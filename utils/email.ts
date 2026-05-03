@@ -1,6 +1,14 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.re_FgA7a2ob_AvnCoGvWdPGdYCKBdWovRJ5K);
+const resendApiKey = process.env.RESEND_API_KEY;
+const resendFromEmail =
+  process.env.RESEND_FROM_EMAIL ?? "rEEEserve <onboarding@resend.dev>";
+
+if (!resendApiKey) {
+  throw new Error("Missing RESEND_API_KEY environment variable.");
+}
+
+const resend = new Resend(resendApiKey);
 
 export async function sendReservationCancelledEmail({
   to,
@@ -18,7 +26,7 @@ export async function sendReservationCancelledEmail({
   instructorName?: string;
 }) {
   return resend.emails.send({
-    from: "rEEEserve <onboarding@resend.dev>", // change once deployment
+    from: resendFromEmail,
     to,
     subject: "Your rEEEserve booking was cancelled",
     html: `
