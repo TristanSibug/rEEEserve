@@ -1339,7 +1339,7 @@ export default function AdminDashboard() {
                 <input
                   style={s.modalInput}
                   type="text"
-                  placeholder="2021-12345"
+                  placeholder="2026-12345"
                   value={resForm.student_num}
                   onChange={e =>
                     setResForm({ ...resForm, student_num: e.target.value })
@@ -1355,7 +1355,7 @@ export default function AdminDashboard() {
                   <input
                     style={s.modalInput}
                     type="text"
-                    placeholder="Prof. Juan Dela Cruz"
+                    placeholder=""
                     value={resForm.instructor_name}
                     onChange={e =>
                       setResForm({ ...resForm, instructor_name: e.target.value })
