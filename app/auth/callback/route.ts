@@ -50,7 +50,7 @@ export async function GET(request: Request) {
   }
 
   if (instructor) {
-    return NextResponse.redirect(`${requestUrl.origin}/instructor-dashboard`);
+    return NextResponse.redirect(`${requestUrl.origin}/instructor/dashboard`);
   }
 
   return NextResponse.redirect(`${requestUrl.origin}/dashboard`);
