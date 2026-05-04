@@ -3,22 +3,55 @@ import { createClient } from "../../../utils/supabase/server";
 import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
 
-  if (code) {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
 
-    if (!error && data.user) {
-      const email = data.user.email ?? "";
-      if (!email.endsWith("@eee.upd.edu.ph")) {
-        await supabase.auth.signOut();
-        return NextResponse.redirect(`${origin}/?error=invalid_domain`);
-      }
-      return NextResponse.redirect(`${origin}/dashboard`);
-    }
+  if (!code) {
+    return NextResponse.redirect(
+      `${requestUrl.origin}/login?error=missing_oauth_code`
+    );
   }
-  return NextResponse.redirect(`${origin}/?error=auth_failed`);
+
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+    code
+  );
+
+  if (exchangeError) {
+    console.error("OAuth code exchange error:", exchangeError.message);
+    return NextResponse.redirect(
+      `${requestUrl.origin}/login?error=auth_callback_failed`
+    );
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user?.email) {
+    console.error("Get user error:", userError?.message);
+    return NextResponse.redirect(`${requestUrl.origin}/login?error=no_user`);
+  }
+
+  const email = user.email.toLowerCase();
+
+  const { data: instructor, error: instructorError } = await supabase
+    .from("staff_credentials")
+    .select("id, username, email, role")
+    .eq("role", "instructor")
+    .ilike("email", email)
+    .maybeSingle();
+
+  if (instructorError) {
+    console.error("Instructor lookup error:", instructorError.message);
+  }
+
+  if (instructor) {
+    return NextResponse.redirect(`${requestUrl.origin}/instructor-dashboard`);
+  }
+
+  return NextResponse.redirect(`${requestUrl.origin}/dashboard`);
 }

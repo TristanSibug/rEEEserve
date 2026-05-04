@@ -5,15 +5,19 @@ export default function Home() {
   const supabase = createClient();
 
   async function handleGoogleLogin() {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
         queryParams: {
-          hd: "eee.upd.edu.ph", // only show @eee.upd.edu.ph accounts in picker
+          hd: "eee.upd.edu.ph",
         },
       },
     });
+
+    if (error) {
+      console.error("Google login error:", error.message);
+    }
   }
 
   return (
