@@ -33,7 +33,7 @@ type CartItem = {
 type DisplaySlot = {
   time_start: string;
   time_end: string;
-  status: "available" | "occupied" | "full" | "selected";
+  status: "available" | "occupied" | "full" | "selected" | "reservedByMe";
   course_name?: string | null;
   capacity: number;
   reserved_count: number;
@@ -446,6 +446,15 @@ export default function Dashboard() {
         item => item.time_start === time_start && item.time_end === time_end
       );
 
+      const reservedByMe = allReservations.some(
+        r =>
+          r.student_email === email &&
+          r.room_name === lab &&
+          r.reserved_date === date &&
+          r.status === "approved" &&
+          overlaps(time_start, time_end, r.time_start, r.time_end)
+      );
+
       const slotsLeft = capacity - reservationCount - selectedCount;
 
       displaySlots.push({
@@ -453,11 +462,13 @@ export default function Dashboard() {
         time_end,
         status: selected
           ? "selected"
-          : blockingSlot
-            ? "occupied"
-            : slotsLeft <= 0
-              ? "full"
-              : "available",
+          : reservedByMe
+            ? "reservedByMe"
+            : blockingSlot
+              ? "occupied"
+              : slotsLeft <= 0
+                ? "full"
+                : "available",
         course_name: blockingSlot?.course_name ?? null,
         capacity,
         reserved_count: reservationCount,
@@ -766,10 +777,10 @@ export default function Dashboard() {
                 {displaySlots.map(slot => {
                   const key = `${slot.time_start}-${slot.time_end}`;
 
-                  const hasCourse =
-                    slot.status === "occupied" && slot.course_name;
+                  const hasCourse = slot.status === "occupied" && slot.course_name;
                   const isAvailable = slot.status === "available";
                   const isSelected = slot.status === "selected";
+                  const isReservedByMe = slot.status === "reservedByMe";
                   const isFull = slot.status === "full";
                   const isClickable = isAvailable || isSelected;
 
@@ -782,9 +793,11 @@ export default function Dashboard() {
                         ...s.slotPill,
                         ...(isSelected
                           ? s.selectedPill
-                          : isAvailable
-                            ? s.availablePill
-                            : s.occupiedPill),
+                          : isReservedByMe
+                            ? s.reservedByMePill
+                            : isAvailable
+                              ? s.availablePill
+                              : s.occupiedPill),
                         cursor: isClickable ? "pointer" : "not-allowed",
                       }}
                     >
@@ -797,11 +810,13 @@ export default function Dashboard() {
                           ? slot.course_name
                           : isSelected
                             ? "Selected"
-                            : isAvailable
-                              ? `${slot.slots_left}/${slot.capacity} slots left`
-                              : isFull
-                                ? "Full"
-                                : "Occupied"}
+                            : isReservedByMe
+                              ? `You reserved this timeslot • ${slot.slots_left}/${slot.capacity} slots left`
+                              : isAvailable
+                                ? `${slot.slots_left}/${slot.capacity} slots left`
+                                : isFull
+                                  ? "Full"
+                                  : "Occupied"}
                       </span>
                     </button>
                   );
@@ -997,6 +1012,13 @@ const s: { [k: string]: React.CSSProperties } = {
     borderColor: "#185FA5",
     color: "#185FA5",
   },
+
+  reservedByMePill: {
+    background: "#FFF7ED",
+    borderColor: "#FB923C",
+    color: "#C2410C",
+  },
+
   slotTimeText: {
     display: "block",
     fontSize: 11,
