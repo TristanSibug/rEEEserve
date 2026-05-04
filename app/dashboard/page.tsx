@@ -230,13 +230,14 @@ export default function Dashboard() {
     };
   }
 
+  const RESERVATION_LEAD_TIME_MINUTES = 60;
+  const MAX_DAILY_RESERVATION_MINUTES = 180;
+
   function isSlotAllowedForDate(selectedDate: string, slotStart: string) {
     const { today, nowMinutes } = getManilaDateTime();
-
     if (selectedDate < today) return false;
     if (selectedDate > today) return true;
-
-    return timeToMinutes(slotStart) >= nowMinutes + 30;
+    return timeToMinutes(slotStart) >= nowMinutes + RESERVATION_LEAD_TIME_MINUTES;
   }
 
   function isPastReservation(r: Reservation) {
@@ -381,6 +382,34 @@ export default function Dashboard() {
     );
   }
 
+  function durationMinutes(start: string, end: string) {
+    return timeToMinutes(end) - timeToMinutes(start);
+  }
+
+  function getExistingApprovedMinutesForDate(selectedDate: string) {
+    return allReservations
+      .filter(r => r.reserved_date === selectedDate)
+      .filter(r => r.status === "approved")
+      .reduce((sum, r) => {
+        return sum + durationMinutes(r.time_start, r.time_end);
+      }, 0);
+  }
+
+  function getCartMinutes() {
+    return cart.reduce((sum, item) => {
+      return sum + durationMinutes(item.time_start, item.time_end);
+    }, 0);
+  }
+
+  function getRemainingReservationMinutesForDate(selectedDate: string) {
+    return Math.max(
+      MAX_DAILY_RESERVATION_MINUTES -
+      getExistingApprovedMinutesForDate(selectedDate) -
+      getCartMinutes(),
+      0
+    );
+  }
+
   function getDisplaySlots(): DisplaySlot[] {
     const displaySlots: DisplaySlot[] = [];
 
@@ -459,6 +488,14 @@ export default function Dashboard() {
     }
 
     if (slot.status !== "available") return;
+
+    const slotMinutes = durationMinutes(slot.time_start, slot.time_end);
+    const remainingMinutes = getRemainingReservationMinutesForDate(date);
+
+    if (slotMinutes > remainingMinutes) {
+      alert("You can reserve a maximum of 3 hours per day across all rooms.");
+      return;
+    }
 
     setCart(prev => [
       ...prev,
@@ -777,6 +814,14 @@ export default function Dashboard() {
                     <strong>{cart.length}</strong>{" "}
                     {cart.length === 1 ? "slot selected" : "slots selected"}
                   </div>
+
+                  {lab && date && (
+                    <p style={{ fontSize: 13, color: "#6B7280", margin: "8px 0 0" }}>
+                      Remaining reservation time for this day:{" "}
+                      {Math.floor(getRemainingReservationMinutesForDate(date) / 60)} hr{" "}
+                      {getRemainingReservationMinutesForDate(date) % 60} min
+                    </p>
+                  )}
 
                   <button
                     type="button"

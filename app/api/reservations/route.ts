@@ -42,13 +42,18 @@ function getManilaDateTime() {
   };
 }
 
+const RESERVATION_LEAD_TIME_MINUTES = 60;
+const MAX_DAILY_RESERVATION_MINUTES = 180;
+
 function isPastOrTooSoon(date: string, timeStart: string) {
   const { today, nowMinutes } = getManilaDateTime();
-
   if (date < today) return true;
   if (date > today) return false;
+  return timeToMinutes(timeStart) < nowMinutes + RESERVATION_LEAD_TIME_MINUTES;
+}
 
-  return timeToMinutes(timeStart) < nowMinutes + 30;
+function durationMinutes(start: string, end: string) {
+  return timeToMinutes(end) - timeToMinutes(start);
 }
 
 export async function GET() {
@@ -191,6 +196,54 @@ export async function POST(request: Request) {
 
   if (!user?.email) {
     return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+  }
+
+  const cartTotalMinutes = items.reduce((sum, item) => {
+    return sum + durationMinutes(item.time_start, item.time_end);
+  }, 0);
+
+  const { data: dailyReservations, error: dailyReservationError } = await supabase
+    .from("reservations")
+    .select("id, room_name, time_start, time_end, status")
+    .eq("student_email", user.email)
+    .eq("reserved_date", date)
+    .in("status", ["approved"]);
+
+  if (dailyReservationError) {
+    return NextResponse.json(
+      { error: dailyReservationError.message },
+      { status: 500 }
+    );
+  }
+
+  const existingDailyMinutes = (dailyReservations ?? []).reduce((sum, r) => {
+    return sum + durationMinutes(r.time_start, r.time_end);
+  }, 0);
+
+  if (existingDailyMinutes + cartTotalMinutes > MAX_DAILY_RESERVATION_MINUTES) {
+    return NextResponse.json(
+      {
+        error:
+          "You can only reserve a maximum of 3 hours per day across all rooms.",
+      },
+      { status: 409 }
+    );
+  }
+
+  for (const item of items) {
+    const overlapsExistingDailyReservation = (dailyReservations ?? []).some(r =>
+      overlaps(item.time_start, item.time_end, r.time_start, r.time_end)
+    );
+
+    if (overlapsExistingDailyReservation) {
+      return NextResponse.json(
+        {
+          error:
+            "One of the selected slots overlaps with another reservation you already have for this day.",
+        },
+        { status: 409 }
+      );
+    }
   }
 
   const [year, month, day] = date.split("-").map(Number);
