@@ -30,7 +30,7 @@ export default function AdminLogin() {
       } else if (data.role === "instructor") {
         router.push("/instructor/dashboard");
       } else {
-        setError("Unknown staff role.");
+        setError("Unknown admin role.");
       }
     } else {
       setError("Incorrect username or password.");
@@ -48,7 +48,7 @@ export default function AdminLogin() {
 
       <main style={styles.main}>
         <div style={styles.card}>
-          <span style={styles.badge}>Staff access</span>
+          <span style={styles.badge}>Admin access</span>
           <h1 style={styles.title}>Login</h1>
 
           <label style={styles.label}>Username</label>
@@ -86,8 +86,7 @@ export default function AdminLogin() {
           </button>
 
           <p style={styles.hint}>
-            Not a staff?{" "}
-            <a href="/" style={{ color: "#185FA5" }}>Log in as student</a>
+            <a href="/" style={{ color: "#185FA5" }}>Not an admin?</a>
           </p>
         </div>
       </main>

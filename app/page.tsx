@@ -26,7 +26,7 @@ export default function Home() {
 
       <main style={s.main}>
         <div style={s.card}>
-          <p style={s.sub}>Student</p>
+          <p style={s.sub}>Student | Instructor</p>
           <h1 style={s.title}>Sign in</h1>
           <p style={s.desc}>
             Use your <strong>@eee.upd.edu.ph</strong> Google account to continue.
@@ -48,7 +48,7 @@ export default function Home() {
             <hr style={{ flex: 1, border: "none", borderTop: "1px solid #eee" }} />
           </div>
 
-          <a href="/admin/login" style={s.adminLink}>Not a student? →</a>
+          <a href="/admin/login" style={s.adminLink}>Not a student or instructor? →</a>
         </div>
       </main>
 
