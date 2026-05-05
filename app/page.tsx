@@ -102,7 +102,7 @@ export default function Home() {
               </div>
 
               <p style={s.demoNote}>
-                For presentation/testing only. Disable after the demo.
+                For testing only.
               </p>
             </div>
           )}
