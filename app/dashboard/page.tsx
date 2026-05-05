@@ -42,6 +42,17 @@ type DisplaySlot = {
 
 type ReservationTab = "current" | "past";
 
+function getCookieValue(name: string) {
+  if (typeof document === "undefined") return "";
+
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+
+  if (parts.length !== 2) return "";
+
+  return decodeURIComponent(parts.pop()?.split(";").shift() ?? "");
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const supabase = createClient();
@@ -72,16 +83,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function getUser() {
+      const demoEmail =
+        process.env.NEXT_PUBLIC_DEMO_LOGIN_ENABLED === "true"
+          ? getCookieValue("demo_email")
+          : "";
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
+      const activeEmail = demoEmail || user?.email || "";
+
+      if (!activeEmail) {
         router.push("/");
         return;
       }
 
-      setEmail(user.email ?? "");
+      setEmail(activeEmail);
       setLoadingUser(false);
     }
 

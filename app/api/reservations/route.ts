@@ -8,6 +8,9 @@ const ROOM_CAPACITY: Record<string, number> = {
   "EEEI 308": 16,
 };
 
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
+type SupabaseServerClient = ReturnType<typeof createClient>;
+
 function timeToMinutes(t: string) {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
@@ -42,29 +45,40 @@ function getManilaDateTime() {
   };
 }
 
-const RESERVATION_LEAD_TIME_MINUTES = 60;
-const MAX_DAILY_RESERVATION_MINUTES = 180;
-
 function isPastOrTooSoon(date: string, timeStart: string) {
   const { today, nowMinutes } = getManilaDateTime();
+
   if (date < today) return true;
   if (date > today) return false;
-  return timeToMinutes(timeStart) < nowMinutes + RESERVATION_LEAD_TIME_MINUTES;
+
+  return timeToMinutes(timeStart) < nowMinutes + 30;
 }
 
-function durationMinutes(start: string, end: string) {
-  return timeToMinutes(end) - timeToMinutes(start);
+async function getActiveStudentEmail(
+  supabase: SupabaseServerClient,
+  cookieStore: CookieStore
+) {
+  const demoEmail =
+    process.env.DEMO_LOGIN_ENABLED === "true"
+      ? cookieStore.get("demo_email")?.value?.toLowerCase() ?? ""
+      : "";
+
+  if (demoEmail) return demoEmail;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user?.email?.toLowerCase() ?? "";
 }
 
 export async function GET() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const studentEmail = await getActiveStudentEmail(supabase, cookieStore);
 
-  if (!user?.email) {
+  if (!studentEmail) {
     return NextResponse.json({ error: "Not logged in" }, { status: 401 });
   }
 
@@ -75,7 +89,7 @@ export async function GET() {
     .select(
       "id, student_email, room_name, reserved_date, time_start, time_end, status"
     )
-    .eq("student_email", user.email)
+    .eq("student_email", studentEmail)
     .in("status", [
       "approved",
       "pending",
@@ -182,7 +196,9 @@ export async function POST(request: Request) {
 
   if (tooSoonItem) {
     return NextResponse.json(
-      { error: "One of the selected slots is no longer available for reservation." },
+      {
+        error: "One of the selected slots is no longer available for reservation.",
+      },
       { status: 409 }
     );
   }
@@ -190,60 +206,10 @@ export async function POST(request: Request) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const studentEmail = await getActiveStudentEmail(supabase, cookieStore);
 
-  if (!user?.email) {
+  if (!studentEmail) {
     return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-  }
-
-  const cartTotalMinutes = items.reduce((sum, item) => {
-    return sum + durationMinutes(item.time_start, item.time_end);
-  }, 0);
-
-  const { data: dailyReservations, error: dailyReservationError } = await supabase
-    .from("reservations")
-    .select("id, room_name, time_start, time_end, status")
-    .eq("student_email", user.email)
-    .eq("reserved_date", date)
-    .in("status", ["approved"]);
-
-  if (dailyReservationError) {
-    return NextResponse.json(
-      { error: dailyReservationError.message },
-      { status: 500 }
-    );
-  }
-
-  const existingDailyMinutes = (dailyReservations ?? []).reduce((sum, r) => {
-    return sum + durationMinutes(r.time_start, r.time_end);
-  }, 0);
-
-  if (existingDailyMinutes + cartTotalMinutes > MAX_DAILY_RESERVATION_MINUTES) {
-    return NextResponse.json(
-      {
-        error:
-          "You can only reserve a maximum of 3 hours per day across all rooms.",
-      },
-      { status: 409 }
-    );
-  }
-
-  for (const item of items) {
-    const overlapsExistingDailyReservation = (dailyReservations ?? []).some(r =>
-      overlaps(item.time_start, item.time_end, r.time_start, r.time_end)
-    );
-
-    if (overlapsExistingDailyReservation) {
-      return NextResponse.json(
-        {
-          error:
-            "One of the selected slots overlaps with another reservation you already have for this day.",
-        },
-        { status: 409 }
-      );
-    }
   }
 
   const [year, month, day] = date.split("-").map(Number);
@@ -311,9 +277,10 @@ export async function POST(request: Request) {
   }
 
   for (const item of items) {
-    const userAlreadyReserved = (existingReservations ?? []).some(r =>
-      r.student_email === user.email &&
-      overlaps(item.time_start, item.time_end, r.time_start, r.time_end)
+    const userAlreadyReserved = (existingReservations ?? []).some(
+      r =>
+        r.student_email === studentEmail &&
+        overlaps(item.time_start, item.time_end, r.time_start, r.time_end)
     );
 
     if (userAlreadyReserved) {
@@ -339,8 +306,7 @@ export async function POST(request: Request) {
     if (existingCount + cartCountForThisSlot > capacity) {
       return NextResponse.json(
         {
-          error:
-            "One of the selected slots no longer has enough seats left.",
+          error: "One of the selected slots no longer has enough seats left.",
         },
         { status: 409 }
       );
@@ -349,7 +315,7 @@ export async function POST(request: Request) {
 
   const rows = items.map(item => ({
     student_id: null,
-    student_email: user.email,
+    student_email: studentEmail,
     room_name: room,
     reserved_date: date,
     time_start: item.time_start,
@@ -396,11 +362,9 @@ export async function DELETE(request: Request) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const studentEmail = await getActiveStudentEmail(supabase, cookieStore);
 
-  if (!user?.email) {
+  if (!studentEmail) {
     return NextResponse.json({ error: "Not logged in" }, { status: 401 });
   }
 
@@ -408,7 +372,7 @@ export async function DELETE(request: Request) {
     .from("reservations")
     .select("id, reserved_date, time_start, student_email")
     .eq("id", id)
-    .eq("student_email", user.email)
+    .eq("student_email", studentEmail)
     .single();
 
   if (readError || !existingReservation) {
@@ -434,7 +398,7 @@ export async function DELETE(request: Request) {
     .from("reservations")
     .delete()
     .eq("id", id)
-    .eq("student_email", user.email);
+    .eq("student_email", studentEmail);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
