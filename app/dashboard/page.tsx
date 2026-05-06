@@ -965,171 +965,176 @@ export default function Dashboard() {
           !
         </p>
 
-        <div style={s.resHeaderRow}>
-          <p style={s.sectionTitle}>Reservations</p>
+        <div style={s.resShell}>
+          <div style={s.resFloatingTitle}>
+            Reservations
+          </div>
 
-          <div style={s.tabGroup}>
-            <button
-              type="button"
-              onClick={() => setReservationTab("current")}
-              style={{
-                ...s.tabButton,
-                ...(reservationTab === "current" ? s.activeTabButton : {}),
-              }}
-            >
-              Current
-            </button>
+          <div style={s.resHeaderRow}>
+            <div />
 
-            <button
-              type="button"
-              onClick={() => setReservationTab("past")}
-              style={{
-                ...s.tabButton,
-                ...(reservationTab === "past" ? s.activeTabButton : {}),
-              }}
-            >
-              Past
-            </button>
+            <div style={s.tabGroup}>
+              <button
+                type="button"
+                onClick={() => setReservationTab("current")}
+                style={{
+                  ...s.tabButton,
+                  ...(reservationTab === "current" ? s.activeTabButton : {}),
+                }}
+              >
+                Current
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReservationTab("past")}
+                style={{
+                  ...s.tabButton,
+                  ...(reservationTab === "past" ? s.activeTabButton : {}),
+                }}
+              >
+                Past
+              </button>
+            </div>
+          </div>
+
+          <div style={s.resCard}>
+            {visibleReservationGroups.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 15, color: "var(--muted)" }}>
+                {reservationTab === "current"
+                  ? "No current reservations"
+                  : "No past reservations"}
+              </p>
+            ) : (
+              <div style={s.resGroupList}>
+                {visibleReservationGroups.map(dayGroup => {
+                  const isDateOpen =
+                    expandedReservationDate === dayGroup.reservedDate;
+
+                  return (
+                    <div key={dayGroup.reservedDate} style={s.dayGroupCard}>
+                      <button
+                        type="button"
+                        style={s.dayGroupButton}
+                        onClick={() => {
+                          setExpandedReservationDate(
+                            isDateOpen ? null : dayGroup.reservedDate
+                          );
+                          setExpandedReservationRoom(null);
+                        }}
+                      >
+                        <div>
+                          <strong>
+                            {reservationTab === "current"
+                              ? formatPanelDate(dayGroup.reservedDate)
+                              : formatReservationDate(dayGroup.reservedDate)}
+                          </strong>
+                          <div style={s.groupSubtext}>
+                            {fmt(dayGroup.firstStart)} – {fmt(dayGroup.lastEnd)}
+                          </div>
+                        </div>
+
+                        <div style={s.groupRightText}>
+                          {dayGroup.reservations.length}{" "}
+                          {dayGroup.reservations.length === 1 ? "slot" : "slots"}
+                          <span style={s.chevron}>{isDateOpen ? "−" : "+"}</span>
+                        </div>
+                      </button>
+
+                      {isDateOpen && (
+                        <div style={s.roomGroupList}>
+                          {dayGroup.rooms.map(roomGroup => {
+                            const roomKey = `${dayGroup.reservedDate}-${roomGroup.roomName}`;
+                            const isRoomOpen = expandedReservationRoom === roomKey;
+
+                            return (
+                              <div key={roomKey} style={s.roomGroupCard}>
+                                <button
+                                  type="button"
+                                  style={s.roomGroupButton}
+                                  onClick={() =>
+                                    setExpandedReservationRoom(
+                                      isRoomOpen ? null : roomKey
+                                    )
+                                  }
+                                >
+                                  <div>
+                                    <strong>{roomGroup.roomName}</strong>
+                                    <div style={s.groupSubtext}>
+                                      {fmt(roomGroup.firstStart)} –{" "}
+                                      {fmt(roomGroup.lastEnd)}
+                                    </div>
+                                  </div>
+
+                                  <div style={s.groupRightText}>
+                                    {roomGroup.reservations.length}{" "}
+                                    {roomGroup.reservations.length === 1
+                                      ? "slot"
+                                      : "slots"}
+                                    <span style={s.chevron}>
+                                      {isRoomOpen ? "−" : "+"}
+                                    </span>
+                                  </div>
+                                </button>
+
+                                {isRoomOpen && (
+                                  <div style={s.timeslotList}>
+                                    {roomGroup.reservations.map((r, index) => {
+                                      const cancellationLabel =
+                                        pastReservationLabel(r.status);
+
+                                      return (
+                                        <div
+                                          key={r.id}
+                                          style={{
+                                            ...s.timeslotRow,
+                                            ...(reservationTab === "past"
+                                              ? s.pastResItem
+                                              : {}),
+                                          }}
+                                        >
+                                          <div>
+                                            <strong>
+                                              {fmt(r.time_start)} – {fmt(r.time_end)}
+                                            </strong>
+                                          </div>
+
+                                          {reservationTab === "current" &&
+                                            canCancelReservation(r) && (
+                                              <button
+                                                type="button"
+                                                style={s.cancelBtn}
+                                                onClick={() => cancelReservation(r.id)}
+                                              >
+                                                Cancel
+                                              </button>
+                                            )}
+
+                                          {reservationTab === "past" &&
+                                            cancellationLabel && (
+                                              <span
+                                                style={pastReservationPillStyle(r.status)}
+                                              >
+                                                {cancellationLabel}
+                                              </span>
+                                            )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-
-        <div style={s.resCard}>
-          {visibleReservationGroups.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 15, color: "var(--muted)" }}>
-              {reservationTab === "current"
-                ? "No current reservations"
-                : "No past reservations"}
-            </p>
-          ) : (
-            <div style={s.resGroupList}>
-              {visibleReservationGroups.map(dayGroup => {
-                const isDateOpen =
-                  expandedReservationDate === dayGroup.reservedDate;
-
-                return (
-                  <div key={dayGroup.reservedDate} style={s.dayGroupCard}>
-                    <button
-                      type="button"
-                      style={s.dayGroupButton}
-                      onClick={() => {
-                        setExpandedReservationDate(
-                          isDateOpen ? null : dayGroup.reservedDate
-                        );
-                        setExpandedReservationRoom(null);
-                      }}
-                    >
-                      <div>
-                        <strong>
-                          {reservationTab === "current"
-                            ? formatPanelDate(dayGroup.reservedDate)
-                            : formatReservationDate(dayGroup.reservedDate)}
-                        </strong>
-                        <div style={s.groupSubtext}>
-                          {fmt(dayGroup.firstStart)} – {fmt(dayGroup.lastEnd)}
-                        </div>
-                      </div>
-
-                      <div style={s.groupRightText}>
-                        {dayGroup.reservations.length}{" "}
-                        {dayGroup.reservations.length === 1 ? "slot" : "slots"}
-                        <span style={s.chevron}>{isDateOpen ? "−" : "+"}</span>
-                      </div>
-                    </button>
-
-                    {isDateOpen && (
-                      <div style={s.roomGroupList}>
-                        {dayGroup.rooms.map(roomGroup => {
-                          const roomKey = `${dayGroup.reservedDate}-${roomGroup.roomName}`;
-                          const isRoomOpen = expandedReservationRoom === roomKey;
-
-                          return (
-                            <div key={roomKey} style={s.roomGroupCard}>
-                              <button
-                                type="button"
-                                style={s.roomGroupButton}
-                                onClick={() =>
-                                  setExpandedReservationRoom(
-                                    isRoomOpen ? null : roomKey
-                                  )
-                                }
-                              >
-                                <div>
-                                  <strong>{roomGroup.roomName}</strong>
-                                  <div style={s.groupSubtext}>
-                                    {fmt(roomGroup.firstStart)} –{" "}
-                                    {fmt(roomGroup.lastEnd)}
-                                  </div>
-                                </div>
-
-                                <div style={s.groupRightText}>
-                                  {roomGroup.reservations.length}{" "}
-                                  {roomGroup.reservations.length === 1
-                                    ? "slot"
-                                    : "slots"}
-                                  <span style={s.chevron}>
-                                    {isRoomOpen ? "−" : "+"}
-                                  </span>
-                                </div>
-                              </button>
-
-                              {isRoomOpen && (
-                                <div style={s.timeslotList}>
-                                  {roomGroup.reservations.map((r, index) => {
-                                    const cancellationLabel =
-                                      pastReservationLabel(r.status);
-
-                                    return (
-                                      <div
-                                        key={r.id}
-                                        style={{
-                                          ...s.timeslotRow,
-                                          ...(reservationTab === "past"
-                                            ? s.pastResItem
-                                            : {}),
-                                        }}
-                                      >
-                                        <div>
-                                          <strong>
-                                            {fmt(r.time_start)} – {fmt(r.time_end)}
-                                          </strong>
-                                        </div>
-
-                                        {reservationTab === "current" &&
-                                          canCancelReservation(r) && (
-                                            <button
-                                              type="button"
-                                              style={s.cancelBtn}
-                                              onClick={() => cancelReservation(r.id)}
-                                            >
-                                              Cancel
-                                            </button>
-                                          )}
-
-                                        {reservationTab === "past" &&
-                                          cancellationLabel && (
-                                            <span
-                                              style={pastReservationPillStyle(r.status)}
-                                            >
-                                              {cancellationLabel}
-                                            </span>
-                                          )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
         <p style={s.sectionTitle}>Lab schedules</p>
 
         <div style={s.scheduleCard}>
@@ -1526,11 +1531,9 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   resCard: {
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 28,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
   },
 
   btn: {
@@ -1693,7 +1696,7 @@ const s: { [k: string]: React.CSSProperties } = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
-    flexWrap: "wrap",
+    marginBottom: 14,
   },
   tabGroup: {
     display: "flex",
@@ -1977,4 +1980,31 @@ const s: { [k: string]: React.CSSProperties } = {
     outline: "2px solid var(--primary)",
     outlineOffset: 2,
   },
+
+  resShell: {
+    position: "relative",
+    marginTop: 24,
+    marginBottom: 24,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    borderRadius: 18,
+    boxShadow: "var(--shadow-sm)",
+    padding: "34px 18px 18px",
+  },
+
+  resFloatingTitle: {
+    position: "absolute",
+    top: -16,
+    left: 18,
+    padding: "8px 16px",
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    fontSize: 16,
+    fontWeight: 700,
+    boxShadow: "var(--shadow-sm)",
+  },
+
+
 };
