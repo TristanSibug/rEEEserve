@@ -800,9 +800,8 @@ export default function InstructorDashboard() {
             <div>
               <div style={s.sectionHeader}>
                 <div>
-                  <h2 style={s.sectionTitle}>My Classes</h2>
                   <p style={s.sectionSubtitle}>
-                    Temporary instructor class list for the demo.
+                    Placeholder. Not working yet (Class sharing & No lab class implementation).
                   </p>
                 </div>
 
