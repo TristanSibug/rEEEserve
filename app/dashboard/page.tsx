@@ -592,9 +592,9 @@ export default function Dashboard() {
       status === "cancelled_by_instructor"
     ) {
       return {
-        background: "#FDECEC",
-        color: "#A32D2D",
-        border: "1px solid #E24B4A",
+        background: "var(--danger-bg)",
+        color: "var(--danger-text)",
+        border: "1px solid var(--danger-border)",
         borderRadius: 999,
         padding: "5px 9px",
         fontSize: 11,
@@ -987,6 +987,7 @@ const s: { [k: string]: React.CSSProperties } = {
     borderRadius: 8,
     fontSize: 13,
     background: "var(--surface-2)",
+    color: "var(--text)",
     minWidth: 160,
   },
   emptyBox: {
@@ -1086,9 +1087,9 @@ const s: { [k: string]: React.CSSProperties } = {
   cartBox: {
     margin: "12px 16px",
     padding: 12,
-    border: "1px solid #BFD7F0",
+    border: "1px solid var(--primary-border)",
     borderRadius: 10,
-    background: "#F5FAFF",
+    background: "var(--primary-soft)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1108,14 +1109,14 @@ const s: { [k: string]: React.CSSProperties } = {
   tabGroup: {
     display: "flex",
     gap: 6,
-    background: "#F2F4F7",
+    background: "var(--tab-bg)",
     padding: 4,
     borderRadius: 999,
   },
   tabButton: {
     border: "none",
     background: "transparent",
-    color: "#666",
+    color: "var(--muted)",
     fontSize: 13,
     fontWeight: 500,
     padding: "7px 14px",
@@ -1123,14 +1124,14 @@ const s: { [k: string]: React.CSSProperties } = {
     cursor: "pointer",
   },
   activeTabButton: {
-    background: "#FFFFFF",
+    background: "var(--surface)",
     color: "var(--primary)",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+    boxShadow: "var(--shadow-sm)",
   },
   cancelBtn: {
-    border: "1px solid #F2B8B5",
-    background: "#FFF5F5",
-    color: "#B42318",
+    border: "1px solid var(--danger-border-2)",
+    background: "var(--danger-bg-2)",
+    color: "var(--danger-text-2)",
     fontSize: 12,
     fontWeight: 500,
     padding: "6px 10px",
@@ -1139,8 +1140,8 @@ const s: { [k: string]: React.CSSProperties } = {
   },
   pastResItem: {
     background: "var(--surface-3)",
-    borderColor: "#e0e0e0",
-    color: "#777",
+    borderColor: "var(--border-strong)",
+    color: "var(--muted)",
   },
   footer: {
     padding: "14px 28px",

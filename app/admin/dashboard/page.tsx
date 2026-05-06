@@ -1281,9 +1281,9 @@ export default function AdminDashboard() {
 
           <div style={s.legend}>
             {[
-              ["#97C459", "Available"],
-              ["#F5B45B", "Student reserved / full"],
-              ["#E24B4A", "Class / blocked / instructor-reserved"],
+              ["var(--success-border)", "Available"],
+              ["var(--warning-border)", "Student reserved / full"],
+              ["var(--danger-border)", "Class / blocked / instructor-reserved"],
             ].map(([color, label]) => (
               <div key={label} style={s.legendItem}>
                 <div
@@ -1532,13 +1532,37 @@ export default function AdminDashboard() {
 }
 
 function pillStyle(status: string): CSSProperties {
-  const map: Record<string, { background: string; color: string }> = {
-    approved: { background: "#EAF3DE", color: "#3B6D11" },
-    pending: { background: "#FAEEDA", color: "#854F0B" },
-    cancelled: { background: "#FCEBEB", color: "#A32D2D" },
-    cancelled_by_admin: { background: "#FCEBEB", color: "#A32D2D" },
-    cancelled_by_instructor: { background: "#FCEBEB", color: "#A32D2D" },
-    instructor_reservation: { background: "#FCEBEB", color: "#A32D2D" },
+  const map: Record<string, CSSProperties> = {
+    approved: {
+      background: "var(--success-bg)",
+      color: "var(--success-text)",
+      border: "1px solid var(--success-border)",
+    },
+    pending: {
+      background: "var(--warning-bg)",
+      color: "var(--warning-text)",
+      border: "1px solid var(--warning-border)",
+    },
+    cancelled: {
+      background: "var(--danger-bg)",
+      color: "var(--danger-text)",
+      border: "1px solid var(--danger-border)",
+    },
+    cancelled_by_admin: {
+      background: "var(--danger-bg)",
+      color: "var(--danger-text)",
+      border: "1px solid var(--danger-border)",
+    },
+    cancelled_by_instructor: {
+      background: "var(--danger-bg)",
+      color: "var(--danger-text)",
+      border: "1px solid var(--danger-border)",
+    },
+    instructor_reservation: {
+      background: "var(--danger-bg)",
+      color: "var(--danger-text)",
+      border: "1px solid var(--danger-border)",
+    },
   };
 
   return {
@@ -1547,7 +1571,11 @@ function pillStyle(status: string): CSSProperties {
     borderRadius: 99,
     fontSize: 11,
     fontWeight: 500,
-    ...(map[status] ?? { background: "#eee", color: "#888" }),
+    ...(map[status] ?? {
+      background: "var(--surface-3)",
+      color: "var(--muted)",
+      border: "1px solid var(--border)",
+    }),
   };
 }
 
@@ -1556,7 +1584,8 @@ const s: Record<string, CSSProperties> = {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
-    background: "#f5f5f5",
+    background: "var(--page-bg)",
+    color: "var(--text)",
     fontFamily: "sans-serif",
   },
 
@@ -1565,20 +1594,20 @@ const s: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: "14px 24px",
-    borderBottom: "1px solid #eee",
-    background: "#fff",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
   },
 
   logo: {
     fontSize: 18,
     fontWeight: 700,
     textDecoration: "none",
-    color: "#111",
+    color: "var(--text)",
   },
 
   badge: {
-    background: "#E6F1FB",
-    color: "#185FA5",
+    background: "var(--primary-soft)",
+    color: "var(--primary)",
     fontSize: 11,
     fontWeight: 500,
     padding: "3px 8px",
@@ -1587,9 +1616,9 @@ const s: Record<string, CSSProperties> = {
 
   logout: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     background: "none",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-strong)",
     padding: "4px 10px",
     borderRadius: 6,
     cursor: "pointer",
@@ -1610,14 +1639,15 @@ const s: Record<string, CSSProperties> = {
   },
 
   stat: {
-    background: "#f0f0f0",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 8,
     padding: 14,
   },
 
   statLabel: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     margin: "0 0 4px",
   },
 
@@ -1625,11 +1655,12 @@ const s: Record<string, CSSProperties> = {
     fontSize: 22,
     fontWeight: 500,
     margin: 0,
+    color: "var(--text)",
   },
 
   card: {
-    background: "#fff",
-    border: "1px solid #eee",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -1639,7 +1670,7 @@ const s: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: "14px 18px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
     flexWrap: "wrap",
     gap: 10,
   },
@@ -1648,17 +1679,18 @@ const s: Record<string, CSSProperties> = {
     fontSize: 13,
     fontWeight: 500,
     margin: 0,
+    color: "var(--text)",
   },
 
   cardSubTitle: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     margin: "4px 0 0",
   },
 
   btn: {
     padding: "7px 14px",
-    background: "#185FA5",
+    background: "var(--primary)",
     color: "#fff",
     border: "none",
     borderRadius: 8,
@@ -1670,8 +1702,8 @@ const s: Record<string, CSSProperties> = {
   btnOutline: {
     padding: "7px 14px",
     background: "none",
-    color: "#888",
-    border: "1px solid #ddd",
+    color: "var(--muted)",
+    border: "1px solid var(--border-strong)",
     borderRadius: 8,
     fontSize: 12,
     cursor: "pointer",
@@ -1681,25 +1713,26 @@ const s: Record<string, CSSProperties> = {
     display: "flex",
     gap: 8,
     padding: "12px 18px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
     flexWrap: "wrap",
     alignItems: "center",
   },
 
   select: {
     padding: "6px 10px",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-strong)",
     borderRadius: 8,
     fontSize: 12,
-    background: "#fafafa",
+    background: "var(--surface-2)",
+    color: "var(--text)",
   },
 
   activityTabs: {
     display: "flex",
     gap: 4,
     padding: 3,
-    border: "1px solid #ddd",
-    background: "#fafafa",
+    border: "1px solid var(--border-strong)",
+    background: "var(--tab-bg)",
     borderRadius: 10,
     marginLeft: "auto",
     flexWrap: "wrap",
@@ -1708,7 +1741,7 @@ const s: Record<string, CSSProperties> = {
   activityTab: {
     border: "none",
     background: "transparent",
-    color: "#777",
+    color: "var(--muted)",
     borderRadius: 8,
     padding: "5px 10px",
     fontSize: 12,
@@ -1720,14 +1753,14 @@ const s: Record<string, CSSProperties> = {
   },
 
   activityTabActive: {
-    background: "#fff",
-    color: "#185FA5",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+    background: "var(--surface)",
+    color: "var(--primary)",
+    boxShadow: "var(--shadow-sm)",
   },
 
   activityCount: {
-    background: "#E6F1FB",
-    color: "#185FA5",
+    background: "var(--primary-soft)",
+    color: "var(--primary)",
     borderRadius: 99,
     padding: "1px 6px",
     fontSize: 10,
@@ -1741,30 +1774,31 @@ const s: Record<string, CSSProperties> = {
   },
 
   th: {
-    background: "#f9f9f9",
+    background: "var(--surface-2)",
     padding: "9px 16px",
     textAlign: "left",
     fontWeight: 500,
-    color: "#888",
+    color: "var(--muted)",
     fontSize: 12,
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
   },
 
   td: {
     padding: "10px 16px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
+    color: "var(--text-soft)",
   },
 
   empty: {
     textAlign: "center",
     padding: 24,
-    color: "#aaa",
+    color: "var(--muted-3)",
     fontSize: 13,
   },
 
   emptyBox: {
     padding: 24,
-    color: "#aaa",
+    color: "var(--muted-3)",
     fontSize: 13,
     textAlign: "center",
   },
@@ -1774,14 +1808,15 @@ const s: Record<string, CSSProperties> = {
     padding: "3px 8px",
     borderRadius: 6,
     cursor: "pointer",
-    border: "1px solid #eee",
-    background: "none",
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text-soft)",
     marginRight: 4,
   },
 
   pastText: {
     fontSize: 11,
-    color: "#999",
+    color: "var(--muted-2)",
   },
 
   visualBox: {
@@ -1790,7 +1825,7 @@ const s: Record<string, CSSProperties> = {
 
   visualTitle: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     padding: "10px 16px 6px",
     margin: 0,
     fontWeight: 500,
@@ -1817,21 +1852,21 @@ const s: Record<string, CSSProperties> = {
   },
 
   availablePill: {
-    background: "#F7FBF2",
-    borderColor: "#97C459",
-    color: "#3B6D11",
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+    color: "var(--success-text)",
   },
 
   occupiedPill: {
-    background: "#FFF7F7",
-    borderColor: "#E24B4A",
-    color: "#A32D2D",
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+    color: "var(--danger-text)",
   },
 
   reservedPill: {
-    background: "#FFF3D8",
-    color: "#8A5A00",
-    border: "1px solid #F5B45B",
+    background: "var(--warning-bg)",
+    color: "var(--warning-text)",
+    border: "1px solid var(--warning-border)",
   },
 
   slotTimeText: {
@@ -1852,7 +1887,7 @@ const s: Record<string, CSSProperties> = {
     gap: 16,
     padding: "10px 16px",
     flexWrap: "wrap",
-    borderTop: "1px solid #eee",
+    borderTop: "1px solid var(--border)",
   },
 
   legendItem: {
@@ -1860,13 +1895,13 @@ const s: Record<string, CSSProperties> = {
     alignItems: "center",
     gap: 6,
     fontSize: 11,
-    color: "#888",
+    color: "var(--muted)",
   },
 
   modalBg: {
     position: "fixed",
     inset: 0,
-    background: "rgba(0,0,0,0.3)",
+    background: "rgba(0,0,0,0.45)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1874,9 +1909,10 @@ const s: Record<string, CSSProperties> = {
   },
 
   modal: {
-    background: "#fff",
+    background: "var(--surface)",
+    color: "var(--text)",
     borderRadius: 12,
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     padding: 24,
     width: "100%",
     maxWidth: 360,
@@ -1888,17 +1924,18 @@ const s: Record<string, CSSProperties> = {
     fontSize: 15,
     fontWeight: 500,
     margin: "0 0 16px",
+    color: "var(--text)",
   },
 
   modalSubText: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     margin: "0 0 12px",
   },
 
   modalLabel: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     display: "block",
     marginBottom: 5,
     marginTop: 12,
@@ -1908,10 +1945,11 @@ const s: Record<string, CSSProperties> = {
     width: "100%",
     boxSizing: "border-box",
     padding: "8px 10px",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-strong)",
     borderRadius: 8,
     fontSize: 13,
-    background: "#fafafa",
+    background: "var(--surface-2)",
+    color: "var(--text)",
   },
 
   modalActions: {
@@ -1924,17 +1962,18 @@ const s: Record<string, CSSProperties> = {
   slotModalTime: {
     fontSize: 14,
     margin: "0 0 8px",
+    color: "var(--text)",
   },
 
   slotModalDesc: {
     fontSize: 13,
-    color: "#666",
+    color: "var(--text-soft)",
     margin: "0 0 16px",
   },
 
   helperText: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     margin: 0,
   },
 };

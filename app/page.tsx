@@ -206,8 +206,8 @@ const s: { [k: string]: React.CSSProperties } = {
     marginTop: 16,
     padding: 12,
     borderRadius: 10,
-    background: "#F7FAFF",
-    border: "1px solid #DCEBFA",
+    background: "var(--primary-soft-2)",
+    border: "1px solid var(--primary-border)",
   },
   demoTitle: {
     margin: "0 0 8px",
@@ -225,7 +225,7 @@ const s: { [k: string]: React.CSSProperties } = {
   demoBtn: {
     padding: "8px 6px",
     borderRadius: 8,
-    border: "1px solid #BFD8F2",
+    border: "1px solid var(--primary-border-2)",
     background: "var(--surface)",
     color: "var(--primary)",
     fontSize: 12,

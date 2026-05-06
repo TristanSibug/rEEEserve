@@ -658,40 +658,46 @@ const s: { [k: string]: React.CSSProperties } = {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
-    background: "#f5f5f5",
+    background: "var(--page-bg)",
+    color: "var(--text)",
     fontFamily: "sans-serif",
   },
+
   nav: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "18px 28px",
-    borderBottom: "1px solid #eee",
-    background: "#fff",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
   },
+
   logo: {
     fontSize: 22,
     fontWeight: 700,
     textDecoration: "none",
-    color: "#111",
+    color: "var(--text)",
   },
+
   badge: {
-    background: "#E6F1FB",
-    color: "#185FA5",
+    background: "var(--primary-soft)",
+    color: "var(--primary)",
     fontSize: 11,
     fontWeight: 500,
     padding: "4px 10px",
     borderRadius: 99,
   },
+
   logout: {
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
     background: "none",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-strong)",
     padding: "4px 10px",
     borderRadius: 6,
     cursor: "pointer",
   },
+
   body: {
     flex: 1,
     padding: 28,
@@ -699,45 +705,53 @@ const s: { [k: string]: React.CSSProperties } = {
     width: "100%",
     boxSizing: "border-box",
   },
+
   welcome: {
     fontSize: 20,
     fontWeight: 500,
     margin: "0 0 20px",
+    color: "var(--text)",
   },
+
   card: {
-    background: "#fff",
-    border: "1px solid #eee",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     overflow: "hidden",
   },
+
   tabs: {
     display: "flex",
-    borderBottom: "1px solid #eee",
-    background: "#fafafa",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface-2)",
   },
+
   tab: {
     padding: "12px 18px",
     border: "none",
-    borderRight: "1px solid #eee",
-    background: "#fafafa",
+    borderRight: "1px solid var(--border)",
+    background: "var(--surface-2)",
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 500,
-    color: "#777",
+    color: "var(--muted)",
   },
+
   activeTab: {
     padding: "12px 18px",
     border: "none",
-    borderRight: "1px solid #eee",
-    background: "#fff",
+    borderRight: "1px solid var(--border)",
+    background: "var(--surface)",
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 600,
-    color: "#185FA5",
+    color: "var(--primary)",
   },
+
   content: {
     padding: 20,
   },
+
   sectionHeader: {
     display: "flex",
     alignItems: "center",
@@ -746,66 +760,77 @@ const s: { [k: string]: React.CSSProperties } = {
     gap: 12,
     flexWrap: "wrap",
   },
+
   sectionTitle: {
     fontSize: 12,
     fontWeight: 500,
-    color: "#999",
+    color: "var(--muted-2)",
     textTransform: "uppercase",
     letterSpacing: 1,
     margin: "0 0 12px",
   },
+
   filters: {
     display: "flex",
     gap: 10,
     padding: "14px 16px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
     flexWrap: "wrap",
   },
+
   select: {
     padding: "8px 12px",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-strong)",
     borderRadius: 8,
     fontSize: 13,
-    background: "#fafafa",
+    background: "var(--surface-2)",
+    color: "var(--text)",
     minWidth: 160,
   },
+
   table: {
     width: "100%",
     borderCollapse: "collapse",
     fontSize: 13,
   },
+
   th: {
-    background: "#f9f9f9",
+    background: "var(--surface-2)",
     padding: "10px 12px",
     textAlign: "left",
     fontWeight: 500,
-    color: "#888",
+    color: "var(--muted)",
     fontSize: 12,
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
   },
+
   td: {
     padding: "10px 12px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
+    color: "var(--text-soft)",
   },
+
   empty: {
     textAlign: "center",
     padding: 24,
-    color: "#aaa",
+    color: "var(--muted-3)",
     fontSize: 13,
   },
+
   emptyBox: {
     textAlign: "center",
     padding: 18,
-    color: "#aaa",
+    color: "var(--muted-3)",
     fontSize: 13,
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     borderRadius: 10,
-    background: "#fafafa",
+    background: "var(--surface-2)",
     margin: 16,
   },
+
   btn: {
     padding: "8px 14px",
-    background: "#185FA5",
+    background: "var(--primary)",
     color: "#fff",
     border: "none",
     borderRadius: 8,
@@ -813,67 +838,78 @@ const s: { [k: string]: React.CSSProperties } = {
     fontWeight: 500,
     cursor: "pointer",
   },
+
   dangerBtn: {
     padding: "5px 10px",
-    background: "#fff",
-    color: "#A32D2D",
-    border: "1px solid #F3C6C6",
+    background: "var(--surface)",
+    color: "var(--danger-text)",
+    border: "1px solid var(--danger-border-2)",
     borderRadius: 6,
     fontSize: 12,
     cursor: "pointer",
   },
+
   slotGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 8,
     padding: 16,
   },
+
   availablePill: {
-    background: "#F7FBF2",
-    borderColor: "#97C459",
-    color: "#3B6D11",
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+    color: "var(--success-text)",
   },
+
   reservedPill: {
-    background: "#FFF8EF",
-    borderColor: "#F5B45B",
-    color: "#A85B00",
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+    color: "var(--warning-text)",
   },
+
   occupiedPill: {
-    background: "#FFF7F7",
-    borderColor: "#E24B4A",
-    color: "#A32D2D",
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+    color: "var(--danger-text)",
   },
+
   legend: {
     display: "flex",
     gap: 14,
     padding: "0 16px 14px",
     fontSize: 11,
-    color: "#888",
+    color: "var(--muted)",
     flexWrap: "wrap",
   },
+
   legendItem: {
     display: "flex",
     alignItems: "center",
     gap: 5,
   },
+
   dot: {
     width: 9,
     height: 9,
     borderRadius: 99,
   },
+
   footer: {
     padding: "14px 28px",
-    borderTop: "1px solid #eee",
-    background: "#fff",
+    borderTop: "1px solid var(--border)",
+    background: "var(--surface)",
     display: "flex",
     gap: 20,
     marginTop: "auto",
   },
+
   footerLink: {
     fontSize: 13,
-    color: "#888",
+    color: "var(--muted)",
     textDecoration: "none",
   },
+
   slotPill: {
     position: "relative",
     border: "1px solid",
@@ -886,6 +922,7 @@ const s: { [k: string]: React.CSSProperties } = {
     overflow: "hidden",
     cursor: "default",
   },
+
   slotTimeText: {
     display: "block",
     fontSize: 11,
@@ -894,6 +931,7 @@ const s: { [k: string]: React.CSSProperties } = {
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
+
   slotInfoText: {
     display: "block",
     marginTop: 3,
@@ -904,9 +942,10 @@ const s: { [k: string]: React.CSSProperties } = {
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
+
   resCard: {
-    background: "#fff",
-    border: "1px solid #eee",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     padding: 20,
     display: "flex",
@@ -916,31 +955,35 @@ const s: { [k: string]: React.CSSProperties } = {
     gap: 16,
     flexWrap: "wrap",
   },
+
   resItem: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 12,
     padding: "12px 14px",
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     borderRadius: 14,
-    background: "#fff",
+    background: "var(--surface-2)",
   },
+
   scheduleCard: {
-    background: "#fff",
-    border: "1px solid #eee",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: 28,
   },
+
   slotSpacer: {
     visibility: "hidden",
   },
+
   cancelBtn: {
     padding: "6px 10px",
-    background: "#fff",
-    color: "#A32D2D",
-    border: "1px solid #F3C6C6",
+    background: "var(--danger-bg-2)",
+    color: "var(--danger-text-2)",
+    border: "1px solid var(--danger-border-2)",
     borderRadius: 8,
     fontSize: 12,
     cursor: "pointer",
