@@ -1019,7 +1019,11 @@ export default function Dashboard() {
                       }}
                     >
                       <div>
-                        <strong>{formatReservationDate(dayGroup.reservedDate)}</strong>
+                        <strong>
+                          {reservationTab === "current"
+                            ? formatPanelDate(dayGroup.reservedDate)
+                            : formatReservationDate(dayGroup.reservedDate)}
+                        </strong>
                         <div style={s.groupSubtext}>
                           {fmt(dayGroup.firstStart)} – {fmt(dayGroup.lastEnd)}
                         </div>

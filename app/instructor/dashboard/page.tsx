@@ -1447,12 +1447,13 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   cancelBtn: {
-    padding: "6px 10px",
+    border: "1px solid var(--danger-border-2)",
     background: "var(--danger-bg-2)",
     color: "var(--danger-text-2)",
-    border: "1px solid var(--danger-border-2)",
-    borderRadius: 8,
     fontSize: 12,
+    fontWeight: 500,
+    padding: "6px 10px",
+    borderRadius: 999,
     cursor: "pointer",
   },
 
