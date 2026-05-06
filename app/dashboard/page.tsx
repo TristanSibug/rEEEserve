@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../utils/supabase/client";
+import Link from "next/link";
 
 type Slot = {
   id: number | string;
@@ -949,9 +950,9 @@ export default function Dashboard() {
   return (
     <div style={s.page}>
       <nav style={s.nav}>
-        <a href="/" style={s.logo}>
+        <Link href="/" style={s.logo}>
           rEEE<span style={{ color: "var(--primary)" }}>serve</span>
-        </a>
+        </Link>
         <span style={s.sn}>{email}</span>
       </nav>
 

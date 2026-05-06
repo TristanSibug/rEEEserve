@@ -657,12 +657,12 @@ export default function InstructorDashboard() {
       </main>
 
       <footer style={s.footer}>
-        <a href="/about" style={s.footerLink}>
+        <Link href="/about" style={s.footerLink}>
           About
-        </a>
-        <a href="/help" style={s.footerLink}>
+        </Link>
+        <Link href="/help" style={s.footerLink}>
           Help
-        </a>
+        </Link>
       </footer>
     </div>
   );

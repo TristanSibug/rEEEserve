@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "../utils/supabase/client";
-
+import Link from "next/link";
 
 type DemoRole = "student" | "instructor" | "admin";
 
@@ -34,9 +34,9 @@ export default function Home() {
   return (
     <div style={s.page}>
       <nav style={s.nav}>
-        <a href="/" style={s.logo}>
+        <Link href="/" style={s.logo}>
           rEEE<span style={{ color: "var(--primary)" }}>serve</span>
-        </a>
+        </Link>
       </nav>
 
       <main style={s.main}>
@@ -116,19 +116,19 @@ export default function Home() {
             <hr style={{ flex: 1, border: "none", borderTop: "1px solid var(--border)" }} />
           </div>
 
-          <a href="/admin/login" style={s.adminLink}>
+          <Link href="/admin/login" style={s.adminLink}>
             Not a student or instructor? →
-          </a>
+          </Link>
         </div>
       </main>
 
       <footer style={s.footer}>
-        <a href="/about" style={s.footerLink}>
+        <Link href="/about" style={s.footerLink}>
           About
-        </a>
-        <a href="/help" style={s.footerLink}>
+        </Link>
+        <Link href="/help" style={s.footerLink}>
           Help
-        </a>
+        </Link>
       </footer>
     </div>
   );
