@@ -97,6 +97,8 @@ export default function AdminDashboard() {
   const [activityView, setActivityView] = useState<ActivityView>("ongoing");
 
   const [showResModal, setShowResModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
   const [editingItem, setEditingItem] = useState<ActivityItem | null>(null);
 
   const [resForm, setResForm] = useState<ResForm>({
@@ -122,6 +124,21 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchAllActivity();
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 700px)");
+
+    const handleChange = () => {
+      setIsMobile(mediaQuery.matches);
+    };
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -1147,54 +1164,27 @@ export default function AdminDashboard() {
               <option value="instructor">Instructors</option>
             </select>
 
-            <div style={s.activityTabs}>
-              <button
-                type="button"
-                style={{
-                  ...s.activityTab,
-                  ...(activityView === "ongoing" ? s.activityTabActive : {}),
-                }}
-                onClick={() => setActivityView("ongoing")}
-              >
-                Ongoing
-                <span style={s.activityCount}>{ongoingActivity.length}</span>
-              </button>
-
-              <button
-                type="button"
-                style={{
-                  ...s.activityTab,
-                  ...(activityView === "pending" ? s.activityTabActive : {}),
-                }}
-                onClick={() => setActivityView("pending")}
-              >
-                Pending
-                <span style={s.activityCount}>{pendingActivity.length}</span>
-              </button>
-
-              <button
-                type="button"
-                style={{
-                  ...s.activityTab,
-                  ...(activityView === "past" ? s.activityTabActive : {}),
-                }}
-                onClick={() => setActivityView("past")}
-              >
-                Past
-                <span style={s.activityCount}>{pastActivity.length}</span>
-              </button>
-
-              <button
-                type="button"
-                style={{
-                  ...s.activityTab,
-                  ...(activityView === "cancelled" ? s.activityTabActive : {}),
-                }}
-                onClick={() => setActivityView("cancelled")}
-              >
-                Cancelled
-                <span style={s.activityCount}>{cancelledActivity.length}</span>
-              </button>
+            <div style={{ ...s.activityTabs, ...(isMobile ? s.activityTabsMobile : {}) }}>
+              {[
+                ["ongoing", "Ongoing", ongoingActivity.length],
+                ["pending", "Pending", pendingActivity.length],
+                ["past", "Past", pastActivity.length],
+                ["cancelled", "Cancelled", cancelledActivity.length],
+              ].map(([key, label, count]) => (
+                <button
+                  key={key}
+                  style={{
+                    ...s.activityTab,
+                    ...(isMobile ? s.activityTabMobile : {}),
+                    ...(activityView === key ? s.activityTabActive : {}),
+                  }}
+                  onClick={() => setActivityView(key as ActivityView)}
+                  type="button"
+                >
+                  <span>{label}</span>
+                  <span style={s.activityCount}>{count}</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -1246,55 +1236,41 @@ export default function AdminDashboard() {
                       </td>
                       <td style={s.td}>
                         {activityView === "ongoing" && canManageReservation(item) && (
-                          <>
-                            <button
-                              style={s.actionBtn}
-                              onClick={() => openEditItem(item)}
-                            >
+                          <div style={s.actionStack}>
+                            <button style={s.actionBtn} onClick={() => openEditItem(item)} type="button">
                               Edit
                             </button>
-
                             <button
-                              style={{ ...s.actionBtn, color: "#A32D2D" }}
+                              style={{ ...s.actionBtn, ...s.actionBtnDanger }}
                               onClick={() =>
                                 item.kind === "student"
                                   ? handleRemoveStudentReservation(item.id)
                                   : handleRemoveInstructorReservation(item.id)
                               }
+                              type="button"
                             >
                               Remove
                             </button>
-                          </>
+                          </div>
                         )}
 
-                        {activityView === "pending" &&
-                          item.kind === "student" &&
-                          canManageReservation(item) && (
-                            <>
-                              <button
-                                style={{ ...s.actionBtn, color: "#3B6D11" }}
-                                onClick={() => handleApprove(Number(item.id))}
-                              >
-                                Approve
-                              </button>
-
-                              <button
-                                style={s.actionBtn}
-                                onClick={() => openEditItem(item)}
-                              >
-                                Edit
-                              </button>
-
-                              <button
-                                style={{ ...s.actionBtn, color: "#A32D2D" }}
-                                onClick={() =>
-                                  handleRemoveStudentReservation(item.id)
-                                }
-                              >
-                                Remove
-                              </button>
-                            </>
-                          )}
+                        {activityView === "pending" && item.kind === "student" && canManageReservation(item) && (
+                          <div style={s.actionStack}>
+                            <button style={s.actionBtn} onClick={() => handleApprove(Number(item.id))} type="button">
+                              Approve
+                            </button>
+                            <button style={s.actionBtn} onClick={() => openEditItem(item)} type="button">
+                              Edit
+                            </button>
+                            <button
+                              style={{ ...s.actionBtn, ...s.actionBtnDanger }}
+                              onClick={() => handleRemoveStudentReservation(item.id)}
+                              type="button"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
 
                         {activityView === "past" && (
                           <span style={s.pastText}>Finished</span>
@@ -1851,17 +1827,6 @@ const s: Record<string, CSSProperties> = {
     color: "var(--text)",
   },
 
-  activityTabs: {
-    display: "flex",
-    gap: 4,
-    padding: 3,
-    border: "1px solid var(--border-strong)",
-    background: "var(--tab-bg)",
-    borderRadius: 10,
-    marginLeft: "auto",
-    flexWrap: "wrap",
-  },
-
   activityTab: {
     border: "none",
     background: "transparent",
@@ -1874,12 +1839,6 @@ const s: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 6,
-  },
-
-  activityTabActive: {
-    background: "var(--surface)",
-    color: "var(--primary)",
-    boxShadow: "var(--shadow-sm)",
   },
 
   activityCount: {
@@ -1925,17 +1884,6 @@ const s: Record<string, CSSProperties> = {
     color: "var(--muted-3)",
     fontSize: 13,
     textAlign: "center",
-  },
-
-  actionBtn: {
-    fontSize: 11,
-    padding: "3px 8px",
-    borderRadius: 6,
-    cursor: "pointer",
-    border: "1px solid var(--border)",
-    background: "var(--surface)",
-    color: "var(--text-soft)",
-    marginRight: 4,
   },
 
   pastText: {
@@ -2099,5 +2047,68 @@ const s: Record<string, CSSProperties> = {
     fontSize: 12,
     color: "var(--muted)",
     margin: 0,
+  },
+
+  activityTabs: {
+    display: "flex",
+    gap: 4,
+    padding: 3,
+    border: "1px solid var(--border-strong)",
+    background: "var(--tab-bg)",
+    borderRadius: 10,
+    marginLeft: "auto",
+    flexWrap: "wrap",
+  },
+
+  activityTabsMobile: {
+    width: "100%",
+    marginLeft: 0,
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 8,
+    padding: 6,
+    borderRadius: 14,
+  },
+
+  activityTabMobile: {
+    minHeight: 42,
+    width: "100%",
+    padding: "8px 10px",
+    fontSize: 13,
+  },
+
+  activityTabActive: {
+    background: "var(--surface)",
+    color: "var(--primary)",
+    boxShadow: "var(--shadow-sm)",
+  },
+
+  actionStack: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 6,
+    width: 78,
+  },
+
+  actionBtn: {
+    width: "100%",
+    minWidth: 78,
+    height: 32,
+    fontSize: 11,
+    padding: "0 10px",
+    borderRadius: 8,
+    cursor: "pointer",
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text-soft)",
+    marginRight: 0,
+    fontWeight: 500,
+  },
+
+  actionBtnDanger: {
+    color: "var(--danger-text)",
+    border: "1px solid var(--danger-border)",
+    background: "var(--surface)",
   },
 };

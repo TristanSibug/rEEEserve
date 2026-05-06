@@ -49,11 +49,7 @@ export default function AdminLogin() {
     <main style={styles.page}>
       <nav style={styles.nav}>
         <Link href="/" style={styles.logo}>
-          rEEE<span style={styles.logoBlue}>serve</span>
-        </Link>
-
-        <Link href="/" style={styles.back}>
-          Not an admin?
+          rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </Link>
       </nav>
 
@@ -110,6 +106,9 @@ export default function AdminLogin() {
           >
             {loading ? "Verifying…" : "Login"}
           </button>
+          <Link href="/" style={styles.notAdminLink}>
+            Not an admin?
+          </Link>
         </div>
       </section>
 
@@ -262,5 +261,15 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 13,
     color: "var(--muted)",
     textDecoration: "none",
+  },
+
+  notAdminLink: {
+    display: "block",
+    textAlign: "center",
+    marginTop: 16,
+    fontSize: 13,
+    color: "var(--primary)",
+    textDecoration: "none",
+    fontWeight: 500,
   },
 };
