@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 type Tab = "classes" | "reservations";
+type ScheduleMode = "none" | "dateFirst" | "roomFirst" | "both";
 
 type ScheduleSlot = {
   id: number | string;
@@ -42,17 +43,33 @@ export default function InstructorDashboard() {
 
   const rooms = ["EEEI 301", "EEEI 305", "EEEI 308"];
 
+  const roomCapacity: Record<string, number> = {
+    "EEEI 301": 10,
+    "EEEI 305": 10,
+    "EEEI 308": 16,
+  };
+
   const [activeTab, setActiveTab] = useState<Tab>("classes");
   const [username, setUsername] = useState("Instructor");
 
   const [lab, setLab] = useState("");
   const [date, setDate] = useState("");
+
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("none");
+  const [previewAnchorDate, setPreviewAnchorDate] = useState("");
+  const [previewAnchorLab, setPreviewAnchorLab] = useState("");
+
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  const [myReservations, setMyReservations] = useState<
-    InstructorReservation[]
-  >([]);
+  const [previewSlots, setPreviewSlots] = useState<Record<string, ScheduleSlot[]>>(
+    {}
+  );
+  const [loadingPreviewSlots, setLoadingPreviewSlots] = useState(false);
+
+  const [myReservations, setMyReservations] = useState<InstructorReservation[]>(
+    []
+  );
   const [creatingReservation, setCreatingReservation] = useState(false);
 
   useEffect(() => {
@@ -72,6 +89,52 @@ export default function InstructorDashboard() {
     fetchSlots();
   }, [lab, date]);
 
+  useEffect(() => {
+    async function fetchPreviews() {
+      const nextPreviewSlots: Record<string, ScheduleSlot[]> = {};
+
+      if (scheduleMode === "none") {
+        setPreviewSlots({});
+        return;
+      }
+
+      setLoadingPreviewSlots(true);
+
+      try {
+        if (scheduleMode === "dateFirst" && previewAnchorDate) {
+          await Promise.all(
+            rooms.map(async room => {
+              const result = await fetchScheduleFor(previewAnchorDate, room);
+              nextPreviewSlots[previewKey(previewAnchorDate, room)] = result;
+            })
+          );
+        }
+
+        if (
+          (scheduleMode === "roomFirst" || scheduleMode === "both") &&
+          previewAnchorLab &&
+          previewAnchorDate
+        ) {
+          const dates = getPreviewDates(previewAnchorDate);
+
+          await Promise.all(
+            dates.map(async previewDate => {
+              const result = await fetchScheduleFor(previewDate, previewAnchorLab);
+              nextPreviewSlots[previewKey(previewDate, previewAnchorLab)] =
+                result;
+            })
+          );
+        }
+
+        setPreviewSlots(nextPreviewSlots);
+      } finally {
+        setLoadingPreviewSlots(false);
+      }
+    }
+
+    fetchPreviews();
+  }, [scheduleMode, previewAnchorDate, previewAnchorLab]);
+
   async function fetchSlots() {
     setLoadingSlots(true);
 
@@ -89,8 +152,33 @@ export default function InstructorDashboard() {
       }
 
       setSlots(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Schedule fetch error:", error);
+      setSlots([]);
     } finally {
       setLoadingSlots(false);
+    }
+  }
+
+  async function fetchScheduleFor(selectedDate: string, selectedRoom: string) {
+    try {
+      const res = await fetch(
+        `/api/schedules?date=${selectedDate}&room=${encodeURIComponent(
+          selectedRoom
+        )}`
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Failed to fetch schedule preview:", data);
+        return [];
+      }
+
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("Schedule preview fetch error:", error);
+      return [];
     }
   }
 
@@ -106,28 +194,30 @@ export default function InstructorDashboard() {
     setMyReservations(Array.isArray(data.current) ? data.current : []);
   }
 
+  function previewKey(selectedDate: string, selectedRoom: string) {
+    return `${selectedDate}__${selectedRoom}`;
+  }
+
+  function getPreviewDates(startDate: string) {
+    return [0, 1, 2].map(days => addDaysToDateString(startDate, days));
+  }
+
+  function normalizeTime(t: string) {
+    return t.slice(0, 5);
+  }
+
   function fmt(t: string) {
-    const [h, m] = t.split(":").map(Number);
+    const clean = normalizeTime(t);
+    const [h, m] = clean.split(":").map(Number);
     const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
 
     return `${hour}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
   }
 
-  function formatDateWords(dateString: string) {
-    if (!dateString) return "";
-
-    const [year, month, day] = dateString.split("-").map(Number);
-    const d = new Date(year, month - 1, day);
-
-    return d.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
   function timeToMinutes(t: string) {
-    const [h, m] = t.split(":").map(Number);
+    const clean = normalizeTime(t);
+    const [h, m] = clean.split(":").map(Number);
+
     return h * 60 + m;
   }
 
@@ -158,13 +248,15 @@ export default function InstructorDashboard() {
     };
   }
 
+  const RESERVATION_LEAD_TIME_MINUTES = 60;
+
   function isSlotAllowedForDate(selectedDate: string, slotStart: string) {
     const { today, nowMinutes } = getManilaDateTime();
 
     if (selectedDate < today) return false;
     if (selectedDate > today) return true;
 
-    return timeToMinutes(slotStart) >= nowMinutes + 30;
+    return timeToMinutes(slotStart) >= nowMinutes + RESERVATION_LEAD_TIME_MINUTES;
   }
 
   function addDaysToDateString(dateString: string, days: number) {
@@ -240,6 +332,35 @@ export default function InstructorDashboard() {
     return options;
   }
 
+  function formatPanelDate(dateString: string) {
+    const { today } = getManilaDateTime();
+    const tomorrow = addDaysToDateString(today, 1);
+
+    const [year, month, day] = dateString.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+
+    const fullDate = d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    if (dateString === today) {
+      return `Today, ${fullDate}`;
+    }
+
+    if (dateString === tomorrow) {
+      return `Tomorrow, ${fullDate}`;
+    }
+
+    return d.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
   function canCancelInstructorReservation(r: InstructorReservation) {
     return isSlotAllowedForDate(r.schedule_date, r.time_start);
   }
@@ -256,34 +377,33 @@ export default function InstructorDashboard() {
     );
   }
 
-  function getDisplaySlots(): DisplaySlot[] {
+  function getDisplaySlotsFor(
+    selectedLab: string,
+    selectedDate: string,
+    sourceSlots: ScheduleSlot[]
+  ): DisplaySlot[] {
     const displaySlots: DisplaySlot[] = [];
 
     const labStart = 8 * 60 + 30;
     const labEnd = 16 * 60;
     const interval = 30;
-
-    const defaultCapacity = lab === "EEEI 308" ? 16 : 10;
-
-    const capacity =
-      slots.find(slot => typeof slot.capacity === "number")?.capacity ??
-      defaultCapacity;
+    const capacity = roomCapacity[selectedLab] ?? 10;
 
     for (let current = labStart; current < labEnd; current += interval) {
       const time_start = minutesToTime(current);
       const time_end = minutesToTime(current + interval);
 
-      if (!isSlotAllowedForDate(date, time_start)) {
+      if (!isSlotAllowedForDate(selectedDate, time_start)) {
         continue;
       }
 
-      const blockingSlot = slots.find(
+      const blockingSlot = sourceSlots.find(
         slot =>
           slot.source !== "reservation" &&
           overlaps(time_start, time_end, slot.time_start, slot.time_end)
       );
 
-      const reservationCount = slots.filter(
+      const reservationCount = sourceSlots.filter(
         slot =>
           slot.source === "reservation" &&
           overlaps(time_start, time_end, slot.time_start, slot.time_end)
@@ -311,6 +431,72 @@ export default function InstructorDashboard() {
     return displaySlots;
   }
 
+  function getDisplaySlots(): DisplaySlot[] {
+    if (!lab || !date) return [];
+
+    return getDisplaySlotsFor(lab, date, slots);
+  }
+
+  function getScheduleSummary(
+    selectedLab: string,
+    selectedDate: string,
+    sourceSlots: ScheduleSlot[]
+  ) {
+    const display = getDisplaySlotsFor(selectedLab, selectedDate, sourceSlots);
+
+    const available = display.filter(slot => slot.status === "available").length;
+    const reserved = display.filter(slot => slot.status === "reserved").length;
+    const full = display.filter(slot => slot.status === "full").length;
+    const occupied = display.filter(slot => slot.status === "occupied").length;
+
+    if (display.length === 0) {
+      return {
+        label: "No timeslots left",
+        detail: "All usable timeslots have passed",
+        tone: "muted" as const,
+        available,
+        reserved,
+        full,
+        occupied,
+      };
+    }
+
+    if (available > 0) {
+      return {
+        label: "Available",
+        detail: `${available} open slot${available === 1 ? "" : "s"}`,
+        tone: "success" as const,
+        available,
+        reserved,
+        full,
+        occupied,
+      };
+    }
+
+    if (reserved > 0 || full > 0) {
+      return {
+        label: "Student reservations",
+        detail: `${reserved + full} student-used slot${reserved + full === 1 ? "" : "s"
+          }`,
+        tone: "warning" as const,
+        available,
+        reserved,
+        full,
+        occupied,
+      };
+    }
+
+    return {
+      label: "Occupied",
+      detail: "Blocked by class or schedule",
+      tone: "danger" as const,
+      available,
+      reserved,
+      full,
+      occupied,
+    };
+  }
+
   async function createInstructorReservation(slot: DisplaySlot) {
     if (!lab || !date) return;
 
@@ -331,7 +517,9 @@ export default function InstructorDashboard() {
 
     const firstRes = await fetch("/api/instructor/reservations", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         room_name: lab,
         schedule_date: date,
@@ -353,7 +541,9 @@ export default function InstructorDashboard() {
 
       const secondRes = await fetch("/api/instructor/reservations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           room_name: lab,
           schedule_date: date,
@@ -364,6 +554,7 @@ export default function InstructorDashboard() {
       });
 
       const secondData = await secondRes.json();
+
       setCreatingReservation(false);
 
       if (!secondRes.ok) {
@@ -372,7 +563,8 @@ export default function InstructorDashboard() {
       }
 
       alert(
-        `Instructor reservation created. ${secondData.cancelledStudentReservations ?? 0} student booking(s) were cancelled and notified.`
+        `Instructor reservation created.\n${secondData.cancelledStudentReservations ?? 0
+        } student booking(s) were cancelled and notified.`
       );
 
       fetchSlots();
@@ -413,6 +605,16 @@ export default function InstructorDashboard() {
 
   const displaySlots = lab && date ? getDisplaySlots() : [];
 
+  const dateFirstRoomPanels =
+    scheduleMode === "dateFirst" && previewAnchorDate ? rooms : [];
+
+  const roomFirstDatePanels =
+    (scheduleMode === "roomFirst" || scheduleMode === "both") &&
+      previewAnchorLab &&
+      previewAnchorDate
+      ? getPreviewDates(previewAnchorDate)
+      : [];
+
   return (
     <div style={s.page}>
       <nav style={s.nav}>
@@ -420,22 +622,27 @@ export default function InstructorDashboard() {
           rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </Link>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={s.navRight}>
           <span style={s.badge}>Instructor</span>
-          <button style={s.logout} onClick={() => router.push("/")}>
+          <button
+            type="button"
+            style={s.logout}
+            onClick={() => router.push("/")}
+          >
             Log out
           </button>
         </div>
       </nav>
 
       <main style={s.body}>
-        <h1 style={s.welcome}>
-          Welcome, <span style={{ color: "#185FA5" }}>{username}</span>!
-        </h1>
+        <p style={s.welcome}>
+          Welcome, <span style={{ color: "var(--primary)" }}>{username}</span>!
+        </p>
 
         <div style={s.card}>
           <div style={s.tabs}>
             <button
+              type="button"
               style={activeTab === "classes" ? s.activeTab : s.tab}
               onClick={() => setActiveTab("classes")}
             >
@@ -443,6 +650,7 @@ export default function InstructorDashboard() {
             </button>
 
             <button
+              type="button"
               style={activeTab === "reservations" ? s.activeTab : s.tab}
               onClick={() => setActiveTab("reservations")}
             >
@@ -450,209 +658,380 @@ export default function InstructorDashboard() {
             </button>
           </div>
 
-          <div style={s.content}>
-            {activeTab === "classes" && (
-              <>
-                <div style={s.sectionHeader}>
-                  <p style={s.sectionTitle}>My Classes</p>
-                  <button style={s.btn}>Edit Classes</button>
+          {activeTab === "classes" && (
+            <div style={s.content}>
+              <div style={s.sectionHeader}>
+                <p style={s.sectionTitle}>My Classes</p>
+                <button type="button" style={s.btn}>
+                  Edit Classes
+                </button>
+              </div>
+
+              <table style={s.table}>
+                <thead>
+                  <tr>
+                    <th style={s.th}>Name</th>
+                    <th style={s.th}>Lab</th>
+                    <th style={s.th}>Day</th>
+                    <th style={s.th}>Timeslot</th>
+                    <th style={s.th}>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr>
+                    <td style={s.td}>EEE 196</td>
+                    <td style={s.td}>Rm 308</td>
+                    <td style={s.td}>F</td>
+                    <td style={s.td}>11:30 AM – 2:30 PM</td>
+                    <td style={s.td}>
+                      <button type="button" style={s.dangerBtn}>
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p style={s.placeholder}>placeholder</p>
+            </div>
+          )}
+
+          {activeTab === "reservations" && (
+            <div style={s.content}>
+              <p style={s.sectionTitle}>My Reservations</p>
+
+              <div style={s.resCard}>
+                {myReservations.length === 0 ? (
+                  <p style={s.emptyText}>No instructor reservations</p>
+                ) : (
+                  <div style={s.resList}>
+                    {myReservations.map(r => (
+                      <div key={r.id} style={s.resItem}>
+                        <div>
+                          <strong>{r.room_name}</strong>
+                          <div style={s.groupSubtext}>
+                            {formatPanelDate(r.schedule_date)} •{" "}
+                            {fmt(r.time_start)} – {fmt(r.time_end)}
+                          </div>
+                        </div>
+
+                        {canCancelInstructorReservation(r) && (
+                          <button
+                            type="button"
+                            style={s.cancelBtn}
+                            onClick={() => cancelInstructorReservation(r.id)}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <p style={s.sectionTitle}>Reserve a lab</p>
+
+              <div style={s.scheduleCard}>
+                <div style={s.filters}>
+                  <select
+                    style={s.select}
+                    value={date}
+                    onChange={e => {
+                      const selectedDate = e.target.value;
+
+                      setDate(selectedDate);
+
+                      if (!selectedDate && !lab) {
+                        setScheduleMode("none");
+                        setPreviewAnchorDate("");
+                        setPreviewAnchorLab("");
+                        return;
+                      }
+
+                      if (!selectedDate && lab) {
+                        const defaultDate = getDefaultScheduleDate();
+
+                        setDate(defaultDate);
+                        setScheduleMode("roomFirst");
+                        setPreviewAnchorLab(lab);
+                        setPreviewAnchorDate(defaultDate);
+                        return;
+                      }
+
+                      if (selectedDate && lab) {
+                        setScheduleMode("both");
+                        setPreviewAnchorDate(selectedDate);
+                        setPreviewAnchorLab(lab);
+                        return;
+                      }
+
+                      if (selectedDate && !lab) {
+                        setScheduleMode("dateFirst");
+                        setPreviewAnchorDate(selectedDate);
+                        setPreviewAnchorLab("");
+                      }
+                    }}
+                  >
+                    <option value="">Date: select one</option>
+                    {getDateOptions().map(({ val, label }) => (
+                      <option key={val} value={val}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    style={s.select}
+                    value={lab}
+                    onChange={e => {
+                      const selectedLab = e.target.value;
+
+                      setLab(selectedLab);
+
+                      if (!selectedLab && !date) {
+                        setScheduleMode("none");
+                        setPreviewAnchorDate("");
+                        setPreviewAnchorLab("");
+                        return;
+                      }
+
+                      if (!selectedLab && date) {
+                        setScheduleMode("dateFirst");
+                        setPreviewAnchorDate(date);
+                        setPreviewAnchorLab("");
+                        return;
+                      }
+
+                      if (selectedLab && date) {
+                        setScheduleMode("both");
+                        setPreviewAnchorDate(date);
+                        setPreviewAnchorLab(selectedLab);
+                        return;
+                      }
+
+                      if (selectedLab && !date) {
+                        const defaultDate = getDefaultScheduleDate();
+
+                        setDate(defaultDate);
+                        setScheduleMode("roomFirst");
+                        setPreviewAnchorLab(selectedLab);
+                        setPreviewAnchorDate(defaultDate);
+                      }
+                    }}
+                  >
+                    <option value="">Lab: select one</option>
+                    {rooms.map(r => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <table style={s.table}>
-                  <thead>
-                    <tr>
-                      <th style={s.th}>Name</th>
-                      <th style={s.th}>Lab</th>
-                      <th style={s.th}>Day</th>
-                      <th style={s.th}>Timeslot</th>
-                      <th style={s.th}>Actions</th>
-                    </tr>
-                  </thead>
+                {!lab && !date && (
+                  <div style={s.emptyBox}>
+                    Select a date to compare all rooms, or select a lab to view
+                    the next three available days.
+                  </div>
+                )}
 
-                  <tbody>
-                    <tr>
-                      <td style={s.td}>EEE 196</td>
-                      <td style={s.td}>Rm 308</td>
-                      <td style={s.td}>F</td>
-                      <td style={s.td}>11:30 AM – 2:30 PM</td>
-                      <td style={s.td}>
-                        <button style={s.dangerBtn}>Cancel</button>
-                      </td>
-                    </tr>
+                {loadingPreviewSlots && (
+                  <div style={s.emptyBox}>Loading schedule preview...</div>
+                )}
 
-                    <tr>
-                      <td colSpan={5} style={s.empty}>
-                        placeholder
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </>
-            )}
+                {!loadingPreviewSlots && dateFirstRoomPanels.length > 0 && (
+                  <div style={s.previewGrid}>
+                    {dateFirstRoomPanels.map(room => {
+                      const key = previewKey(previewAnchorDate, room);
+                      const summary = getScheduleSummary(
+                        room,
+                        previewAnchorDate,
+                        previewSlots[key] ?? []
+                      );
 
-            {activeTab === "reservations" && (
-              <>
-                <div style={s.sectionHeader}>
-                  <p style={s.sectionTitle}>My Reservations</p>
-                </div>
+                      const isSelectedRoom = room === lab;
 
-                <div style={s.resCard}>
-                  {myReservations.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: 15, color: "#888" }}>
-                      No instructor reservations
-                    </p>
-                  ) : (
-                    <div style={{ display: "grid", gap: 8, width: "100%" }}>
-                      {myReservations.map(r => (
-                        <div key={r.id} style={s.resItem}>
-                          <div>
-                            <strong>{r.room_name}</strong>
-                            <div style={{ fontSize: 12, color: "#888" }}>
-                              {r.schedule_date} • {fmt(r.time_start)} –{" "}
-                              {fmt(r.time_end)}
-                            </div>
+                      return (
+                        <button
+                          key={room}
+                          type="button"
+                          onClick={() => {
+                            setLab(room);
+                          }}
+                          style={{
+                            ...s.previewCard,
+                            ...(summary.tone === "success"
+                              ? s.previewCardSuccess
+                              : summary.tone === "warning"
+                                ? s.previewCardWarning
+                                : summary.tone === "muted"
+                                  ? s.previewCardMuted
+                                  : s.previewCardDanger),
+                            ...(isSelectedRoom ? s.previewCardSelected : {}),
+                          }}
+                        >
+                          <div style={s.panelTopRow}>
+                            <strong>{room}</strong>
+                            <span style={s.panelBadge}>{summary.label}</span>
                           </div>
 
-                          {canCancelInstructorReservation(r) && (
-                            <button
-                              type="button"
-                              style={s.cancelBtn}
-                              onClick={() => cancelInstructorReservation(r.id)}
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                          <div style={s.panelMainText}>
+                            {formatPanelDate(previewAnchorDate)}
+                          </div>
 
-                <p style={{ ...s.sectionTitle, marginTop: 24 }}>
-                  Reserve a lab
-                </p>
-
-                <div style={s.scheduleCard}>
-                  <div style={s.filters}>
-                    <select
-                      style={s.select}
-                      value={date}
-                      onChange={e => setDate(e.target.value)}
-                      disabled={!lab}
-                    >
-                      <option value="">Date: select one</option>
-                      {getDateOptions().map(({ val, label }) => (
-                        <option key={val} value={val}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      style={s.select}
-                      value={lab}
-                      onChange={e => {
-                        const selectedLab = e.target.value;
-
-                        setLab(selectedLab);
-
-                        if (selectedLab) {
-                          setDate(getDefaultScheduleDate());
-                        } else {
-                          setDate("");
-                        }
-                      }}
-                    >
-                      <option value="">Lab: select one</option>
-                      {rooms.map(r => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
+                          <div style={s.panelSubtext}>{summary.detail}</div>
+                        </button>
+                      );
+                    })}
                   </div>
+                )}
 
-                  {(!lab || !date) && (
-                    <div style={s.emptyBox}>
-                      Select a lab and date to view the schedule
+                {!loadingPreviewSlots && roomFirstDatePanels.length > 0 && (
+                  <div style={s.previewGrid}>
+                    {roomFirstDatePanels.map(previewDate => {
+                      const key = previewKey(previewDate, previewAnchorLab);
+                      const summary = getScheduleSummary(
+                        previewAnchorLab,
+                        previewDate,
+                        previewSlots[key] ?? []
+                      );
+
+                      const isSelectedDate = previewDate === date;
+
+                      return (
+                        <button
+                          key={previewDate}
+                          type="button"
+                          onClick={() => {
+                            setDate(previewDate);
+                          }}
+                          style={{
+                            ...s.previewCard,
+                            ...(summary.tone === "success"
+                              ? s.previewCardSuccess
+                              : summary.tone === "warning"
+                                ? s.previewCardWarning
+                                : summary.tone === "muted"
+                                  ? s.previewCardMuted
+                                  : s.previewCardDanger),
+                            ...(isSelectedDate ? s.previewCardSelected : {}),
+                          }}
+                        >
+                          <div style={s.panelTopRow}>
+                            <strong>{formatPanelDate(previewDate)}</strong>
+                            <span style={s.panelBadge}>{summary.label}</span>
+                          </div>
+
+                          <div style={s.panelMainText}>{previewAnchorLab}</div>
+                          <div style={s.panelSubtext}>{summary.detail}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {lab && date && loadingSlots && (
+                  <div style={s.emptyBox}>Loading...</div>
+                )}
+
+                {lab && date && !loadingSlots && displaySlots.length === 0 && (
+                  <div style={s.emptyBox}>
+                    No available timeslots left for this date
+                  </div>
+                )}
+
+                {lab && date && !loadingSlots && displaySlots.length > 0 && (
+                  <>
+                    <div style={s.selectedScheduleHeader}>
+                      <div>
+                        <strong>{lab}</strong>
+                        <div style={s.groupSubtext}>{formatPanelDate(date)}</div>
+                      </div>
                     </div>
-                  )}
 
-                  {lab && date && loadingSlots && (
-                    <div style={s.emptyBox}>Loading...</div>
-                  )}
+                    <div style={s.slotGrid}>
+                      {displaySlots.map(slot => {
+                        const key = `${slot.time_start}-${slot.time_end}`;
+                        const isAvailable = slot.status === "available";
+                        const isReserved = slot.status === "reserved";
+                        const isFull = slot.status === "full";
+                        const isOccupied = slot.status === "occupied";
+                        const isClickable = !isOccupied && !creatingReservation;
 
-                  {lab && date && !loadingSlots && (
-                    <>
-                      <div style={s.slotGrid}>
-                        <div style={s.slotSpacer} />
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => createInstructorReservation(slot)}
+                            disabled={!isClickable}
+                            style={{
+                              ...s.slotPill,
+                              ...(isAvailable
+                                ? s.availablePill
+                                : isReserved || isFull
+                                  ? s.reservedPill
+                                  : s.occupiedPill),
+                              cursor: isClickable ? "pointer" : "not-allowed",
+                              opacity: creatingReservation ? 0.75 : 1,
+                            }}
+                          >
+                            <span style={s.slotTimeText}>
+                              {fmt(slot.time_start)} – {fmt(slot.time_end)}
+                            </span>
 
-                        {displaySlots.map(slot => {
-                          const key = `${slot.time_start}-${slot.time_end}`;
-
-                          const isAvailable = slot.status === "available";
-                          const isReserved = slot.status === "reserved";
-                          const isFull = slot.status === "full";
-                          const isOccupied = slot.status === "occupied";
-
-                          const isClickable = !isOccupied && !creatingReservation;
-
-                          return (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => createInstructorReservation(slot)}
-                              disabled={!isClickable}
-                              style={{
-                                ...s.slotPill,
-                                ...(isAvailable
-                                  ? s.availablePill
-                                  : isReserved || isFull
-                                    ? s.reservedPill
-                                    : s.occupiedPill),
-                                cursor: isClickable ? "pointer" : "not-allowed",
-                                opacity: creatingReservation ? 0.75 : 1,
-                              }}
-                            >
-                              <span style={s.slotTimeText}>
-                                {fmt(slot.time_start)} – {fmt(slot.time_end)}
-                              </span>
-
-                              <span style={s.slotInfoText}>
-                                {isOccupied
-                                  ? slot.course_name ??
-                                  "Class / blocked / instructor reservation"
-                                  : isFull
-                                    ? "Full"
+                            <span style={s.slotInfoText}>
+                              {isOccupied
+                                ? slot.course_name ??
+                                "Class / blocked / instructor reservation"
+                                : isFull
+                                  ? "Full — click to override"
+                                  : isReserved
+                                    ? `${slot.slots_left}/${slot.capacity} slots left — click to override`
                                     : `${slot.slots_left}/${slot.capacity} slots left`}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                      <div style={s.legend}>
-                        <span style={s.legendItem}>
-                          <span style={{ ...s.dot, background: "#97C459" }} />
-                          Available
-                        </span>
+                    <div style={s.legend}>
+                      <span style={s.legendItem}>
+                        <span
+                          style={{
+                            ...s.dot,
+                            background: "var(--success-border)",
+                          }}
+                        />
+                        Available
+                      </span>
 
-                        <span style={s.legendItem}>
-                          <span style={{ ...s.dot, background: "#F5B45B" }} />
-                          Student reservation / full
-                        </span>
+                      <span style={s.legendItem}>
+                        <span
+                          style={{
+                            ...s.dot,
+                            background: "var(--warning-border)",
+                          }}
+                        />
+                        Student reservation / full
+                      </span>
 
-                        <span style={s.legendItem}>
-                          <span style={{ ...s.dot, background: "#E24B4A" }} />
-                          Class / blocked
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+                      <span style={s.legendItem}>
+                        <span
+                          style={{
+                            ...s.dot,
+                            background: "var(--danger-border)",
+                          }}
+                        />
+                        Class / blocked
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -660,6 +1039,7 @@ export default function InstructorDashboard() {
         <Link href="/about" style={s.footerLink}>
           About
         </Link>
+
         <Link href="/help" style={s.footerLink}>
           Help
         </Link>
@@ -694,8 +1074,10 @@ const s: { [k: string]: React.CSSProperties } = {
     color: "var(--text)",
   },
 
-  logoBlue: {
-    color: "var(--primary)",
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
   },
 
   badge: {
@@ -720,7 +1102,7 @@ const s: { [k: string]: React.CSSProperties } = {
   body: {
     flex: 1,
     padding: 28,
-    maxWidth: 720,
+    maxWidth: 980,
     width: "100%",
     boxSizing: "border-box",
   },
@@ -789,24 +1171,6 @@ const s: { [k: string]: React.CSSProperties } = {
     margin: "0 0 12px",
   },
 
-  filters: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 10,
-    padding: "14px 16px",
-    borderBottom: "1px solid #eee",
-  },
-
-  select: {
-    padding: "8px 12px",
-    border: "1px solid #ddd",
-    borderRadius: 8,
-    fontSize: 13,
-    background: "#fafafa",
-    width: "100%",
-    minWidth: 0,
-  },
-
   table: {
     width: "100%",
     borderCollapse: "collapse",
@@ -829,22 +1193,10 @@ const s: { [k: string]: React.CSSProperties } = {
     color: "var(--text-soft)",
   },
 
-  empty: {
-    textAlign: "center",
-    padding: 24,
-    color: "var(--muted-3)",
+  placeholder: {
+    marginTop: 14,
+    color: "var(--muted)",
     fontSize: 13,
-  },
-
-  emptyBox: {
-    textAlign: "center",
-    padding: 18,
-    color: "var(--muted-3)",
-    fontSize: 13,
-    border: "1px solid var(--border)",
-    borderRadius: 10,
-    background: "var(--surface-2)",
-    margin: 16,
   },
 
   btn: {
@@ -868,11 +1220,185 @@ const s: { [k: string]: React.CSSProperties } = {
     cursor: "pointer",
   },
 
+  resCard: {
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 28,
+  },
+
+  resList: {
+    display: "grid",
+    gap: 10,
+  },
+
+  resItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    padding: "12px 14px",
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    background: "var(--surface-2)",
+    flexWrap: "wrap",
+  },
+
+  emptyText: {
+    margin: 0,
+    fontSize: 15,
+    color: "var(--muted)",
+  },
+
+  cancelBtn: {
+    padding: "6px 10px",
+    background: "var(--danger-bg-2)",
+    color: "var(--danger-text-2)",
+    border: "1px solid var(--danger-border-2)",
+    borderRadius: 8,
+    fontSize: 12,
+    cursor: "pointer",
+  },
+
+  scheduleCard: {
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 28,
+  },
+
+  filters: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 10,
+    padding: "14px 16px",
+    borderBottom: "1px solid var(--border)",
+  },
+
+  select: {
+    padding: "9px 12px",
+    border: "1px solid var(--border-strong)",
+    borderRadius: 8,
+    fontSize: 13,
+    background: "var(--select-bg)",
+    color: "var(--text)",
+    width: "100%",
+    minWidth: 0,
+  },
+
+  emptyBox: {
+    textAlign: "center",
+    padding: 18,
+    color: "var(--muted-3)",
+    fontSize: 13,
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    background: "var(--surface-2)",
+    margin: 16,
+  },
+
+  previewGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: 12,
+    padding: 16,
+  },
+
+  previewCard: {
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    padding: 14,
+    background: "var(--surface-2)",
+    color: "var(--text)",
+    textAlign: "left",
+    cursor: "pointer",
+    minHeight: 112,
+  },
+
+  previewCardSuccess: {
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+  },
+
+  previewCardWarning: {
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+  },
+
+  previewCardDanger: {
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+  },
+
+  previewCardMuted: {
+    background: "var(--surface-2)",
+    borderColor: "var(--border)",
+  },
+
+  previewCardSelected: {
+    outline: "2px solid var(--primary)",
+    outlineOffset: 2,
+  },
+
+  panelTopRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  panelBadge: {
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "4px 8px",
+    borderRadius: 999,
+    background: "var(--surface)",
+    color: "var(--text)",
+    border: "1px solid var(--border)",
+    whiteSpace: "nowrap",
+  },
+
+  panelMainText: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "var(--text)",
+  },
+
+  panelSubtext: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+
+  selectedScheduleHeader: {
+    margin: "4px 16px 0",
+    padding: "12px 14px",
+    border: "1px solid var(--border)",
+    borderRadius: 12,
+    background: "var(--surface-2)",
+  },
+
   slotGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
     gap: 8,
     padding: 16,
+  },
+
+  slotPill: {
+    position: "relative",
+    border: "1px solid",
+    borderRadius: 14,
+    padding: "8px 10px",
+    fontSize: 12,
+    fontWeight: 500,
+    textAlign: "center",
+    minHeight: 48,
+    overflow: "hidden",
+    cursor: "default",
   },
 
   availablePill: {
@@ -891,6 +1417,26 @@ const s: { [k: string]: React.CSSProperties } = {
     background: "var(--danger-bg)",
     borderColor: "var(--danger-border)",
     color: "var(--danger-text)",
+  },
+
+  slotTimeText: {
+    display: "block",
+    fontSize: 11,
+    lineHeight: 1.1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+
+  slotInfoText: {
+    display: "block",
+    marginTop: 3,
+    fontSize: 11,
+    fontWeight: 600,
+    lineHeight: 1.1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   legend: {
@@ -914,6 +1460,12 @@ const s: { [k: string]: React.CSSProperties } = {
     borderRadius: 99,
   },
 
+  groupSubtext: {
+    marginTop: 3,
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+
   footer: {
     padding: "14px 28px",
     borderTop: "1px solid var(--border)",
@@ -927,84 +1479,5 @@ const s: { [k: string]: React.CSSProperties } = {
     fontSize: 13,
     color: "var(--muted)",
     textDecoration: "none",
-  },
-
-  slotPill: {
-    position: "relative",
-    border: "1px solid",
-    borderRadius: 14,
-    padding: "8px 10px",
-    fontSize: 12,
-    fontWeight: 500,
-    textAlign: "center",
-    minHeight: 48,
-    overflow: "hidden",
-    cursor: "default",
-  },
-
-  slotTimeText: {
-    display: "block",
-    fontSize: 11,
-    lineHeight: 1.1,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-
-  slotInfoText: {
-    display: "block",
-    marginTop: 3,
-    fontSize: 11,
-    fontWeight: 600,
-    lineHeight: 1.1,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-
-  resCard: {
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    borderRadius: 12,
-    padding: 20,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 28,
-    gap: 16,
-    flexWrap: "wrap",
-  },
-
-  resItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    padding: "12px 14px",
-    border: "1px solid var(--border)",
-    borderRadius: 14,
-    background: "var(--surface-2)",
-  },
-
-  scheduleCard: {
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 28,
-  },
-
-  slotSpacer: {
-    visibility: "hidden",
-  },
-
-  cancelBtn: {
-    padding: "6px 10px",
-    background: "var(--danger-bg-2)",
-    color: "var(--danger-text-2)",
-    border: "1px solid var(--danger-border-2)",
-    borderRadius: 8,
-    fontSize: 12,
-    cursor: "pointer",
   },
 };
