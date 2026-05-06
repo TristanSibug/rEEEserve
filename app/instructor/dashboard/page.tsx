@@ -876,7 +876,6 @@ export default function InstructorDashboard() {
                                               <strong>
                                                 {fmt(r.time_start)} – {fmt(r.time_end)}
                                               </strong>
-                                              <div style={s.groupSubtext}>Reserved by you</div>
                                             </div>
 
                                             {canCancelInstructorReservation(r) && (
