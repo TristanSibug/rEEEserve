@@ -1104,7 +1104,7 @@ export default function AdminDashboard() {
           {[
             ["Reservations Today", reservationsTodayCount],
             ["Active Now", activeNowCount],
-            ["Available Slots Today", availableSlotsToday],
+            ["Available Time Slots Today", availableSlotsToday],
           ].map(([label, val]) => (
             <div key={String(label)} style={s.stat}>
               <p style={s.statLabel}>{label}</p>

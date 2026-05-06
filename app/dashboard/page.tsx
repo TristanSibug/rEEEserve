@@ -1239,28 +1239,35 @@ export default function Dashboard() {
           )}
 
           {!loadingPreviewSlots && dateFirstRoomPanels.length > 0 && (
-            <div style={s.panelGrid}>
+            <div style={s.previewGrid}>
               {dateFirstRoomPanels.map(room => {
                 const key = previewKey(previewAnchorDate, room);
-                const summary = getScheduleSummary(room, previewAnchorDate, previewSlots[key] ?? []);
+                const summary = getScheduleSummary(
+                  room,
+                  previewAnchorDate,
+                  previewSlots[key] ?? []
+                );
+
+                const isSelectedRoom = room === lab;
 
                 return (
                   <button
                     key={room}
                     type="button"
-                    style={{
-                      ...s.schedulePanel,
-                      ...(summary.tone === "success"
-                        ? s.successPanel
-                        : summary.tone === "warning"
-                          ? s.warningPanel
-                          : summary.tone === "danger"
-                            ? s.dangerPanel
-                            : s.mutedPanel),
-                    }}
                     onClick={() => {
                       setLab(room);
                       setCart([]);
+                    }}
+                    style={{
+                      ...s.previewCard,
+                      ...(summary.tone === "success"
+                        ? s.previewCardSuccess
+                        : summary.tone === "warning"
+                          ? s.previewCardWarning
+                          : summary.tone === "muted"
+                            ? s.previewCardMuted
+                            : s.previewCardDanger),
+                      ...(isSelectedRoom ? s.previewCardSelected : {}),
                     }}
                   >
                     <div style={s.panelTopRow}>
@@ -1268,7 +1275,10 @@ export default function Dashboard() {
                       <span style={s.panelBadge}>{summary.label}</span>
                     </div>
 
-                    <div style={s.panelMainText}>{formatPanelDate(previewAnchorDate)}</div>
+                    <div style={s.panelMainText}>
+                      {formatPanelDate(previewAnchorDate)}
+                    </div>
+
                     <div style={s.panelSubtext}>{summary.detail}</div>
                   </button>
                 );
@@ -1919,5 +1929,48 @@ const s: { [k: string]: React.CSSProperties } = {
     border: "1px solid var(--border)",
     borderRadius: 12,
     background: "var(--surface-2)",
+  },
+
+  previewGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: 12,
+    padding: 16,
+  },
+
+  previewCard: {
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    padding: 14,
+    background: "var(--surface-2)",
+    color: "var(--text)",
+    textAlign: "left",
+    cursor: "pointer",
+    minHeight: 112,
+  },
+
+  previewCardSuccess: {
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+  },
+
+  previewCardWarning: {
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+  },
+
+  previewCardDanger: {
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+  },
+
+  previewCardMuted: {
+    background: "var(--surface-2)",
+    borderColor: "var(--border)",
+  },
+
+  previewCardSelected: {
+    outline: "2px solid var(--primary)",
+    outlineOffset: 2,
   },
 };
