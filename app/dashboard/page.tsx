@@ -621,10 +621,10 @@ export default function Dashboard() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#f5f5f5",
+          background: "var(--page-bg)",
         }}
       >
-        <p style={{ color: "#aaa", fontSize: 14 }}>Loading...</p>
+        <p style={{ color: "var(--muted-3)", fontSize: 14 }}>Loading...</p>
       </div>
     );
   }
@@ -633,7 +633,7 @@ export default function Dashboard() {
     <div style={s.page}>
       <nav style={s.nav}>
         <a href="/" style={s.logo}>
-          rEEE<span style={{ color: "#185FA5" }}>serve</span>
+          rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </a>
         <span style={s.sn}>{email}</span>
       </nav>
@@ -641,7 +641,7 @@ export default function Dashboard() {
       <div style={s.body}>
         <p style={s.welcome}>
           Welcome,{" "}
-          <span style={{ color: "#185FA5" }}>
+          <span style={{ color: "var(--primary)" }}>
             {formatNameFromEmail(email)}
           </span>
           !
@@ -677,7 +677,7 @@ export default function Dashboard() {
 
         <div style={s.resCard}>
           {visibleReservations.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 15, color: "#888" }}>
+            <p style={{ margin: 0, fontSize: 15, color: "var(--muted)" }}>
               {reservationTab === "current"
                 ? "No current reservations"
                 : "No past reservations"}
@@ -900,7 +900,8 @@ const s: { [k: string]: React.CSSProperties } = {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
-    background: "#f5f5f5",
+    background: "var(--page-bg)",
+    color: "var(--text)",
     fontFamily: "sans-serif",
   },
   nav: {
@@ -908,18 +909,19 @@ const s: { [k: string]: React.CSSProperties } = {
     alignItems: "center",
     justifyContent: "space-between",
     padding: "16px 28px",
-    borderBottom: "1px solid #eee",
-    background: "#fff",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
   },
   logo: {
     fontSize: 20,
     fontWeight: 700,
     textDecoration: "none",
-    color: "#111",
+    color: "var(--text)",
   },
+
   sn: {
     fontSize: 13,
-    color: "#888",
+    color: "var(--muted)",
   },
   body: {
     flex: 1,
@@ -936,14 +938,14 @@ const s: { [k: string]: React.CSSProperties } = {
   sectionTitle: {
     fontSize: 12,
     fontWeight: 500,
-    color: "#999",
+    color: "var(--muted-2)",
     textTransform: "uppercase",
     letterSpacing: 1,
     margin: "0 0 10px",
   },
   resCard: {
-    background: "#fff",
-    border: "1px solid #eee",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     padding: 20,
     display: "flex",
@@ -955,7 +957,7 @@ const s: { [k: string]: React.CSSProperties } = {
   },
   btn: {
     padding: "9px 18px",
-    background: "#185FA5",
+    background: "var(--primary)",
     color: "#fff",
     borderRadius: 8,
     fontSize: 13,
@@ -966,8 +968,8 @@ const s: { [k: string]: React.CSSProperties } = {
     cursor: "pointer",
   },
   scheduleCard: {
-    background: "#fff",
-    border: "1px solid #eee",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: 28,
@@ -976,25 +978,25 @@ const s: { [k: string]: React.CSSProperties } = {
     display: "flex",
     gap: 10,
     padding: "14px 16px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
     flexWrap: "wrap",
   },
   select: {
     padding: "8px 12px",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-strong)",
     borderRadius: 8,
     fontSize: 13,
-    background: "#fafafa",
+    background: "var(--surface-2)",
     minWidth: 160,
   },
   emptyBox: {
     textAlign: "center",
     padding: 18,
-    color: "#aaa",
+    color: "var(--muted-3)",
     fontSize: 13,
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     borderRadius: 10,
-    background: "#fafafa",
+    background: "var(--surface-2)",
     margin: 16,
   },
   slotGrid: {
@@ -1016,25 +1018,24 @@ const s: { [k: string]: React.CSSProperties } = {
     cursor: "default",
   },
   availablePill: {
-    background: "#F7FBF2",
-    borderColor: "#97C459",
-    color: "#3B6D11",
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+    color: "var(--success-text)",
   },
   occupiedPill: {
-    background: "#FFF7F7",
-    borderColor: "#E24B4A",
-    color: "#A32D2D",
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+    color: "var(--danger-text)",
   },
   selectedPill: {
-    background: "#E6F1FB",
-    borderColor: "#185FA5",
-    color: "#185FA5",
+    background: "var(--primary-soft)",
+    borderColor: "var(--primary)",
+    color: "var(--primary)",
   },
-
   reservedByMePill: {
-    background: "#FFF7ED",
-    borderColor: "#FB923C",
-    color: "#C2410C",
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+    color: "var(--warning-text)",
   },
 
   slotTimeText: {
@@ -1060,7 +1061,7 @@ const s: { [k: string]: React.CSSProperties } = {
     gap: 14,
     padding: "0 16px 14px",
     fontSize: 11,
-    color: "#888",
+    color: "var(--muted)",
   },
   legendItem: {
     display: "flex",
@@ -1078,9 +1079,9 @@ const s: { [k: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     gap: 12,
     padding: "10px 12px",
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     borderRadius: 10,
-    background: "#fafafa",
+    background: "var(--surface-2)",
   },
   cartBox: {
     margin: "12px 16px",
@@ -1123,7 +1124,7 @@ const s: { [k: string]: React.CSSProperties } = {
   },
   activeTabButton: {
     background: "#FFFFFF",
-    color: "#185FA5",
+    color: "var(--primary)",
     boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
   },
   cancelBtn: {
@@ -1137,21 +1138,21 @@ const s: { [k: string]: React.CSSProperties } = {
     cursor: "pointer",
   },
   pastResItem: {
-    background: "#f7f7f7",
+    background: "var(--surface-3)",
     borderColor: "#e0e0e0",
     color: "#777",
   },
   footer: {
     padding: "14px 28px",
-    borderTop: "1px solid #eee",
-    background: "#fff",
+    borderTop: "1px solid var(--border)",
+    background: "var(--surface)",
     display: "flex",
     gap: 20,
     marginTop: "auto",
   },
   footerLink: {
     fontSize: 13,
-    color: "#888",
+    color: "var(--muted)",
     textDecoration: "none",
   },
 };

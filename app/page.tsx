@@ -34,7 +34,7 @@ export default function Home() {
     <div style={s.page}>
       <nav style={s.nav}>
         <a href="/" style={s.logo}>
-          rEEE<span style={{ color: "#185FA5" }}>serve</span>
+          rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </a>
       </nav>
 
@@ -108,11 +108,11 @@ export default function Home() {
           )}
 
           <div style={s.divider}>
-            <hr style={{ flex: 1, border: "none", borderTop: "1px solid #eee" }} />
-            <span style={{ fontSize: 12, color: "#aaa", margin: "0 10px" }}>
+            <hr style={{ flex: 1, border: "none", borderTop: "1px solid var(--border)" }} />
+            <span style={{ fontSize: 12, color: "var(--muted-3)", margin: "0 10px" }}>
               or
             </span>
-            <hr style={{ flex: 1, border: "none", borderTop: "1px solid #eee" }} />
+            <hr style={{ flex: 1, border: "none", borderTop: "1px solid var(--border)" }} />
           </div>
 
           <a href="/admin/login" style={s.adminLink}>
@@ -138,21 +138,21 @@ const s: { [k: string]: React.CSSProperties } = {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
-    background: "#f5f5f5",
+    background: "var(--page-bg)",
     fontFamily: "sans-serif",
   },
   nav: {
     display: "flex",
     alignItems: "center",
     padding: "18px 28px",
-    borderBottom: "1px solid #eee",
-    background: "#fff",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
   },
   logo: {
     fontSize: 22,
     fontWeight: 700,
     textDecoration: "none",
-    color: "#111",
+    color: "var(--text)",
   },
   main: {
     flex: 1,
@@ -162,8 +162,8 @@ const s: { [k: string]: React.CSSProperties } = {
     padding: 24,
   },
   card: {
-    background: "#fff",
-    border: "1px solid #eee",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     padding: "36px 40px",
     width: "100%",
@@ -171,7 +171,7 @@ const s: { [k: string]: React.CSSProperties } = {
   },
   sub: {
     fontSize: 11,
-    color: "#999",
+    color: "var(--muted-2)",
     textTransform: "uppercase",
     letterSpacing: 1,
     margin: "0 0 4px",
@@ -183,16 +183,16 @@ const s: { [k: string]: React.CSSProperties } = {
   },
   desc: {
     fontSize: 13,
-    color: "#888",
+    color: "var(--muted)",
     margin: "0 0 24px",
     lineHeight: 1.6,
   },
   googleBtn: {
     width: "100%",
     padding: 11,
-    background: "#fff",
-    color: "#333",
-    border: "1px solid #ddd",
+    background: "var(--surface)",
+    color: "var(--text-soft)",
+    border: "1px solid var(--border-strong)",
     borderRadius: 8,
     fontSize: 14,
     fontWeight: 500,
@@ -213,7 +213,7 @@ const s: { [k: string]: React.CSSProperties } = {
     margin: "0 0 8px",
     fontSize: 12,
     fontWeight: 700,
-    color: "#185FA5",
+    color: "var(--primary)",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
@@ -226,8 +226,8 @@ const s: { [k: string]: React.CSSProperties } = {
     padding: "8px 6px",
     borderRadius: 8,
     border: "1px solid #BFD8F2",
-    background: "#fff",
-    color: "#185FA5",
+    background: "var(--surface)",
+    color: "var(--primary)",
     fontSize: 12,
     fontWeight: 700,
     cursor: "pointer",
@@ -235,7 +235,7 @@ const s: { [k: string]: React.CSSProperties } = {
   demoNote: {
     margin: "8px 0 0",
     fontSize: 11,
-    color: "#888",
+    color: "var(--muted)",
     lineHeight: 1.4,
   },
   divider: {
@@ -247,20 +247,20 @@ const s: { [k: string]: React.CSSProperties } = {
     display: "block",
     textAlign: "center",
     fontSize: 13,
-    color: "#185FA5",
+    color: "var(--primary)",
     textDecoration: "none",
     fontWeight: 500,
   },
   footer: {
     padding: "14px 28px",
-    borderTop: "1px solid #eee",
-    background: "#fff",
+    borderTop: "1px solid var(--border)",
+    background: "var(--surface)",
     display: "flex",
     gap: 20,
   },
   footerLink: {
     fontSize: 13,
-    color: "#888",
+    color: "var(--muted)",
     textDecoration: "none",
   },
 };
