@@ -76,10 +76,21 @@ export default function Dashboard() {
   const [reservationTab, setReservationTab] =
     useState<ReservationTab>("current");
 
+  const [expandedReservationDate, setExpandedReservationDate] =
+    useState<string | null>(null);
+
+  const [expandedReservationRoom, setExpandedReservationRoom] =
+    useState<string | null>(null);
+
   const [allReservations, setAllReservations] = useState<Reservation[]>([]);
 
   const [email, setEmail] = useState("");
   const [loadingUser, setLoadingUser] = useState(true);
+
+  useEffect(() => {
+    setExpandedReservationDate(null);
+    setExpandedReservationRoom(null);
+  }, [reservationTab]);
 
   useEffect(() => {
     async function getUser() {
@@ -606,10 +617,96 @@ export default function Dashboard() {
     return {};
   }
 
+  function formatReservationDate(dateString: string) {
+    const [year, month, day] = dateString.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+
+    return d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  function getEarliestStart(reservations: Reservation[]) {
+    return reservations.reduce(
+      (earliest, r) =>
+        timeToMinutes(r.time_start) < timeToMinutes(earliest)
+          ? r.time_start
+          : earliest,
+      reservations[0]?.time_start ?? "00:00:00"
+    );
+  }
+
+  function getLatestEnd(reservations: Reservation[]) {
+    return reservations.reduce(
+      (latest, r) =>
+        timeToMinutes(r.time_end) > timeToMinutes(latest)
+          ? r.time_end
+          : latest,
+      reservations[0]?.time_end ?? "00:00:00"
+    );
+  }
+
+  function getReservationDayGroups(reservations: Reservation[]) {
+    const dateMap = new Map<string, Reservation[]>();
+
+    reservations.forEach(r => {
+      const existing = dateMap.get(r.reserved_date) ?? [];
+      existing.push(r);
+      dateMap.set(r.reserved_date, existing);
+    });
+
+    const sortedDates = Array.from(dateMap.entries()).sort(([dateA], [dateB]) => {
+      return reservationTab === "current"
+        ? dateA.localeCompare(dateB)
+        : dateB.localeCompare(dateA);
+    });
+
+    return sortedDates.map(([reservedDate, dayReservations]) => {
+      const sortedDayReservations = [...dayReservations].sort((a, b) =>
+        timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
+      );
+
+      const roomMap = new Map<string, Reservation[]>();
+
+      sortedDayReservations.forEach(r => {
+        const existing = roomMap.get(r.room_name) ?? [];
+        existing.push(r);
+        roomMap.set(r.room_name, existing);
+      });
+
+      const rooms = Array.from(roomMap.entries())
+        .sort(([roomA], [roomB]) => roomA.localeCompare(roomB))
+        .map(([roomName, roomReservations]) => {
+          const sortedRoomReservations = [...roomReservations].sort((a, b) =>
+            timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
+          );
+
+          return {
+            roomName,
+            reservations: sortedRoomReservations,
+            firstStart: getEarliestStart(sortedRoomReservations),
+            lastEnd: getLatestEnd(sortedRoomReservations),
+          };
+        });
+
+      return {
+        reservedDate,
+        reservations: sortedDayReservations,
+        rooms,
+        firstStart: getEarliestStart(sortedDayReservations),
+        lastEnd: getLatestEnd(sortedDayReservations),
+      };
+    });
+  }
+
   const currentReservations = getCurrentReservations();
   const pastReservations = getPastReservations();
+
   const visibleReservations =
     reservationTab === "current" ? currentReservations : pastReservations;
+
+  const visibleReservationGroups = getReservationDayGroups(visibleReservations);
 
   const displaySlots = lab && date ? getDisplaySlots() : [];
 
@@ -676,53 +773,144 @@ export default function Dashboard() {
         </div>
 
         <div style={s.resCard}>
-          {visibleReservations.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 15, color: "var(--muted)" }}>
+          {visibleReservationGroups.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 15, color: "#888" }}>
               {reservationTab === "current"
                 ? "No current reservations"
                 : "No past reservations"}
             </p>
           ) : (
-            <div style={{ display: "grid", gap: 8, width: "100%" }}>
-              {visibleReservations.map(r => {
-                const cancellationLabel = pastReservationLabel(r.status);
+            <div style={s.resGroupList}>
+              {visibleReservationGroups.map(dayGroup => {
+                const isDateOpen =
+                  expandedReservationDate === dayGroup.reservedDate;
 
                 return (
-                  <div
-                    key={r.id}
-                    style={{
-                      ...s.resItem,
-                      ...(reservationTab === "past" ? s.pastResItem : {}),
-                    }}
-                  >
-                    <div>
-                      <strong>{r.room_name}</strong>
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: reservationTab === "past" ? "#aaa" : "#888",
-                        }}
-                      >
-                        {r.reserved_date} • {fmt(r.time_start)} –{" "}
-                        {fmt(r.time_end)}
+                  <div key={dayGroup.reservedDate} style={s.dayGroupCard}>
+                    <button
+                      type="button"
+                      style={s.dayGroupButton}
+                      onClick={() => {
+                        const nextDate = isDateOpen ? null : dayGroup.reservedDate;
+
+                        setExpandedReservationDate(nextDate);
+                        setExpandedReservationRoom(null);
+                      }}
+                    >
+                      <div>
+                        <strong>
+                          {formatReservationDate(dayGroup.reservedDate)}
+                        </strong>
+
+                        <div style={s.groupSubtext}>
+                          {fmt(dayGroup.firstStart)} – {fmt(dayGroup.lastEnd)}
+                        </div>
                       </div>
-                    </div>
 
-                    {reservationTab === "current" &&
-                      canCancelReservation(r) && (
-                        <button
-                          type="button"
-                          style={s.cancelBtn}
-                          onClick={() => cancelReservation(r.id)}
-                        >
-                          Cancel
-                        </button>
-                      )}
+                      <div style={s.groupRightText}>
+                        {dayGroup.reservations.length}{" "}
+                        {dayGroup.reservations.length === 1 ? "slot" : "slots"}
+                        <span style={s.chevron}>{isDateOpen ? "−" : "+"}</span>
+                      </div>
+                    </button>
 
-                    {reservationTab === "past" && cancellationLabel && (
-                      <span style={pastReservationPillStyle(r.status)}>
-                        {cancellationLabel}
-                      </span>
+                    {isDateOpen && (
+                      <div style={s.roomGroupList}>
+                        {dayGroup.rooms.map(roomGroup => {
+                          const roomKey = `${dayGroup.reservedDate}-${roomGroup.roomName}`;
+                          const isRoomOpen = expandedReservationRoom === roomKey;
+
+                          return (
+                            <div key={roomKey} style={s.roomGroupCard}>
+                              <button
+                                type="button"
+                                style={s.roomGroupButton}
+                                onClick={() =>
+                                  setExpandedReservationRoom(
+                                    isRoomOpen ? null : roomKey
+                                  )
+                                }
+                              >
+                                <div>
+                                  <strong>{roomGroup.roomName}</strong>
+
+                                  <div style={s.groupSubtext}>
+                                    {fmt(roomGroup.firstStart)} –{" "}
+                                    {fmt(roomGroup.lastEnd)}
+                                  </div>
+                                </div>
+
+                                <div style={s.groupRightText}>
+                                  {roomGroup.reservations.length}{" "}
+                                  {roomGroup.reservations.length === 1
+                                    ? "slot"
+                                    : "slots"}
+                                  <span style={s.chevron}>
+                                    {isRoomOpen ? "−" : "+"}
+                                  </span>
+                                </div>
+                              </button>
+
+                              {isRoomOpen && (
+                                <div style={s.timeslotList}>
+                                  {roomGroup.reservations.map((r, index) => {
+                                    const cancellationLabel =
+                                      pastReservationLabel(r.status);
+
+                                    return (
+                                      <div
+                                        key={r.id}
+                                        style={{
+                                          ...s.timeslotRow,
+                                          ...(reservationTab === "past"
+                                            ? s.pastResItem
+                                            : {}),
+                                        }}
+                                      >
+                                        <div>
+                                          <strong>Timeslot {index + 1}</strong>
+
+                                          <div
+                                            style={{
+                                              fontSize: 12,
+                                              color:
+                                                reservationTab === "past"
+                                                  ? "#aaa"
+                                                  : "#888",
+                                            }}
+                                          >
+                                            {fmt(r.time_start)} – {fmt(r.time_end)}
+                                          </div>
+                                        </div>
+
+                                        {reservationTab === "current" &&
+                                          canCancelReservation(r) && (
+                                            <button
+                                              type="button"
+                                              style={s.cancelBtn}
+                                              onClick={() => cancelReservation(r.id)}
+                                            >
+                                              Cancel
+                                            </button>
+                                          )}
+
+                                        {reservationTab === "past" &&
+                                          cancellationLabel && (
+                                            <span
+                                              style={pastReservationPillStyle(r.status)}
+                                            >
+                                              {cancellationLabel}
+                                            </span>
+                                          )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 );
@@ -737,9 +925,24 @@ export default function Dashboard() {
           <div style={s.filters}>
             <select
               style={s.select}
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              disabled={!lab}
+            >
+              <option value="">Date: select one</option>
+              {getDateOptions().map(({ val, label }) => (
+                <option key={val} value={val}>
+                  {label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              style={s.select}
               value={lab}
               onChange={e => {
                 const selectedLab = e.target.value;
+
                 setLab(selectedLab);
                 setCart([]);
 
@@ -754,20 +957,6 @@ export default function Dashboard() {
               {rooms.map(r => (
                 <option key={r} value={r}>
                   {r}
-                </option>
-              ))}
-            </select>
-
-            <select
-              style={s.select}
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              disabled={!lab}
-            >
-              <option value="">Date: select one</option>
-              {getDateOptions().map(({ val, label }) => (
-                <option key={val} value={val}>
-                  {label}
                 </option>
               ))}
             </select>
@@ -975,20 +1164,20 @@ const s: { [k: string]: React.CSSProperties } = {
     marginBottom: 28,
   },
   filters: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 10,
     padding: "14px 16px",
-    borderBottom: "1px solid var(--border)",
-    flexWrap: "wrap",
+    borderBottom: "1px solid #eee",
   },
   select: {
     padding: "8px 12px",
-    border: "1px solid var(--border-strong)",
+    border: "1px solid #ddd",
     borderRadius: 8,
     fontSize: 13,
-    background: "var(--surface-2)",
-    color: "var(--text)",
-    minWidth: 160,
+    background: "#fafafa",
+    width: "100%",
+    minWidth: 0,
   },
   emptyBox: {
     textAlign: "center",
@@ -1155,5 +1344,104 @@ const s: { [k: string]: React.CSSProperties } = {
     fontSize: 13,
     color: "var(--muted)",
     textDecoration: "none",
+  },
+
+  resGroupList: {
+    display: "grid",
+    gap: 10,
+    width: "100%",
+  },
+
+  dayGroupCard: {
+    border: "1px solid #eee",
+    borderRadius: 12,
+    background: "#fafafa",
+    overflow: "hidden",
+  },
+
+  dayGroupButton: {
+    width: "100%",
+    border: "none",
+    background: "transparent",
+    padding: "14px 16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    cursor: "pointer",
+    textAlign: "left",
+  },
+
+  roomGroupList: {
+    display: "grid",
+    gap: 8,
+    padding: "0 12px 12px",
+  },
+
+  roomGroupCard: {
+    border: "1px solid #e8e8e8",
+    borderRadius: 10,
+    background: "#fff",
+    overflow: "hidden",
+  },
+
+  roomGroupButton: {
+    width: "100%",
+    border: "none",
+    background: "transparent",
+    padding: "12px 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    cursor: "pointer",
+    textAlign: "left",
+  },
+
+  timeslotList: {
+    display: "grid",
+    gap: 8,
+    padding: "0 12px 12px",
+  },
+
+  timeslotRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "10px 12px",
+    border: "1px solid #eee",
+    borderRadius: 10,
+    background: "#fafafa",
+    flexWrap: "wrap",
+  },
+
+  groupSubtext: {
+    marginTop: 3,
+    fontSize: 12,
+    color: "#888",
+  },
+
+  groupRightText: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 12,
+    color: "#666",
+    whiteSpace: "nowrap",
+  },
+
+  chevron: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    background: "#fff",
+    border: "1px solid #ddd",
+    color: "#185FA5",
+    fontSize: 16,
+    fontWeight: 700,
   },
 };

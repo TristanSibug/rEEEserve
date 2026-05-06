@@ -522,9 +522,24 @@ export default function InstructorDashboard() {
                   <div style={s.filters}>
                     <select
                       style={s.select}
+                      value={date}
+                      onChange={e => setDate(e.target.value)}
+                      disabled={!lab}
+                    >
+                      <option value="">Date: select one</option>
+                      {getDateOptions().map(({ val, label }) => (
+                        <option key={val} value={val}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      style={s.select}
                       value={lab}
                       onChange={e => {
                         const selectedLab = e.target.value;
+
                         setLab(selectedLab);
 
                         if (selectedLab) {
@@ -538,20 +553,6 @@ export default function InstructorDashboard() {
                       {rooms.map(r => (
                         <option key={r} value={r}>
                           {r}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      style={s.select}
-                      value={date}
-                      onChange={e => setDate(e.target.value)}
-                      disabled={!lab}
-                    >
-                      <option value="">Date: select one</option>
-                      {getDateOptions().map(({ val, label }) => (
-                        <option key={val} value={val}>
-                          {label}
                         </option>
                       ))}
                     </select>
@@ -771,21 +772,21 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   filters: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 10,
     padding: "14px 16px",
-    borderBottom: "1px solid var(--border)",
-    flexWrap: "wrap",
+    borderBottom: "1px solid #eee",
   },
 
   select: {
     padding: "8px 12px",
-    border: "1px solid var(--border-strong)",
+    border: "1px solid #ddd",
     borderRadius: 8,
     fontSize: 13,
-    background: "var(--surface-2)",
-    color: "var(--text)",
-    minWidth: 160,
+    background: "#fafafa",
+    width: "100%",
+    minWidth: 0,
   },
 
   table: {
