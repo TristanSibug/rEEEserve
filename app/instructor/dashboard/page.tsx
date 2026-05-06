@@ -1183,7 +1183,7 @@ export default function InstructorDashboard() {
                                   : isFull
                                     ? "Full — click to override"
                                     : isReserved
-                                      ? `${slot.slots_left}/${slot.capacity} slots left — click to override`
+                                      ? `${slot.slots_left}/${slot.capacity} slots left`
                                       : `${slot.slots_left}/${slot.capacity} slots left`}
                             </span>
                           </button>
@@ -1209,7 +1209,7 @@ export default function InstructorDashboard() {
                             background: "var(--warning-border)",
                           }}
                         />
-                        Student reservation / full
+                        Student reservation / full / reserved by you
                       </span>
 
                       <span style={s.legendItem}>
