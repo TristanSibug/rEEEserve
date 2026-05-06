@@ -41,6 +41,7 @@ type DisplaySlot = {
 };
 
 type ReservationTab = "current" | "past";
+type ScheduleMode = "none" | "dateFirst" | "roomFirst" | "both";
 
 function getCookieValue(name: string) {
   if (typeof document === "undefined") return "";
@@ -67,6 +68,12 @@ export default function Dashboard() {
 
   const [lab, setLab] = useState("");
   const [date, setDate] = useState("");
+
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("none");
+
+  const [previewAnchorDate, setPreviewAnchorDate] = useState("");
+  const [previewAnchorLab, setPreviewAnchorLab] = useState("");
+
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
@@ -94,7 +101,7 @@ export default function Dashboard() {
     async function fetchPreviews() {
       const nextPreviewSlots: Record<string, Slot[]> = {};
 
-      if (!date && !lab) {
+      if (scheduleMode === "none") {
         setPreviewSlots({});
         return;
       }
@@ -102,23 +109,32 @@ export default function Dashboard() {
       setLoadingPreviewSlots(true);
 
       try {
-        if (date && !lab) {
+        if (scheduleMode === "dateFirst" && previewAnchorDate) {
           await Promise.all(
             rooms.map(async room => {
-              const result = await fetchScheduleFor(date, room);
-              nextPreviewSlots[previewKey(date, room)] = result;
+              const result = await fetchScheduleFor(previewAnchorDate, room);
+              nextPreviewSlots[previewKey(previewAnchorDate, room)] = result;
             })
           );
         }
 
-        if (lab) {
-          const startDate = date || getDefaultScheduleDate();
-          const dates = getPreviewDates(startDate);
+        if (
+          (scheduleMode === "roomFirst" || scheduleMode === "both") &&
+          previewAnchorLab &&
+          previewAnchorDate
+        ) {
+          const dates = getPreviewDates(previewAnchorDate);
 
           await Promise.all(
             dates.map(async previewDate => {
-              const result = await fetchScheduleFor(previewDate, lab);
-              nextPreviewSlots[previewKey(previewDate, lab)] = result;
+              const result = await fetchScheduleFor(
+                previewDate,
+                previewAnchorLab
+              );
+
+              nextPreviewSlots[
+                previewKey(previewDate, previewAnchorLab)
+              ] = result;
             })
           );
         }
@@ -130,7 +146,7 @@ export default function Dashboard() {
     }
 
     fetchPreviews();
-  }, [date, lab]);
+  }, [scheduleMode, previewAnchorDate, previewAnchorLab]);
 
   useEffect(() => {
     setExpandedReservationDate(null);
@@ -900,8 +916,15 @@ export default function Dashboard() {
 
   const displaySlots = lab && date ? getDisplaySlots() : [];
 
-  const dateFirstRoomPanels = date && !lab ? rooms : [];
-  const roomFirstDatePanels = lab ? getPreviewDates(date || getDefaultScheduleDate()) : [];
+  const dateFirstRoomPanels =
+    scheduleMode === "dateFirst" && previewAnchorDate ? rooms : [];
+
+  const roomFirstDatePanels =
+    (scheduleMode === "roomFirst" || scheduleMode === "both") &&
+      previewAnchorLab &&
+      previewAnchorDate
+      ? getPreviewDates(previewAnchorDate)
+      : [];
 
   if (loadingUser) {
     return (
@@ -1106,8 +1129,40 @@ export default function Dashboard() {
               style={s.select}
               value={date}
               onChange={e => {
-                setDate(e.target.value);
+                const selectedDate = e.target.value;
+
+                setDate(selectedDate);
                 setCart([]);
+
+                if (!selectedDate && !lab) {
+                  setScheduleMode("none");
+                  setPreviewAnchorDate("");
+                  setPreviewAnchorLab("");
+                  return;
+                }
+
+                if (!selectedDate && lab) {
+                  const defaultDate = getDefaultScheduleDate();
+
+                  setDate(defaultDate);
+                  setScheduleMode("roomFirst");
+                  setPreviewAnchorLab(lab);
+                  setPreviewAnchorDate(defaultDate);
+                  return;
+                }
+
+                if (selectedDate && lab) {
+                  setScheduleMode("both");
+                  setPreviewAnchorDate(selectedDate);
+                  setPreviewAnchorLab(lab);
+                  return;
+                }
+
+                if (selectedDate && !lab) {
+                  setScheduleMode("dateFirst");
+                  setPreviewAnchorDate(selectedDate);
+                  setPreviewAnchorLab("");
+                }
               }}
             >
               <option value="">Date: select one</option>
@@ -1127,8 +1182,34 @@ export default function Dashboard() {
                 setLab(selectedLab);
                 setCart([]);
 
+                if (!selectedLab && !date) {
+                  setScheduleMode("none");
+                  setPreviewAnchorDate("");
+                  setPreviewAnchorLab("");
+                  return;
+                }
+
+                if (!selectedLab && date) {
+                  setScheduleMode("dateFirst");
+                  setPreviewAnchorDate(date);
+                  setPreviewAnchorLab("");
+                  return;
+                }
+
+                if (selectedLab && date) {
+                  setScheduleMode("both");
+                  setPreviewAnchorDate(date);
+                  setPreviewAnchorLab(selectedLab);
+                  return;
+                }
+
                 if (selectedLab && !date) {
-                  setDate(getDefaultScheduleDate());
+                  const defaultDate = getDefaultScheduleDate();
+
+                  setDate(defaultDate);
+                  setScheduleMode("roomFirst");
+                  setPreviewAnchorLab(selectedLab);
+                  setPreviewAnchorDate(defaultDate);
                 }
               }}
             >
@@ -1155,8 +1236,8 @@ export default function Dashboard() {
           {!loadingPreviewSlots && dateFirstRoomPanels.length > 0 && (
             <div style={s.panelGrid}>
               {dateFirstRoomPanels.map(room => {
-                const key = previewKey(date, room);
-                const summary = getScheduleSummary(room, date, previewSlots[key] ?? []);
+                const key = previewKey(previewAnchorDate, room);
+                const summary = getScheduleSummary(room, previewAnchorDate, previewSlots[key] ?? []);
 
                 return (
                   <button
@@ -1182,7 +1263,7 @@ export default function Dashboard() {
                       <span style={s.panelBadge}>{summary.label}</span>
                     </div>
 
-                    <div style={s.panelMainText}>{formatPanelDate(date)}</div>
+                    <div style={s.panelMainText}>{formatPanelDate(previewAnchorDate)}</div>
                     <div style={s.panelSubtext}>{summary.detail}</div>
                   </button>
                 );
@@ -1193,9 +1274,9 @@ export default function Dashboard() {
           {!loadingPreviewSlots && roomFirstDatePanels.length > 0 && (
             <div style={s.panelGrid}>
               {roomFirstDatePanels.map(previewDate => {
-                const key = previewKey(previewDate, lab);
+                const key = previewKey(previewDate, previewAnchorLab);
                 const summary = getScheduleSummary(
-                  lab,
+                  previewAnchorLab,
                   previewDate,
                   previewSlots[key] ?? []
                 );
@@ -1227,7 +1308,7 @@ export default function Dashboard() {
                       <span style={s.panelBadge}>{summary.label}</span>
                     </div>
 
-                    <div style={s.panelMainText}>{lab}</div>
+                    <div style={s.panelMainText}>{previewAnchorLab}</div>
                     <div style={s.panelSubtext}>{summary.detail}</div>
                   </button>
                 );
