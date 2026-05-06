@@ -192,3 +192,15 @@ html[data-theme="dark"] .theme-toggle-thumb {
     transform: translateX(30px);
   }
 }
+
+select,
+option,
+button,
+input {
+  color-scheme: light dark;
+}
+
+select {
+  background-color: var(--select-bg);
+  color: var(--text);
+}

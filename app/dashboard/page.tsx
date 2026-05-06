@@ -82,10 +82,55 @@ export default function Dashboard() {
   const [expandedReservationRoom, setExpandedReservationRoom] =
     useState<string | null>(null);
 
+  const [previewSlots, setPreviewSlots] = useState<Record<string, Slot[]>>({});
+  const [loadingPreviewSlots, setLoadingPreviewSlots] = useState(false);
+
   const [allReservations, setAllReservations] = useState<Reservation[]>([]);
 
   const [email, setEmail] = useState("");
   const [loadingUser, setLoadingUser] = useState(true);
+
+  useEffect(() => {
+    async function fetchPreviews() {
+      const nextPreviewSlots: Record<string, Slot[]> = {};
+
+      if (!date && !lab) {
+        setPreviewSlots({});
+        return;
+      }
+
+      setLoadingPreviewSlots(true);
+
+      try {
+        if (date && !lab) {
+          await Promise.all(
+            rooms.map(async room => {
+              const result = await fetchScheduleFor(date, room);
+              nextPreviewSlots[previewKey(date, room)] = result;
+            })
+          );
+        }
+
+        if (lab) {
+          const startDate = date || getDefaultScheduleDate();
+          const dates = getPreviewDates(startDate);
+
+          await Promise.all(
+            dates.map(async previewDate => {
+              const result = await fetchScheduleFor(previewDate, lab);
+              nextPreviewSlots[previewKey(previewDate, lab)] = result;
+            })
+          );
+        }
+
+        setPreviewSlots(nextPreviewSlots);
+      } finally {
+        setLoadingPreviewSlots(false);
+      }
+    }
+
+    fetchPreviews();
+  }, [date, lab]);
 
   useEffect(() => {
     setExpandedReservationDate(null);
@@ -156,6 +201,36 @@ export default function Dashboard() {
     } finally {
       setLoadingSlots(false);
     }
+  }
+
+  async function fetchScheduleFor(selectedDate: string, selectedRoom: string) {
+    try {
+      const res = await fetch(
+        `/api/schedules?date=${selectedDate}&room=${encodeURIComponent(
+          selectedRoom
+        )}`
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Failed to fetch schedule preview:", data);
+        return [];
+      }
+
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("Schedule preview fetch error:", error);
+      return [];
+    }
+  }
+
+  function previewKey(selectedDate: string, selectedRoom: string) {
+    return `${selectedDate}__${selectedRoom}`;
+  }
+
+  function getPreviewDates(startDate: string) {
+    return [0, 1, 2].map(days => addDaysToDateString(startDate, days));
   }
 
   async function fetchMyReservations() {
@@ -439,47 +514,57 @@ export default function Dashboard() {
     );
   }
 
-  function getDisplaySlots(): DisplaySlot[] {
+  function getDisplaySlotsFor(
+    selectedLab: string,
+    selectedDate: string,
+    sourceSlots: Slot[]
+  ): DisplaySlot[] {
     const displaySlots: DisplaySlot[] = [];
 
     const labStart = 8 * 60 + 30;
     const labEnd = 16 * 60;
     const interval = 30;
-    const capacity = roomCapacity[lab] ?? 10;
+    const capacity = roomCapacity[selectedLab] ?? 10;
 
     for (let current = labStart; current < labEnd; current += interval) {
       const time_start = minutesToTime(current);
       const time_end = minutesToTime(current + interval);
 
-      if (!isSlotAllowedForDate(date, time_start)) {
+      if (!isSlotAllowedForDate(selectedDate, time_start)) {
         continue;
       }
 
-      const blockingSlot = slots.find(
+      const blockingSlot = sourceSlots.find(
         slot =>
           slot.source !== "reservation" &&
           overlaps(time_start, time_end, slot.time_start, slot.time_end)
       );
 
-      const reservationCount = slots.filter(
+      const reservationCount = sourceSlots.filter(
         slot =>
           slot.source === "reservation" &&
           overlaps(time_start, time_end, slot.time_start, slot.time_end)
       ).length;
 
-      const selectedCount = cart.filter(item =>
-        overlaps(time_start, time_end, item.time_start, item.time_end)
-      ).length;
+      const selectedCount =
+        selectedLab === lab && selectedDate === date
+          ? cart.filter(item =>
+            overlaps(time_start, time_end, item.time_start, item.time_end)
+          ).length
+          : 0;
 
-      const selected = cart.some(
-        item => item.time_start === time_start && item.time_end === time_end
-      );
+      const selected =
+        selectedLab === lab &&
+        selectedDate === date &&
+        cart.some(
+          item => item.time_start === time_start && item.time_end === time_end
+        );
 
       const reservedByMe = allReservations.some(
         r =>
           r.student_email === email &&
-          r.room_name === lab &&
-          r.reserved_date === date &&
+          r.room_name === selectedLab &&
+          r.reserved_date === selectedDate &&
           r.status === "approved" &&
           overlaps(time_start, time_end, r.time_start, r.time_end)
       );
@@ -506,6 +591,85 @@ export default function Dashboard() {
     }
 
     return displaySlots;
+  }
+
+  function getDisplaySlots(): DisplaySlot[] {
+    if (!lab || !date) return [];
+    return getDisplaySlotsFor(lab, date, slots);
+  }
+
+  function getScheduleSummary(
+    selectedLab: string,
+    selectedDate: string,
+    sourceSlots: Slot[]
+  ) {
+    const display = getDisplaySlotsFor(selectedLab, selectedDate, sourceSlots);
+
+    const available = display.filter(slot => slot.status === "available").length;
+    const full = display.filter(slot => slot.status === "full").length;
+    const occupied = display.filter(slot => slot.status === "occupied").length;
+    const reservedByMe = display.filter(
+      slot => slot.status === "reservedByMe"
+    ).length;
+
+    if (display.length === 0) {
+      return {
+        label: "No timeslots left",
+        detail: "All usable timeslots have passed",
+        tone: "muted" as const,
+        available,
+        full,
+        occupied,
+        reservedByMe,
+      };
+    }
+
+    if (available > 0) {
+      return {
+        label: "Available",
+        detail: `${available} open slot${available === 1 ? "" : "s"}`,
+        tone: "success" as const,
+        available,
+        full,
+        occupied,
+        reservedByMe,
+      };
+    }
+
+    if (reservedByMe > 0) {
+      return {
+        label: "You have a reservation",
+        detail: `${reservedByMe} reserved slot${reservedByMe === 1 ? "" : "s"
+          } by you`,
+        tone: "warning" as const,
+        available,
+        full,
+        occupied,
+        reservedByMe,
+      };
+    }
+
+    if (full > 0) {
+      return {
+        label: "Full",
+        detail: "No remaining student slots",
+        tone: "danger" as const,
+        available,
+        full,
+        occupied,
+        reservedByMe,
+      };
+    }
+
+    return {
+      label: "Occupied",
+      detail: "Blocked by class or schedule",
+      tone: "danger" as const,
+      available,
+      full,
+      occupied,
+      reservedByMe,
+    };
   }
 
   function toggleCartSlot(slot: DisplaySlot) {
@@ -627,6 +791,34 @@ export default function Dashboard() {
     });
   }
 
+  function formatPanelDate(dateString: string) {
+    const { today } = getManilaDateTime();
+    const tomorrow = addDaysToDateString(today, 1);
+
+    const [year, month, day] = dateString.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+
+    if (dateString === today) {
+      return `Today, ${d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })}`;
+    }
+
+    if (dateString === tomorrow) {
+      return `Tomorrow, ${d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })}`;
+    }
+
+    return d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
   function getEarliestStart(reservations: Reservation[]) {
     return reservations.reduce(
       (earliest, r) =>
@@ -640,9 +832,7 @@ export default function Dashboard() {
   function getLatestEnd(reservations: Reservation[]) {
     return reservations.reduce(
       (latest, r) =>
-        timeToMinutes(r.time_end) > timeToMinutes(latest)
-          ? r.time_end
-          : latest,
+        timeToMinutes(r.time_end) > timeToMinutes(latest) ? r.time_end : latest,
       reservations[0]?.time_end ?? "00:00:00"
     );
   }
@@ -663,8 +853,8 @@ export default function Dashboard() {
     });
 
     return sortedDates.map(([reservedDate, dayReservations]) => {
-      const sortedDayReservations = [...dayReservations].sort((a, b) =>
-        timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
+      const sortedDayReservations = [...dayReservations].sort(
+        (a, b) => timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
       );
 
       const roomMap = new Map<string, Reservation[]>();
@@ -678,8 +868,8 @@ export default function Dashboard() {
       const rooms = Array.from(roomMap.entries())
         .sort(([roomA], [roomB]) => roomA.localeCompare(roomB))
         .map(([roomName, roomReservations]) => {
-          const sortedRoomReservations = [...roomReservations].sort((a, b) =>
-            timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
+          const sortedRoomReservations = [...roomReservations].sort(
+            (a, b) => timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
           );
 
           return {
@@ -709,6 +899,9 @@ export default function Dashboard() {
   const visibleReservationGroups = getReservationDayGroups(visibleReservations);
 
   const displaySlots = lab && date ? getDisplaySlots() : [];
+
+  const dateFirstRoomPanels = date && !lab ? rooms : [];
+  const roomFirstDatePanels = lab ? getPreviewDates(date || getDefaultScheduleDate()) : [];
 
   if (loadingUser) {
     return (
@@ -774,7 +967,7 @@ export default function Dashboard() {
 
         <div style={s.resCard}>
           {visibleReservationGroups.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 15, color: "#888" }}>
+            <p style={{ margin: 0, fontSize: 15, color: "var(--muted)" }}>
               {reservationTab === "current"
                 ? "No current reservations"
                 : "No past reservations"}
@@ -791,17 +984,14 @@ export default function Dashboard() {
                       type="button"
                       style={s.dayGroupButton}
                       onClick={() => {
-                        const nextDate = isDateOpen ? null : dayGroup.reservedDate;
-
-                        setExpandedReservationDate(nextDate);
+                        setExpandedReservationDate(
+                          isDateOpen ? null : dayGroup.reservedDate
+                        );
                         setExpandedReservationRoom(null);
                       }}
                     >
                       <div>
-                        <strong>
-                          {formatReservationDate(dayGroup.reservedDate)}
-                        </strong>
-
+                        <strong>{formatReservationDate(dayGroup.reservedDate)}</strong>
                         <div style={s.groupSubtext}>
                           {fmt(dayGroup.firstStart)} – {fmt(dayGroup.lastEnd)}
                         </div>
@@ -833,7 +1023,6 @@ export default function Dashboard() {
                               >
                                 <div>
                                   <strong>{roomGroup.roomName}</strong>
-
                                   <div style={s.groupSubtext}>
                                     {fmt(roomGroup.firstStart)} –{" "}
                                     {fmt(roomGroup.lastEnd)}
@@ -869,16 +1058,7 @@ export default function Dashboard() {
                                       >
                                         <div>
                                           <strong>Timeslot {index + 1}</strong>
-
-                                          <div
-                                            style={{
-                                              fontSize: 12,
-                                              color:
-                                                reservationTab === "past"
-                                                  ? "#aaa"
-                                                  : "#888",
-                                            }}
-                                          >
+                                          <div style={s.groupSubtext}>
                                             {fmt(r.time_start)} – {fmt(r.time_end)}
                                           </div>
                                         </div>
@@ -926,8 +1106,10 @@ export default function Dashboard() {
             <select
               style={s.select}
               value={date}
-              onChange={e => setDate(e.target.value)}
-              disabled={!lab}
+              onChange={e => {
+                setDate(e.target.value);
+                setCart([]);
+              }}
             >
               <option value="">Date: select one</option>
               {getDateOptions().map(({ val, label }) => (
@@ -946,10 +1128,8 @@ export default function Dashboard() {
                 setLab(selectedLab);
                 setCart([]);
 
-                if (selectedLab) {
+                if (selectedLab && !date) {
                   setDate(getDefaultScheduleDate());
-                } else {
-                  setDate("");
                 }
               }}
             >
@@ -962,28 +1142,118 @@ export default function Dashboard() {
             </select>
           </div>
 
-          {(!lab || !date) && (
+          {!lab && !date && (
             <div style={s.emptyBox}>
-              Select a lab and date to view the schedule
+              Select a date to compare all rooms, or select a lab to view the next
+              three available days.
+            </div>
+          )}
+
+          {loadingPreviewSlots && (
+            <div style={s.emptyBox}>Loading schedule preview...</div>
+          )}
+
+          {!loadingPreviewSlots && dateFirstRoomPanels.length > 0 && (
+            <div style={s.panelGrid}>
+              {dateFirstRoomPanels.map(room => {
+                const key = previewKey(date, room);
+                const summary = getScheduleSummary(room, date, previewSlots[key] ?? []);
+
+                return (
+                  <button
+                    key={room}
+                    type="button"
+                    style={{
+                      ...s.schedulePanel,
+                      ...(summary.tone === "success"
+                        ? s.successPanel
+                        : summary.tone === "warning"
+                          ? s.warningPanel
+                          : summary.tone === "danger"
+                            ? s.dangerPanel
+                            : s.mutedPanel),
+                    }}
+                    onClick={() => {
+                      setLab(room);
+                      setCart([]);
+                    }}
+                  >
+                    <div style={s.panelTopRow}>
+                      <strong>{room}</strong>
+                      <span style={s.panelBadge}>{summary.label}</span>
+                    </div>
+
+                    <div style={s.panelMainText}>{formatPanelDate(date)}</div>
+                    <div style={s.panelSubtext}>{summary.detail}</div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {!loadingPreviewSlots && roomFirstDatePanels.length > 0 && (
+            <div style={s.panelGrid}>
+              {roomFirstDatePanels.map(previewDate => {
+                const key = previewKey(previewDate, lab);
+                const summary = getScheduleSummary(
+                  lab,
+                  previewDate,
+                  previewSlots[key] ?? []
+                );
+
+                const isSelectedDate = previewDate === date;
+
+                return (
+                  <button
+                    key={previewDate}
+                    type="button"
+                    style={{
+                      ...s.schedulePanel,
+                      ...(summary.tone === "success"
+                        ? s.successPanel
+                        : summary.tone === "warning"
+                          ? s.warningPanel
+                          : summary.tone === "danger"
+                            ? s.dangerPanel
+                            : s.mutedPanel),
+                      ...(isSelectedDate ? s.selectedPanel : {}),
+                    }}
+                    onClick={() => {
+                      setDate(previewDate);
+                      setCart([]);
+                    }}
+                  >
+                    <div style={s.panelTopRow}>
+                      <strong>{formatPanelDate(previewDate)}</strong>
+                      <span style={s.panelBadge}>{summary.label}</span>
+                    </div>
+
+                    <div style={s.panelMainText}>{lab}</div>
+                    <div style={s.panelSubtext}>{summary.detail}</div>
+                  </button>
+                );
+              })}
             </div>
           )}
 
           {lab && date && loadingSlots && <div style={s.emptyBox}>Loading...</div>}
 
           {lab && date && !loadingSlots && displaySlots.length === 0 && (
-            <div style={s.emptyBox}>
-              No available timeslots left for this date
-            </div>
+            <div style={s.emptyBox}>No available timeslots left for this date</div>
           )}
 
           {lab && date && !loadingSlots && displaySlots.length > 0 && (
             <>
-              <div style={s.slotGrid}>
-                <div style={s.slotSpacer} />
+              <div style={s.selectedScheduleHeader}>
+                <div>
+                  <strong>{lab}</strong>
+                  <div style={s.groupSubtext}>{formatPanelDate(date)}</div>
+                </div>
+              </div>
 
+              <div style={s.slotGrid}>
                 {displaySlots.map(slot => {
                   const key = `${slot.time_start}-${slot.time_end}`;
-
                   const hasCourse = slot.status === "occupied" && slot.course_name;
                   const isAvailable = slot.status === "available";
                   const isSelected = slot.status === "selected";
@@ -1035,15 +1305,13 @@ export default function Dashboard() {
                   <div>
                     <strong>{cart.length}</strong>{" "}
                     {cart.length === 1 ? "slot selected" : "slots selected"}
-                  </div>
 
-                  {lab && date && (
-                    <p style={{ fontSize: 13, color: "#6B7280", margin: "8px 0 0" }}>
+                    <div style={s.groupSubtext}>
                       Remaining reservation time for this day:{" "}
                       {Math.floor(getRemainingReservationMinutesForDate(date) / 60)} hr{" "}
                       {getRemainingReservationMinutesForDate(date) % 60} min
-                    </p>
-                  )}
+                    </div>
+                  </div>
 
                   <button
                     type="button"
@@ -1058,13 +1326,18 @@ export default function Dashboard() {
 
               <div style={s.legend}>
                 <span style={s.legendItem}>
-                  <span style={{ ...s.dot, background: "#97C459" }} />
+                  <span style={{ ...s.dot, background: "var(--success-border)" }} />
                   Available
                 </span>
 
                 <span style={s.legendItem}>
-                  <span style={{ ...s.dot, background: "#E24B4A" }} />
-                  Occupied
+                  <span style={{ ...s.dot, background: "var(--danger-border)" }} />
+                  Occupied / Full
+                </span>
+
+                <span style={s.legendItem}>
+                  <span style={{ ...s.dot, background: "var(--warning-border)" }} />
+                  Your reservation
                 </span>
               </div>
             </>
@@ -1093,6 +1366,7 @@ const s: { [k: string]: React.CSSProperties } = {
     color: "var(--text)",
     fontFamily: "sans-serif",
   },
+
   nav: {
     display: "flex",
     alignItems: "center",
@@ -1101,6 +1375,7 @@ const s: { [k: string]: React.CSSProperties } = {
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
   },
+
   logo: {
     fontSize: 20,
     fontWeight: 700,
@@ -1112,18 +1387,15 @@ const s: { [k: string]: React.CSSProperties } = {
     fontSize: 13,
     color: "var(--muted)",
   },
+
   body: {
     flex: 1,
     padding: 28,
-    maxWidth: 720,
+    maxWidth: 980,
     width: "100%",
     boxSizing: "border-box",
   },
-  welcome: {
-    fontSize: 20,
-    fontWeight: 500,
-    margin: "0 0 20px",
-  },
+
   sectionTitle: {
     fontSize: 12,
     fontWeight: 500,
@@ -1132,18 +1404,15 @@ const s: { [k: string]: React.CSSProperties } = {
     letterSpacing: 1,
     margin: "0 0 10px",
   },
+
   resCard: {
     background: "var(--surface)",
     border: "1px solid var(--border)",
     borderRadius: 12,
     padding: 20,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 28,
-    gap: 16,
-    flexWrap: "wrap",
   },
+
   btn: {
     padding: "9px 18px",
     background: "var(--primary)",
@@ -1163,22 +1432,26 @@ const s: { [k: string]: React.CSSProperties } = {
     overflow: "hidden",
     marginBottom: 28,
   },
+
   filters: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 10,
     padding: "14px 16px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border)",
   },
+
   select: {
-    padding: "8px 12px",
-    border: "1px solid #ddd",
+    padding: "9px 12px",
+    border: "1px solid var(--border-strong)",
     borderRadius: 8,
     fontSize: 13,
-    background: "#fafafa",
+    background: "var(--select-bg)",
+    color: "var(--text)",
     width: "100%",
     minWidth: 0,
   },
+
   emptyBox: {
     textAlign: "center",
     padding: 18,
@@ -1189,12 +1462,14 @@ const s: { [k: string]: React.CSSProperties } = {
     background: "var(--surface-2)",
     margin: 16,
   },
+
   slotGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
     gap: 8,
     padding: 16,
   },
+
   slotPill: {
     position: "relative",
     border: "1px solid",
@@ -1212,16 +1487,19 @@ const s: { [k: string]: React.CSSProperties } = {
     borderColor: "var(--success-border)",
     color: "var(--success-text)",
   },
+
   occupiedPill: {
     background: "var(--danger-bg)",
     borderColor: "var(--danger-border)",
     color: "var(--danger-text)",
   },
+
   selectedPill: {
     background: "var(--primary-soft)",
     borderColor: "var(--primary)",
     color: "var(--primary)",
   },
+
   reservedByMePill: {
     background: "var(--warning-bg)",
     borderColor: "var(--warning-border)",
@@ -1252,6 +1530,7 @@ const s: { [k: string]: React.CSSProperties } = {
     padding: "0 16px 14px",
     fontSize: 11,
     color: "var(--muted)",
+    flexWrap: "wrap",
   },
   legendItem: {
     display: "flex",
@@ -1279,6 +1558,7 @@ const s: { [k: string]: React.CSSProperties } = {
     border: "1px solid var(--primary-border)",
     borderRadius: 10,
     background: "var(--primary-soft)",
+    color: "var(--text)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1302,6 +1582,7 @@ const s: { [k: string]: React.CSSProperties } = {
     padding: 4,
     borderRadius: 999,
   },
+
   tabButton: {
     border: "none",
     background: "transparent",
@@ -1312,11 +1593,13 @@ const s: { [k: string]: React.CSSProperties } = {
     borderRadius: 999,
     cursor: "pointer",
   },
+
   activeTabButton: {
     background: "var(--surface)",
     color: "var(--primary)",
     boxShadow: "var(--shadow-sm)",
   },
+
   cancelBtn: {
     border: "1px solid var(--danger-border-2)",
     background: "var(--danger-bg-2)",
@@ -1329,9 +1612,10 @@ const s: { [k: string]: React.CSSProperties } = {
   },
   pastResItem: {
     background: "var(--surface-3)",
-    borderColor: "var(--border-strong)",
+    borderColor: "var(--border)",
     color: "var(--muted)",
   },
+
   footer: {
     padding: "14px 28px",
     borderTop: "1px solid var(--border)",
@@ -1340,6 +1624,7 @@ const s: { [k: string]: React.CSSProperties } = {
     gap: 20,
     marginTop: "auto",
   },
+
   footerLink: {
     fontSize: 13,
     color: "var(--muted)",
@@ -1353,9 +1638,9 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   dayGroupCard: {
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     borderRadius: 12,
-    background: "#fafafa",
+    background: "var(--surface-2)",
     overflow: "hidden",
   },
 
@@ -1363,6 +1648,7 @@ const s: { [k: string]: React.CSSProperties } = {
     width: "100%",
     border: "none",
     background: "transparent",
+    color: "var(--text)",
     padding: "14px 16px",
     display: "flex",
     alignItems: "center",
@@ -1379,9 +1665,9 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   roomGroupCard: {
-    border: "1px solid #e8e8e8",
+    border: "1px solid var(--border)",
     borderRadius: 10,
-    background: "#fff",
+    background: "var(--surface)",
     overflow: "hidden",
   },
 
@@ -1389,6 +1675,7 @@ const s: { [k: string]: React.CSSProperties } = {
     width: "100%",
     border: "none",
     background: "transparent",
+    color: "var(--text)",
     padding: "12px 14px",
     display: "flex",
     alignItems: "center",
@@ -1410,16 +1697,17 @@ const s: { [k: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     gap: 12,
     padding: "10px 12px",
-    border: "1px solid #eee",
+    border: "1px solid var(--border)",
     borderRadius: 10,
-    background: "#fafafa",
+    background: "var(--surface-2)",
+    color: "var(--text)",
     flexWrap: "wrap",
   },
 
   groupSubtext: {
     marginTop: 3,
     fontSize: 12,
-    color: "#888",
+    color: "var(--muted)",
   },
 
   groupRightText: {
@@ -1427,7 +1715,7 @@ const s: { [k: string]: React.CSSProperties } = {
     alignItems: "center",
     gap: 8,
     fontSize: 12,
-    color: "#666",
+    color: "var(--muted)",
     whiteSpace: "nowrap",
   },
 
@@ -1438,10 +1726,92 @@ const s: { [k: string]: React.CSSProperties } = {
     width: 22,
     height: 22,
     borderRadius: 999,
-    background: "#fff",
-    border: "1px solid #ddd",
-    color: "#185FA5",
+    background: "var(--surface)",
+    border: "1px solid var(--border-strong)",
+    color: "var(--primary)",
     fontSize: 16,
     fontWeight: 700,
+  },
+
+  panelGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: 12,
+    padding: 16,
+  },
+
+  schedulePanel: {
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    padding: 14,
+    background: "var(--surface-2)",
+    color: "var(--text)",
+    textAlign: "left",
+    cursor: "pointer",
+    minHeight: 112,
+  },
+
+  selectedPanel: {
+    outline: "2px solid var(--primary)",
+    outlineOffset: 2,
+  },
+
+  successPanel: {
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+  },
+
+  warningPanel: {
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+  },
+
+  dangerPanel: {
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+  },
+
+  mutedPanel: {
+    background: "var(--surface-2)",
+    borderColor: "var(--border)",
+  },
+
+  panelTopRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  panelBadge: {
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "4px 8px",
+    borderRadius: 999,
+    background: "var(--surface)",
+    color: "var(--text)",
+    border: "1px solid var(--border)",
+    whiteSpace: "nowrap",
+  },
+
+  panelMainText: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "var(--text)",
+  },
+
+  panelSubtext: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+
+  selectedScheduleHeader: {
+    margin: "4px 16px 0",
+    padding: "12px 14px",
+    border: "1px solid var(--border)",
+    borderRadius: 12,
+    background: "var(--surface-2)",
   },
 };
