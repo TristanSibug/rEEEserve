@@ -3,8 +3,15 @@ import { cookies } from "next/headers";
 import { createClient } from "../../../../utils/supabase/server";
 import { sendReservationCancelledEmail } from "../../../../utils/email";
 
+const RESERVATION_LEAD_TIME_MINUTES = 60;
+
+function normalizeTime(t: string) {
+  return t.slice(0, 5);
+}
+
 function timeToMinutes(t: string) {
-  const [h, m] = t.split(":").map(Number);
+  const clean = normalizeTime(t);
+  const [h, m] = clean.split(":").map(Number);
   return h * 60 + m;
 }
 
@@ -33,6 +40,7 @@ function getManilaDateTime() {
   return {
     today: `${get("year")}-${get("month")}-${get("day")}`,
     nowMinutes: Number(get("hour")) * 60 + Number(get("minute")),
+    nowTime: `${get("hour")}:${get("minute")}:${get("second")}`,
   };
 }
 
@@ -42,27 +50,53 @@ function isPastOrTooSoon(date: string, timeStart: string) {
   if (date < today) return true;
   if (date > today) return false;
 
-  return timeToMinutes(timeStart) < nowMinutes + 30;
+  return (
+    timeToMinutes(timeStart) <
+    nowMinutes + RESERVATION_LEAD_TIME_MINUTES
+  );
 }
 
-function getManilaNow() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(new Date());
+async function getInstructorFromGoogleSession(supabase: any) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  const get = (type: string) =>
-    parts.find(part => part.type === type)?.value ?? "00";
+  if (userError || !user?.email) {
+    return {
+      staff: null,
+      error: "You must be logged in with Google to use instructor reservations.",
+      status: 401,
+    };
+  }
+
+  const { data: staff, error: staffError } = await supabase
+    .from("staff_credentials")
+    .select("id, username, role, email")
+    .eq("role", "instructor")
+    .ilike("email", user.email)
+    .maybeSingle();
+
+  if (staffError) {
+    return {
+      staff: null,
+      error: staffError.message,
+      status: 500,
+    };
+  }
+
+  if (!staff) {
+    return {
+      staff: null,
+      error: "Only instructors can use this reservation route.",
+      status: 403,
+    };
+  }
 
   return {
-    today: `${get("year")}-${get("month")}-${get("day")}`,
-    nowTime: `${get("hour")}:${get("minute")}:${get("second")}`,
+    staff,
+    error: null,
+    status: 200,
   };
 }
 
@@ -70,21 +104,17 @@ export async function GET() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const staffRole = cookieStore.get("staff_role")?.value;
-  const staffId = cookieStore.get("staff_id")?.value;
+  const auth = await getInstructorFromGoogleSession(supabase);
 
-  if (staffRole !== "instructor") {
-    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-  }
-
-  if (!staffId) {
+  if (!auth.staff) {
     return NextResponse.json(
-      { error: "Missing staff account." },
-      { status: 401 }
+      { error: auth.error },
+      { status: auth.status }
     );
   }
 
-  const { today, nowTime } = getManilaNow();
+  const staffId = auth.staff.id;
+  const { today, nowTime } = getManilaDateTime();
 
   const { data, error } = await supabase
     .from("room_schedule_blocks")
@@ -92,7 +122,7 @@ export async function GET() {
       "id, room_name, block_date, time_start, time_end, block_type, label, created_by_staff_id, created_by_role"
     )
     .eq("block_type", "instructor_reservation")
-    .eq("created_by_staff_id", Number(staffId))
+    .eq("created_by_staff_id", staffId)
     .order("block_date", { ascending: true })
     .order("time_start", { ascending: true });
 
@@ -160,37 +190,17 @@ export async function POST(request: Request) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const staffRole = cookieStore.get("staff_role")?.value;
-  const staffId = cookieStore.get("staff_id")?.value;
+  const auth = await getInstructorFromGoogleSession(supabase);
 
-  if (staffRole !== "instructor") {
+  if (!auth.staff) {
     return NextResponse.json(
-      { error: "Only instructors can use this reservation route." },
-      { status: 403 }
+      { error: auth.error },
+      { status: auth.status }
     );
   }
 
-  if (!staffId) {
-    return NextResponse.json(
-      { error: "Missing staff account." },
-      { status: 401 }
-    );
-  }
-
-  const { data: staffData, error: staffError } = await supabase
-    .from("staff_credentials")
-    .select("username")
-    .eq("id", Number(staffId))
-    .single();
-
-  if (staffError || !staffData) {
-    return NextResponse.json(
-      { error: "Could not find instructor account." },
-      { status: 401 }
-    );
-  }
-
-  const instructorName = staffData.username;
+  const staffId = auth.staff.id;
+  const instructorName = auth.staff.username ?? "Instructor";
 
   const [year, month, day] = date.split("-").map(Number);
   const selectedDate = new Date(year, month - 1, day);
@@ -289,7 +299,7 @@ export async function POST(request: Request) {
       time_end: timeEnd,
       block_type: "instructor_reservation",
       label: `Reserved by ${instructorName}`,
-      created_by_staff_id: Number(staffId),
+      created_by_staff_id: staffId,
       created_by_role: "instructor",
     })
     .select()
@@ -306,7 +316,7 @@ export async function POST(request: Request) {
       .from("reservations")
       .update({
         status: "cancelled_by_instructor",
-        cancelled_by_staff_id: Number(staffId),
+        cancelled_by_staff_id: staffId,
         cancellation_reason: "Overridden by instructor reservation.",
         cancelled_at: new Date().toISOString(),
       })
@@ -328,7 +338,7 @@ export async function POST(request: Request) {
     action_date: date,
     time_start: timeStart,
     time_end: timeEnd,
-    staff_id: Number(staffId),
+    staff_id: staffId,
     details: `Reserved by ${instructorName}`,
   });
 
@@ -368,19 +378,16 @@ export async function DELETE(request: Request) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const staffRole = cookieStore.get("staff_role")?.value;
-  const staffId = cookieStore.get("staff_id")?.value;
+  const auth = await getInstructorFromGoogleSession(supabase);
 
-  if (staffRole !== "instructor") {
-    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-  }
-
-  if (!staffId) {
+  if (!auth.staff) {
     return NextResponse.json(
-      { error: "Missing staff account." },
-      { status: 401 }
+      { error: auth.error },
+      { status: auth.status }
     );
   }
+
+  const staffId = auth.staff.id;
 
   const { data: existingBlock, error: readError } = await supabase
     .from("room_schedule_blocks")
@@ -389,7 +396,7 @@ export async function DELETE(request: Request) {
     )
     .eq("id", Number(id))
     .eq("block_type", "instructor_reservation")
-    .eq("created_by_staff_id", Number(staffId))
+    .eq("created_by_staff_id", staffId)
     .single();
 
   if (readError || !existingBlock) {
@@ -411,7 +418,7 @@ export async function DELETE(request: Request) {
     .delete()
     .eq("id", Number(id))
     .eq("block_type", "instructor_reservation")
-    .eq("created_by_staff_id", Number(staffId));
+    .eq("created_by_staff_id", staffId);
 
   if (deleteError) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
@@ -423,7 +430,7 @@ export async function DELETE(request: Request) {
     action_date: existingBlock.block_date,
     time_start: existingBlock.time_start,
     time_end: existingBlock.time_end,
-    staff_id: Number(staffId),
+    staff_id: staffId,
     details: `Cancelled ${existingBlock.label ?? "instructor reservation"}.`,
   });
 
