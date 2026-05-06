@@ -871,35 +871,24 @@ export default function InstructorDashboard() {
                                     {isRoomOpen && (
                                       <div style={s.timeslotList}>
                                         {roomGroup.reservations.map(r => (
-                                          <button
-                                            key={r.id}
-                                            type="button"
-                                            style={{
-                                              ...s.timeslotRow,
-                                              ...(canCancelInstructorReservation(r)
-                                                ? s.clickableTimeslotRow
-                                                : {}),
-                                            }}
-                                            onClick={() => {
-                                              if (!canCancelInstructorReservation(r)) return;
-                                              cancelInstructorReservation(r.id);
-                                            }}
-                                          >
+                                          <div key={r.id} style={s.timeslotRow}>
                                             <div>
                                               <strong>
                                                 {fmt(r.time_start)} – {fmt(r.time_end)}
                                               </strong>
-                                              <div style={s.groupSubtext}>
-                                                Reserved by you
-                                              </div>
+                                              <div style={s.groupSubtext}>Reserved by you</div>
                                             </div>
 
                                             {canCancelInstructorReservation(r) && (
-                                              <span style={s.cancelHint}>
-                                                Click to cancel
-                                              </span>
+                                              <button
+                                                type="button"
+                                                style={s.cancelBtn}
+                                                onClick={() => cancelInstructorReservation(r.id)}
+                                              >
+                                                Cancel
+                                              </button>
                                             )}
-                                          </button>
+                                          </div>
                                         ))}
                                       </div>
                                     )}
@@ -1189,7 +1178,7 @@ export default function InstructorDashboard() {
 
                             <span style={s.slotInfoText}>
                               {isReservedByMe
-                                ? "Reserved by you • click to cancel"
+                                ? "Reserved by you"
                                 : isOccupied
                                   ? slot.course_name ?? "Class / blocked"
                                   : isFull
@@ -1755,22 +1744,16 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   timeslotRow: {
-    width: "100%",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
     padding: "10px 12px",
-    border: "1px solid var(--warning-border)",
+    border: "1px solid var(--border)",
     borderRadius: 10,
-    background: "var(--warning-bg)",
-    color: "var(--warning-text)",
+    background: "var(--surface-2)",
+    color: "var(--text)",
     flexWrap: "wrap",
-    textAlign: "left",
-  },
-
-  clickableTimeslotRow: {
-    cursor: "pointer",
   },
 
   groupRightText: {
@@ -1796,10 +1779,4 @@ const s: { [k: string]: React.CSSProperties } = {
     fontWeight: 700,
   },
 
-  cancelHint: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: "var(--warning-text)",
-    whiteSpace: "nowrap",
-  },
 };
