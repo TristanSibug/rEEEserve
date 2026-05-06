@@ -1057,10 +1057,9 @@ export default function Dashboard() {
                                         }}
                                       >
                                         <div>
-                                          <strong>Timeslot {index + 1}</strong>
-                                          <div style={s.groupSubtext}>
+                                          <strong>
                                             {fmt(r.time_start)} – {fmt(r.time_end)}
-                                          </div>
+                                          </strong>
                                         </div>
 
                                         {reservationTab === "current" &&
