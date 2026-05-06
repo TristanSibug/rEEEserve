@@ -55,6 +55,21 @@ export default function InstructorDashboard() {
 
   const rooms = ["EEEI 301", "EEEI 305", "EEEI 308"];
 
+  const teachingClasses = [
+    {
+      name: "EEE 121",
+      lab: "EEEI 399",
+      days: "M, W",
+      timeslot: "11:30 AM – 2:30 PM",
+    },
+    {
+      name: "EEE 128",
+      lab: "EEEI 001",
+      days: "S",
+      timeslot: "8:00 AM – 11:00 AM",
+    },
+  ];
+
   const roomCapacity: Record<string, number> = {
     "EEEI 301": 10,
     "EEEI 305": 10,
@@ -782,41 +797,48 @@ export default function InstructorDashboard() {
           </div>
 
           {activeTab === "classes" && (
-            <div style={s.content}>
+            <div>
               <div style={s.sectionHeader}>
-                <p style={s.sectionTitle}>My Classes</p>
+                <div>
+                  <h2 style={s.sectionTitle}>My Classes</h2>
+                  <p style={s.sectionSubtitle}>
+                    Temporary instructor class list for the demo.
+                  </p>
+                </div>
+
                 <button type="button" style={s.btn}>
                   Edit Classes
                 </button>
               </div>
 
-              <table style={s.table}>
-                <thead>
-                  <tr>
-                    <th style={s.th}>Name</th>
-                    <th style={s.th}>Lab</th>
-                    <th style={s.th}>Day</th>
-                    <th style={s.th}>Timeslot</th>
-                    <th style={s.th}>Actions</th>
-                  </tr>
-                </thead>
+              <div style={s.classGrid}>
+                {teachingClasses.map(cls => (
+                  <div key={`${cls.name}-${cls.lab}-${cls.days}`} style={s.classCard}>
+                    <div style={s.classCardTop}>
+                      <div>
+                        <div style={s.classCode}>{cls.name}</div>
+                        <div style={s.classLab}>{cls.lab}</div>
+                      </div>
 
-                <tbody>
-                  <tr>
-                    <td style={s.td}>EEE 196</td>
-                    <td style={s.td}>Rm 308</td>
-                    <td style={s.td}>F</td>
-                    <td style={s.td}>11:30 AM – 2:30 PM</td>
-                    <td style={s.td}>
-                      <button type="button" style={s.dangerBtn}>
+                      <button type="button" style={s.classCancelBtn}>
                         Cancel
                       </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </div>
 
-              <p style={s.placeholder}>placeholder</p>
+                    <div style={s.classMetaGrid}>
+                      <div style={s.classMetaItem}>
+                        <span style={s.classMetaLabel}>Days</span>
+                        <strong style={s.classMetaValue}>{cls.days}</strong>
+                      </div>
+
+                      <div style={s.classMetaItem}>
+                        <span style={s.classMetaLabel}>Timeslot</span>
+                        <strong style={s.classMetaValue}>{cls.timeslot}</strong>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -1806,4 +1828,83 @@ const s: { [k: string]: React.CSSProperties } = {
     fontWeight: 700,
   },
 
+  sectionSubtitle: {
+    margin: "4px 0 0",
+    fontSize: 13,
+    color: "var(--muted)",
+  },
+
+  classGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: 14,
+    marginTop: 16,
+  },
+
+  classCard: {
+    border: "1px solid var(--border)",
+    borderRadius: 16,
+    padding: 16,
+    background: "var(--surface-2)",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.04)",
+  },
+
+  classCardTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 16,
+  },
+
+  classCode: {
+    fontSize: 17,
+    fontWeight: 700,
+    color: "var(--text)",
+  },
+
+  classLab: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "var(--muted)",
+  },
+
+  classMetaGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: 10,
+  },
+
+  classMetaItem: {
+    padding: "10px 12px",
+    borderRadius: 12,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+  },
+
+  classMetaLabel: {
+    display: "block",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    color: "var(--muted-2)",
+    marginBottom: 4,
+  },
+
+  classMetaValue: {
+    display: "block",
+    fontSize: 13,
+    color: "var(--text)",
+  },
+
+  classCancelBtn: {
+    padding: "6px 10px",
+    background: "var(--surface)",
+    color: "var(--danger-text)",
+    border: "1px solid var(--danger-border-2)",
+    borderRadius: 999,
+    fontSize: 12,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
 };
