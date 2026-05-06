@@ -22,7 +22,7 @@ type ScheduleSlot = {
 type DisplaySlot = {
   time_start: string;
   time_end: string;
-  status: "available" | "reserved" | "full" | "occupied";
+  status: "available" | "reserved" | "full" | "occupied" | "reservedByMe";
   course_name?: string | null;
   capacity: number;
   reserved_count: number;
@@ -70,6 +70,13 @@ export default function InstructorDashboard() {
   const [myReservations, setMyReservations] = useState<InstructorReservation[]>(
     []
   );
+
+  const [expandedReservationDate, setExpandedReservationDate] =
+    useState<string | null>(null);
+
+  const [expandedReservationRoom, setExpandedReservationRoom] =
+    useState<string | null>(null);
+
   const [creatingReservation, setCreatingReservation] = useState(false);
 
   useEffect(() => {
@@ -88,6 +95,11 @@ export default function InstructorDashboard() {
 
     fetchSlots();
   }, [lab, date]);
+
+  useEffect(() => {
+    setExpandedReservationDate(null);
+    setExpandedReservationRoom(null);
+  }, [activeTab]);
 
   useEffect(() => {
     async function fetchPreviews() {
@@ -361,6 +373,77 @@ export default function InstructorDashboard() {
     });
   }
 
+  function getEarliestStart(reservations: InstructorReservation[]) {
+    return reservations.reduce(
+      (earliest, r) =>
+        timeToMinutes(r.time_start) < timeToMinutes(earliest)
+          ? r.time_start
+          : earliest,
+      reservations[0]?.time_start ?? "00:00:00"
+    );
+  }
+
+  function getLatestEnd(reservations: InstructorReservation[]) {
+    return reservations.reduce(
+      (latest, r) =>
+        timeToMinutes(r.time_end) > timeToMinutes(latest) ? r.time_end : latest,
+      reservations[0]?.time_end ?? "00:00:00"
+    );
+  }
+
+  function getInstructorReservationDayGroups(
+    reservations: InstructorReservation[]
+  ) {
+    const dateMap = new Map<string, InstructorReservation[]>();
+
+    reservations.forEach(r => {
+      const existing = dateMap.get(r.schedule_date) ?? [];
+      existing.push(r);
+      dateMap.set(r.schedule_date, existing);
+    });
+
+    const sortedDates = Array.from(dateMap.entries()).sort(
+      ([dateA], [dateB]) => dateA.localeCompare(dateB)
+    );
+
+    return sortedDates.map(([scheduleDate, dayReservations]) => {
+      const sortedDayReservations = [...dayReservations].sort(
+        (a, b) => timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
+      );
+
+      const roomMap = new Map<string, InstructorReservation[]>();
+
+      sortedDayReservations.forEach(r => {
+        const existing = roomMap.get(r.room_name) ?? [];
+        existing.push(r);
+        roomMap.set(r.room_name, existing);
+      });
+
+      const rooms = Array.from(roomMap.entries())
+        .sort(([roomA], [roomB]) => roomA.localeCompare(roomB))
+        .map(([roomName, roomReservations]) => {
+          const sortedRoomReservations = [...roomReservations].sort(
+            (a, b) => timeToMinutes(a.time_start) - timeToMinutes(b.time_start)
+          );
+
+          return {
+            roomName,
+            reservations: sortedRoomReservations,
+            firstStart: getEarliestStart(sortedRoomReservations),
+            lastEnd: getLatestEnd(sortedRoomReservations),
+          };
+        });
+
+      return {
+        scheduleDate,
+        reservations: sortedDayReservations,
+        rooms,
+        firstStart: getEarliestStart(sortedDayReservations),
+        lastEnd: getLatestEnd(sortedDayReservations),
+      };
+    });
+  }
+
   function canCancelInstructorReservation(r: InstructorReservation) {
     return isSlotAllowedForDate(r.schedule_date, r.time_start);
   }
@@ -397,9 +480,17 @@ export default function InstructorDashboard() {
         continue;
       }
 
+      const reservedByMe = myReservations.some(
+        r =>
+          r.room_name === selectedLab &&
+          r.schedule_date === selectedDate &&
+          overlaps(time_start, time_end, r.time_start, r.time_end)
+      );
+
       const blockingSlot = sourceSlots.find(
         slot =>
           slot.source !== "reservation" &&
+          !reservedByMe &&
           overlaps(time_start, time_end, slot.time_start, slot.time_end)
       );
 
@@ -414,13 +505,15 @@ export default function InstructorDashboard() {
       displaySlots.push({
         time_start,
         time_end,
-        status: blockingSlot
-          ? "occupied"
-          : slotsLeft <= 0
-            ? "full"
-            : reservationCount > 0
-              ? "reserved"
-              : "available",
+        status: reservedByMe
+          ? "reservedByMe"
+          : blockingSlot
+            ? "occupied"
+            : slotsLeft <= 0
+              ? "full"
+              : reservationCount > 0
+                ? "reserved"
+                : "available",
         course_name: blockingSlot?.course_name ?? null,
         capacity,
         reserved_count: reservationCount,
@@ -605,6 +698,9 @@ export default function InstructorDashboard() {
 
   const displaySlots = lab && date ? getDisplaySlots() : [];
 
+  const instructorReservationGroups =
+    getInstructorReservationDayGroups(myReservations);
+
   const dateFirstRoomPanels =
     scheduleMode === "dateFirst" && previewAnchorDate ? rooms : [];
 
@@ -702,31 +798,119 @@ export default function InstructorDashboard() {
               <p style={s.sectionTitle}>My Reservations</p>
 
               <div style={s.resCard}>
-                {myReservations.length === 0 ? (
+                {instructorReservationGroups.length === 0 ? (
                   <p style={s.emptyText}>No instructor reservations</p>
                 ) : (
-                  <div style={s.resList}>
-                    {myReservations.map(r => (
-                      <div key={r.id} style={s.resItem}>
-                        <div>
-                          <strong>{r.room_name}</strong>
-                          <div style={s.groupSubtext}>
-                            {formatPanelDate(r.schedule_date)} •{" "}
-                            {fmt(r.time_start)} – {fmt(r.time_end)}
-                          </div>
-                        </div>
+                  <div style={s.resGroupList}>
+                    {instructorReservationGroups.map(dayGroup => {
+                      const isDateOpen =
+                        expandedReservationDate === dayGroup.scheduleDate;
 
-                        {canCancelInstructorReservation(r) && (
+                      return (
+                        <div key={dayGroup.scheduleDate} style={s.dayGroupCard}>
                           <button
                             type="button"
-                            style={s.cancelBtn}
-                            onClick={() => cancelInstructorReservation(r.id)}
+                            style={s.dayGroupButton}
+                            onClick={() => {
+                              setExpandedReservationDate(
+                                isDateOpen ? null : dayGroup.scheduleDate
+                              );
+                              setExpandedReservationRoom(null);
+                            }}
                           >
-                            Cancel
+                            <div>
+                              <strong>{formatPanelDate(dayGroup.scheduleDate)}</strong>
+                              <div style={s.groupSubtext}>
+                                {fmt(dayGroup.firstStart)} – {fmt(dayGroup.lastEnd)}
+                              </div>
+                            </div>
+
+                            <div style={s.groupRightText}>
+                              {dayGroup.reservations.length}{" "}
+                              {dayGroup.reservations.length === 1 ? "slot" : "slots"}
+                              <span style={s.chevron}>{isDateOpen ? "−" : "+"}</span>
+                            </div>
                           </button>
-                        )}
-                      </div>
-                    ))}
+
+                          {isDateOpen && (
+                            <div style={s.roomGroupList}>
+                              {dayGroup.rooms.map(roomGroup => {
+                                const roomKey = `${dayGroup.scheduleDate}-${roomGroup.roomName}`;
+                                const isRoomOpen = expandedReservationRoom === roomKey;
+
+                                return (
+                                  <div key={roomKey} style={s.roomGroupCard}>
+                                    <button
+                                      type="button"
+                                      style={s.roomGroupButton}
+                                      onClick={() =>
+                                        setExpandedReservationRoom(
+                                          isRoomOpen ? null : roomKey
+                                        )
+                                      }
+                                    >
+                                      <div>
+                                        <strong>{roomGroup.roomName}</strong>
+                                        <div style={s.groupSubtext}>
+                                          {fmt(roomGroup.firstStart)} –{" "}
+                                          {fmt(roomGroup.lastEnd)}
+                                        </div>
+                                      </div>
+
+                                      <div style={s.groupRightText}>
+                                        {roomGroup.reservations.length}{" "}
+                                        {roomGroup.reservations.length === 1
+                                          ? "slot"
+                                          : "slots"}
+                                        <span style={s.chevron}>
+                                          {isRoomOpen ? "−" : "+"}
+                                        </span>
+                                      </div>
+                                    </button>
+
+                                    {isRoomOpen && (
+                                      <div style={s.timeslotList}>
+                                        {roomGroup.reservations.map(r => (
+                                          <button
+                                            key={r.id}
+                                            type="button"
+                                            style={{
+                                              ...s.timeslotRow,
+                                              ...(canCancelInstructorReservation(r)
+                                                ? s.clickableTimeslotRow
+                                                : {}),
+                                            }}
+                                            onClick={() => {
+                                              if (!canCancelInstructorReservation(r)) return;
+                                              cancelInstructorReservation(r.id);
+                                            }}
+                                          >
+                                            <div>
+                                              <strong>
+                                                {fmt(r.time_start)} – {fmt(r.time_end)}
+                                              </strong>
+                                              <div style={s.groupSubtext}>
+                                                Reserved by you
+                                              </div>
+                                            </div>
+
+                                            {canCancelInstructorReservation(r) && (
+                                              <span style={s.cancelHint}>
+                                                Click to cancel
+                                              </span>
+                                            )}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -956,23 +1140,45 @@ export default function InstructorDashboard() {
                         const key = `${slot.time_start}-${slot.time_end}`;
                         const isAvailable = slot.status === "available";
                         const isReserved = slot.status === "reserved";
+                        const isReservedByMe = slot.status === "reservedByMe";
                         const isFull = slot.status === "full";
                         const isOccupied = slot.status === "occupied";
-                        const isClickable = !isOccupied && !creatingReservation;
+                        const isClickable = (!isOccupied || isReservedByMe) && !creatingReservation;
 
                         return (
                           <button
                             key={key}
                             type="button"
-                            onClick={() => createInstructorReservation(slot)}
+                            onClick={() => {
+                              if (isReservedByMe) {
+                                const matchingReservation = myReservations.find(
+                                  r =>
+                                    r.room_name === lab &&
+                                    r.schedule_date === date &&
+                                    overlaps(slot.time_start, slot.time_end, r.time_start, r.time_end)
+                                );
+
+                                if (!matchingReservation) {
+                                  alert("Could not find your instructor reservation for this timeslot.");
+                                  return;
+                                }
+
+                                cancelInstructorReservation(matchingReservation.id);
+                                return;
+                              }
+
+                              createInstructorReservation(slot);
+                            }}
                             disabled={!isClickable}
                             style={{
                               ...s.slotPill,
-                              ...(isAvailable
-                                ? s.availablePill
-                                : isReserved || isFull
-                                  ? s.reservedPill
-                                  : s.occupiedPill),
+                              ...(isReservedByMe
+                                ? s.reservedByMePill
+                                : isAvailable
+                                  ? s.availablePill
+                                  : isReserved || isFull
+                                    ? s.reservedPill
+                                    : s.occupiedPill),
                               cursor: isClickable ? "pointer" : "not-allowed",
                               opacity: creatingReservation ? 0.75 : 1,
                             }}
@@ -982,14 +1188,15 @@ export default function InstructorDashboard() {
                             </span>
 
                             <span style={s.slotInfoText}>
-                              {isOccupied
-                                ? slot.course_name ??
-                                "Class / blocked / instructor reservation"
-                                : isFull
-                                  ? "Full — click to override"
-                                  : isReserved
-                                    ? `${slot.slots_left}/${slot.capacity} slots left — click to override`
-                                    : `${slot.slots_left}/${slot.capacity} slots left`}
+                              {isReservedByMe
+                                ? "Reserved by you • click to cancel"
+                                : isOccupied
+                                  ? slot.course_name ?? "Class / blocked"
+                                  : isFull
+                                    ? "Full — click to override"
+                                    : isReserved
+                                      ? `${slot.slots_left}/${slot.capacity} slots left — click to override`
+                                      : `${slot.slots_left}/${slot.capacity} slots left`}
                             </span>
                           </button>
                         );
@@ -1479,5 +1686,120 @@ const s: { [k: string]: React.CSSProperties } = {
     fontSize: 13,
     color: "var(--muted)",
     textDecoration: "none",
+  },
+
+  reservedByMePill: {
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+    color: "var(--warning-text)",
+  },
+
+  resGroupList: {
+    display: "grid",
+    gap: 10,
+    width: "100%",
+  },
+
+  dayGroupCard: {
+    border: "1px solid var(--border)",
+    borderRadius: 12,
+    background: "var(--surface-2)",
+    overflow: "hidden",
+  },
+
+  dayGroupButton: {
+    width: "100%",
+    border: "none",
+    background: "transparent",
+    color: "var(--text)",
+    padding: "14px 16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    cursor: "pointer",
+    textAlign: "left",
+  },
+
+  roomGroupList: {
+    display: "grid",
+    gap: 8,
+    padding: "0 12px 12px",
+  },
+
+  roomGroupCard: {
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    background: "var(--surface)",
+    overflow: "hidden",
+  },
+
+  roomGroupButton: {
+    width: "100%",
+    border: "none",
+    background: "transparent",
+    color: "var(--text)",
+    padding: "12px 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    cursor: "pointer",
+    textAlign: "left",
+  },
+
+  timeslotList: {
+    display: "grid",
+    gap: 8,
+    padding: "0 12px 12px",
+  },
+
+  timeslotRow: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "10px 12px",
+    border: "1px solid var(--warning-border)",
+    borderRadius: 10,
+    background: "var(--warning-bg)",
+    color: "var(--warning-text)",
+    flexWrap: "wrap",
+    textAlign: "left",
+  },
+
+  clickableTimeslotRow: {
+    cursor: "pointer",
+  },
+
+  groupRightText: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 12,
+    color: "var(--muted)",
+    whiteSpace: "nowrap",
+  },
+
+  chevron: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    background: "var(--surface)",
+    border: "1px solid var(--border-strong)",
+    color: "var(--primary)",
+    fontSize: 16,
+    fontWeight: 700,
+  },
+
+  cancelHint: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "var(--warning-text)",
+    whiteSpace: "nowrap",
   },
 };
