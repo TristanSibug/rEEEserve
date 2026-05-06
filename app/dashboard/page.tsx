@@ -1135,105 +1135,111 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-        <p style={s.sectionTitle}>Lab schedules</p>
 
-        <div style={s.scheduleCard}>
-          <div style={s.filters}>
-            <select
-              style={s.select}
-              value={date}
-              onChange={e => {
-                const selectedDate = e.target.value;
+        <div style={s.scheduleShell}>
+          <div style={s.scheduleFloatingTitle}>
+            Lab Schedules
+          </div>
 
-                setDate(selectedDate);
-                setCart([]);
+          <div style={s.scheduleCard}>
 
-                if (!selectedDate && !lab) {
-                  setScheduleMode("none");
-                  setPreviewAnchorDate("");
-                  setPreviewAnchorLab("");
-                  return;
-                }
+            <div style={s.filters}>
+              <select
+                style={s.select}
+                value={date}
+                onChange={e => {
+                  const selectedDate = e.target.value;
 
-                if (!selectedDate && lab) {
-                  const defaultDate = getDefaultScheduleDate();
+                  setDate(selectedDate);
+                  setCart([]);
 
-                  setDate(defaultDate);
-                  setScheduleMode("roomFirst");
-                  setPreviewAnchorLab(lab);
-                  setPreviewAnchorDate(defaultDate);
-                  return;
-                }
+                  if (!selectedDate && !lab) {
+                    setScheduleMode("none");
+                    setPreviewAnchorDate("");
+                    setPreviewAnchorLab("");
+                    return;
+                  }
 
-                if (selectedDate && lab) {
-                  setScheduleMode("both");
-                  setPreviewAnchorDate(selectedDate);
-                  setPreviewAnchorLab(lab);
-                  return;
-                }
+                  if (!selectedDate && lab) {
+                    const defaultDate = getDefaultScheduleDate();
 
-                if (selectedDate && !lab) {
-                  setScheduleMode("dateFirst");
-                  setPreviewAnchorDate(selectedDate);
-                  setPreviewAnchorLab("");
-                }
-              }}
-            >
-              <option value="">Date: select one</option>
-              {getDateOptions().map(({ val, label }) => (
-                <option key={val} value={val}>
-                  {label}
-                </option>
-              ))}
-            </select>
+                    setDate(defaultDate);
+                    setScheduleMode("roomFirst");
+                    setPreviewAnchorLab(lab);
+                    setPreviewAnchorDate(defaultDate);
+                    return;
+                  }
 
-            <select
-              style={s.select}
-              value={lab}
-              onChange={e => {
-                const selectedLab = e.target.value;
+                  if (selectedDate && lab) {
+                    setScheduleMode("both");
+                    setPreviewAnchorDate(selectedDate);
+                    setPreviewAnchorLab(lab);
+                    return;
+                  }
 
-                setLab(selectedLab);
-                setCart([]);
+                  if (selectedDate && !lab) {
+                    setScheduleMode("dateFirst");
+                    setPreviewAnchorDate(selectedDate);
+                    setPreviewAnchorLab("");
+                  }
+                }}
+              >
+                <option value="">Date: select one</option>
+                {getDateOptions().map(({ val, label }) => (
+                  <option key={val} value={val}>
+                    {label}
+                  </option>
+                ))}
+              </select>
 
-                if (!selectedLab && !date) {
-                  setScheduleMode("none");
-                  setPreviewAnchorDate("");
-                  setPreviewAnchorLab("");
-                  return;
-                }
+              <select
+                style={s.select}
+                value={lab}
+                onChange={e => {
+                  const selectedLab = e.target.value;
 
-                if (!selectedLab && date) {
-                  setScheduleMode("dateFirst");
-                  setPreviewAnchorDate(date);
-                  setPreviewAnchorLab("");
-                  return;
-                }
+                  setLab(selectedLab);
+                  setCart([]);
 
-                if (selectedLab && date) {
-                  setScheduleMode("both");
-                  setPreviewAnchorDate(date);
-                  setPreviewAnchorLab(selectedLab);
-                  return;
-                }
+                  if (!selectedLab && !date) {
+                    setScheduleMode("none");
+                    setPreviewAnchorDate("");
+                    setPreviewAnchorLab("");
+                    return;
+                  }
 
-                if (selectedLab && !date) {
-                  const defaultDate = getDefaultScheduleDate();
+                  if (!selectedLab && date) {
+                    setScheduleMode("dateFirst");
+                    setPreviewAnchorDate(date);
+                    setPreviewAnchorLab("");
+                    return;
+                  }
 
-                  setDate(defaultDate);
-                  setScheduleMode("roomFirst");
-                  setPreviewAnchorLab(selectedLab);
-                  setPreviewAnchorDate(defaultDate);
-                }
-              }}
-            >
-              <option value="">Lab: select one</option>
-              {rooms.map(r => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+                  if (selectedLab && date) {
+                    setScheduleMode("both");
+                    setPreviewAnchorDate(date);
+                    setPreviewAnchorLab(selectedLab);
+                    return;
+                  }
+
+                  if (selectedLab && !date) {
+                    const defaultDate = getDefaultScheduleDate();
+
+                    setDate(defaultDate);
+                    setScheduleMode("roomFirst");
+                    setPreviewAnchorLab(selectedLab);
+                    setPreviewAnchorDate(defaultDate);
+                  }
+                }}
+              >
+                <option value="">Lab: select one</option>
+                {rooms.map(r => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {!lab && !date && (
@@ -1547,13 +1553,6 @@ const s: { [k: string]: React.CSSProperties } = {
     whiteSpace: "nowrap",
     border: "none",
     cursor: "pointer",
-  },
-  scheduleCard: {
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 28,
   },
 
   filters: {
@@ -2006,5 +2005,34 @@ const s: { [k: string]: React.CSSProperties } = {
     boxShadow: "var(--shadow-sm)",
   },
 
+  scheduleShell: {
+    position: "relative",
+    marginTop: 30,
+    marginBottom: 24,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    borderRadius: 18,
+    boxShadow: "var(--shadow-sm)",
+    padding: "34px 18px 18px",
+  },
 
+  scheduleFloatingTitle: {
+    position: "absolute",
+    top: -16,
+    left: 18,
+    padding: "8px 16px",
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    fontSize: 16,
+    fontWeight: 700,
+    boxShadow: "var(--shadow-sm)",
+  },
+
+  scheduleCard: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+  },
 };
