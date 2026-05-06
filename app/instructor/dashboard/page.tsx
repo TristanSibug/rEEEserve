@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Tab = "classes" | "reservations";
 
@@ -110,6 +111,19 @@ export default function InstructorDashboard() {
     const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
 
     return `${hour}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+  }
+
+  function formatDateWords(dateString: string) {
+    if (!dateString) return "";
+
+    const [year, month, day] = dateString.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+
+    return d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
   }
 
   function timeToMinutes(t: string) {
@@ -402,9 +416,9 @@ export default function InstructorDashboard() {
   return (
     <div style={s.page}>
       <nav style={s.nav}>
-        <a href="/" style={s.logo}>
-          rEEE<span style={{ color: "#185FA5" }}>serve</span>
-        </a>
+        <Link href="/" style={s.logo}>
+          rEEE<span style={{ color: "var(--primary)" }}>serve</span>
+        </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={s.badge}>Instructor</span>
@@ -678,6 +692,10 @@ const s: { [k: string]: React.CSSProperties } = {
     fontWeight: 700,
     textDecoration: "none",
     color: "var(--text)",
+  },
+
+  logoBlue: {
+    color: "var(--primary)",
   },
 
   badge: {

@@ -812,6 +812,19 @@ export default function AdminDashboard() {
     return `${hour}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
   }
 
+  function formatDateWords(dateString: string) {
+    if (!dateString) return "";
+
+    const [year, month, day] = dateString.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+
+    return d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
   function timeToMinutes(t: string) {
     const clean = normalizeTime(t);
     const [h, m] = clean.split(":").map(Number);
@@ -1075,7 +1088,7 @@ export default function AdminDashboard() {
     <div style={s.page}>
       <nav style={s.nav}>
         <a href="/" style={s.logo}>
-          rEEE<span style={{ color: "#185FA5" }}>serve</span>
+          rEEE<span style={s.logoBlue}>serve</span>
         </a>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1222,7 +1235,7 @@ export default function AdminDashboard() {
                     <tr key={`${item.kind}-${item.id}`}>
                       <td style={s.td}>{item.person}</td>
                       <td style={s.td}>{item.room_name}</td>
-                      <td style={s.td}>{item.reserved_date}</td>
+                      <td style={s.td}>{formatDateWords(item.reserved_date)}</td>
                       <td style={s.td}>
                         {fmt(item.time_start)} – {fmt(item.time_end)}
                       </td>
@@ -1570,7 +1583,7 @@ export default function AdminDashboard() {
             <h3 style={s.modalTitle}>Manage timeslot</h3>
 
             <p style={s.modalSubText}>
-              {scheduleRoom} — {scheduleDate}
+              {scheduleRoom} — {formatDateWords(scheduleDate)}
             </p>
 
             <p style={s.slotModalTime}>
@@ -1700,16 +1713,20 @@ const s: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "14px 24px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
   },
 
   logo: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 700,
     textDecoration: "none",
     color: "var(--text)",
+  },
+
+  logoBlue: {
+    color: "var(--primary)",
   },
 
   badge: {

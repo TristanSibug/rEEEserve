@@ -798,12 +798,15 @@ export default function Dashboard() {
   }
 
   function formatReservationDate(dateString: string) {
+    if (!dateString) return "";
+
     const [year, month, day] = dateString.split("-").map(Number);
     const d = new Date(year, month - 1, day);
 
     return d.toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
+      year: "numeric",
     });
   }
 
@@ -814,24 +817,25 @@ export default function Dashboard() {
     const [year, month, day] = dateString.split("-").map(Number);
     const d = new Date(year, month - 1, day);
 
+    const fullDate = d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
     if (dateString === today) {
-      return `Today, ${d.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })}`;
+      return `Today, ${fullDate}`;
     }
 
     if (dateString === tomorrow) {
-      return `Tomorrow, ${d.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })}`;
+      return `Tomorrow, ${fullDate}`;
     }
 
     return d.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
+      weekday: "long",
+      month: "long",
       day: "numeric",
+      year: "numeric",
     });
   }
 
@@ -1472,13 +1476,13 @@ const s: { [k: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "16px 28px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
   },
 
   logo: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 700,
     textDecoration: "none",
     color: "var(--text)",

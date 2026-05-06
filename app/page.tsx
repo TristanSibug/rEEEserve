@@ -2,6 +2,7 @@
 
 import { createClient } from "../utils/supabase/client";
 
+
 type DemoRole = "student" | "instructor" | "admin";
 
 export default function Home() {
