@@ -1339,13 +1339,42 @@ export default function Dashboard() {
                   const isSelected = slot.status === "selected";
                   const isReservedByMe = slot.status === "reservedByMe";
                   const isFull = slot.status === "full";
-                  const isClickable = isAvailable || isSelected;
+                  const isClickable = isAvailable || isSelected || isReservedByMe;
 
                   return (
                     <button
                       key={key}
                       type="button"
-                      onClick={() => toggleCartSlot(slot)}
+                      onClick={() => {
+                        if (isReservedByMe) {
+                          const matchingReservation = allReservations.find(
+                            r =>
+                              r.student_email === email &&
+                              r.room_name === lab &&
+                              r.reserved_date === date &&
+                              r.status === "approved" &&
+                              overlaps(slot.time_start, slot.time_end, r.time_start, r.time_end)
+                          );
+
+                          if (!matchingReservation) {
+                            alert("Could not find your reservation for this timeslot.");
+                            return;
+                          }
+
+                          const ok = confirm(
+                            `Cancel your reservation for ${fmt(slot.time_start)} – ${fmt(
+                              slot.time_end
+                            )}?`
+                          );
+
+                          if (!ok) return;
+
+                          cancelReservation(matchingReservation.id);
+                          return;
+                        }
+
+                        toggleCartSlot(slot);
+                      }}
                       style={{
                         ...s.slotPill,
                         ...(isSelected
@@ -1368,7 +1397,7 @@ export default function Dashboard() {
                           : isSelected
                             ? "Selected"
                             : isReservedByMe
-                              ? `You reserved this timeslot • ${slot.slots_left}/${slot.capacity} slots left`
+                              ? `You reserved this timeslot • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
                               : isAvailable
                                 ? `${slot.slots_left}/${slot.capacity} slots left`
                                 : isFull
