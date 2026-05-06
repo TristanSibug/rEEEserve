@@ -118,28 +118,22 @@ body {
 
 .theme-toggle {
   position: fixed;
-  top: 18px;
+  top: 76px;
   right: 18px;
   z-index: 9999;
-
   width: 72px;
   height: 38px;
   padding: 0 7px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
+  transition: background-color 160ms ease, border-color 160ms ease,
     transform 120ms ease;
 }
 
@@ -159,16 +153,12 @@ body {
   position: absolute;
   top: 4px;
   left: 4px;
-
   width: 28px;
   height: 28px;
   border-radius: 999px;
   background: var(--primary);
   box-shadow: var(--shadow-sm);
-
-  transition:
-    transform 180ms ease,
-    background-color 160ms ease;
+  transition: transform 180ms ease, background-color 160ms ease;
 }
 
 html[data-theme="dark"] .theme-toggle-thumb {
@@ -177,8 +167,8 @@ html[data-theme="dark"] .theme-toggle-thumb {
 
 @media (max-width: 640px) {
   .theme-toggle {
-    top: 12px;
-    right: 12px;
+    top: 74px;
+    right: 14px;
     width: 64px;
     height: 34px;
   }
