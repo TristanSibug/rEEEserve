@@ -49,7 +49,7 @@ export default function AdminLogin() {
     <main style={styles.page}>
       <nav style={styles.nav}>
         <Link href="/" style={styles.logo}>
-          rEEE serve
+          rEEE<span style={styles.logoBlue}>serve</span>
         </Link>
 
         <Link href="/" style={styles.back}>
@@ -150,6 +150,10 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
     textDecoration: "none",
     color: "var(--text)",
+  },
+
+  logoBlue: {
+    color: "var(--primary)",
   },
 
   back: {

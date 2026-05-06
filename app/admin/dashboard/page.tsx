@@ -111,6 +111,7 @@ export default function AdminDashboard() {
   });
 
   const [visualRanges, setVisualRanges] = useState<VisualRange[]>([]);
+  const [availableSlotsToday, setAvailableSlotsToday] = useState(0);
   const [loadingVisualSchedule, setLoadingVisualSchedule] = useState(false);
 
   const [scheduleDate, setScheduleDate] = useState(getDefaultScheduleDate());
@@ -129,7 +130,11 @@ export default function AdminDashboard() {
   }, [scheduleDate, scheduleRoom]);
 
   async function fetchAllActivity() {
-    await Promise.all([fetchStudentReservations(), fetchInstructorReservations()]);
+    await Promise.all([
+      fetchStudentReservations(),
+      fetchInstructorReservations(),
+      fetchAvailableSlotsToday(),
+    ]);
   }
 
   async function fetchStudentReservations() {
@@ -187,6 +192,33 @@ export default function AdminDashboard() {
       setVisualRanges(Array.isArray(visualData) ? visualData : []);
     } finally {
       setLoadingVisualSchedule(false);
+    }
+  }
+
+  async function fetchAvailableSlotsToday() {
+    const today = getManilaNow().date;
+
+    try {
+      const results = await Promise.all(
+        rooms.map(async (room) => {
+          const res = await fetch(
+            `/api/schedules?date=${today}&room=${encodeURIComponent(room)}`
+          );
+
+          const data = await res.json();
+
+          if (!res.ok || !Array.isArray(data)) {
+            return 0;
+          }
+
+          return countAvailableSlotsForRanges(room, today, data);
+        })
+      );
+
+      setAvailableSlotsToday(results.reduce((sum, count) => sum + count, 0));
+    } catch (error) {
+      console.error("Failed to fetch available slots today:", error);
+      setAvailableSlotsToday(0);
     }
   }
 
@@ -687,6 +719,22 @@ export default function AdminDashboard() {
           ? pastActivity
           : cancelledActivity;
 
+  const reservationsTodayCount = studentActivity.filter(
+    (item) =>
+      item.reserved_date === getManilaNow().date &&
+      item.status === "approved"
+  ).length;
+
+  const activeNowCount = [...studentActivity, ...instructorActivity].filter(
+    (item) => {
+      if (item.kind === "student") {
+        return item.status === "approved" && isActiveNow(item);
+      }
+
+      return isActiveNow(item);
+    }
+  ).length;
+
   const displaySlots = generateDisplaySlots();
 
   function extractInstructorName(label?: string | null) {
@@ -962,6 +1010,67 @@ export default function AdminDashboard() {
     return displaySlots;
   }
 
+  function isActiveNow(item: {
+    reserved_date: string;
+    time_start: string;
+    time_end: string;
+  }) {
+    const now = getManilaNow();
+
+    if (item.reserved_date !== now.date) return false;
+
+    const start = normalizeTime(item.time_start);
+    const end = normalizeTime(item.time_end);
+
+    return start <= now.time && end > now.time;
+  }
+
+  function countAvailableSlotsForRanges(
+    room: string,
+    date: string,
+    ranges: VisualRange[]
+  ) {
+    let count = 0;
+
+    const labStart = 8 * 60 + 30;
+    const labEnd = 16 * 60;
+    const interval = 30;
+
+    const defaultCapacity = room === "EEEI 308" ? 16 : 10;
+    const capacity =
+      ranges.find((range) => typeof range.capacity === "number")?.capacity ??
+      defaultCapacity;
+
+    for (let current = labStart; current < labEnd; current += interval) {
+      const time_start = minutesToTime(current);
+      const time_end = minutesToTime(current + interval);
+
+      if (!isSlotAllowedForDate(date, time_start)) {
+        continue;
+      }
+
+      const blockingSlot = ranges.find(
+        (range) =>
+          range.source !== "reservation" &&
+          overlaps(time_start, time_end, range.time_start, range.time_end)
+      );
+
+      const reservationCount = ranges.filter(
+        (range) =>
+          range.source === "reservation" &&
+          overlaps(time_start, time_end, range.time_start, range.time_end)
+      ).length;
+
+      const slotsLeft = capacity - reservationCount;
+
+      if (!blockingSlot && slotsLeft > 0) {
+        count += 1;
+      }
+    }
+
+    return count;
+  }
+
   return (
     <div style={s.page}>
       <nav style={s.nav}>
@@ -980,11 +1089,9 @@ export default function AdminDashboard() {
       <div style={s.body}>
         <div style={s.stats}>
           {[
-            ["Total", sourceActivity.length],
-            ["Ongoing", ongoingActivity.length],
-            ["Pending", pendingActivity.length],
-            ["Past", pastActivity.length],
-            ["Cancelled", cancelledActivity.length],
+            ["Reservations Today", reservationsTodayCount],
+            ["Active Now", activeNowCount],
+            ["Available Slots Today", availableSlotsToday],
           ].map(([label, val]) => (
             <div key={String(label)} style={s.stat}>
               <p style={s.statLabel}>{label}</p>
