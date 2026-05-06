@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "../../../utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -38,8 +39,19 @@ type InstructorReservation = {
   status: string;
 };
 
+function formatNameFromEmail(email: string) {
+  const namePart = email.split("@")[0];
+
+  return namePart
+    .split(".")
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default function InstructorDashboard() {
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
   const rooms = ["EEEI 301", "EEEI 305", "EEEI 308"];
 
@@ -80,8 +92,23 @@ export default function InstructorDashboard() {
   const [creatingReservation, setCreatingReservation] = useState(false);
 
   useEffect(() => {
-    setUsername("Instructor");
-  }, []);
+    async function getUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const activeEmail = user?.email || "";
+
+      if (!activeEmail) {
+        router.push("/");
+        return;
+      }
+
+      setUsername(formatNameFromEmail(activeEmail));
+    }
+
+    getUser();
+  }, [router, supabase]);
 
   useEffect(() => {
     fetchMyReservations();

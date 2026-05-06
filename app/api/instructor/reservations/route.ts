@@ -56,6 +56,30 @@ function isPastOrTooSoon(date: string, timeStart: string) {
   );
 }
 
+function formatNameFromEmail(email: string) {
+  const namePart = email.split("@")[0];
+
+  return namePart
+    .split(".")
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function formatFirstGivenAndLastNameFromEmail(email: string) {
+  const parts = email
+    .split("@")[0]
+    .split(".")
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
+
+  if (parts.length <= 1) {
+    return parts[0] ?? "Instructor";
+  }
+
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+}
+
 async function getInstructorFromGoogleSession(supabase: any) {
   const {
     data: { user },
@@ -65,6 +89,7 @@ async function getInstructorFromGoogleSession(supabase: any) {
   if (userError || !user?.email) {
     return {
       staff: null,
+      email: null,
       error: "You must be logged in with Google to use instructor reservations.",
       status: 401,
     };
@@ -72,7 +97,7 @@ async function getInstructorFromGoogleSession(supabase: any) {
 
   const { data: staff, error: staffError } = await supabase
     .from("staff_credentials")
-    .select("id, username, role, email")
+    .select("id, role, email")
     .eq("role", "instructor")
     .ilike("email", user.email)
     .maybeSingle();
@@ -80,6 +105,7 @@ async function getInstructorFromGoogleSession(supabase: any) {
   if (staffError) {
     return {
       staff: null,
+      email: null,
       error: staffError.message,
       status: 500,
     };
@@ -88,6 +114,7 @@ async function getInstructorFromGoogleSession(supabase: any) {
   if (!staff) {
     return {
       staff: null,
+      email: user.email,
       error: "Only instructors can use this reservation route.",
       status: 403,
     };
@@ -95,6 +122,7 @@ async function getInstructorFromGoogleSession(supabase: any) {
 
   return {
     staff,
+    email: user.email,
     error: null,
     status: 200,
   };
@@ -200,7 +228,10 @@ export async function POST(request: Request) {
   }
 
   const staffId = auth.staff.id;
-  const instructorName = auth.staff.username ?? "Instructor";
+  const instructorName = formatNameFromEmail(auth.email ?? auth.staff.email ?? "instructor");
+  const instructorEmailName = formatFirstGivenAndLastNameFromEmail(
+    auth.email ?? auth.staff.email ?? "instructor"
+  );
 
   const [year, month, day] = date.split("-").map(Number);
   const selectedDate = new Date(year, month - 1, day);
@@ -352,7 +383,7 @@ export async function POST(request: Request) {
           date: r.reserved_date,
           timeStart: r.time_start,
           timeEnd: r.time_end,
-          instructorName,
+          instructorName: instructorEmailName,
         })
       )
   );
