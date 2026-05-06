@@ -1361,14 +1361,6 @@ export default function Dashboard() {
                             return;
                           }
 
-                          const ok = confirm(
-                            `Cancel your reservation for ${fmt(slot.time_start)} – ${fmt(
-                              slot.time_end
-                            )}?`
-                          );
-
-                          if (!ok) return;
-
                           cancelReservation(matchingReservation.id);
                           return;
                         }
