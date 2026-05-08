@@ -2067,6 +2067,8 @@ const s: { [k: string]: React.CSSProperties } = {
     gap: 18,
     padding: "14px 28px",
     marginTop: "auto",
+    borderTop: "1px solid var(--border)",
+    background: "var(--surface)",
   },
 
   footerLink: {
