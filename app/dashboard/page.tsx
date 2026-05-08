@@ -1418,7 +1418,7 @@ export default function Dashboard() {
                           : isSelected
                             ? "Selected"
                             : isReservedByMe
-                              ? `You reserved this timeslot • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
+                              ? `You reserved this timeslot • ${slot.slots_left}/${slot.capacity} slots left`
                               : isAvailable
                                 ? `${slot.slots_left}/${slot.capacity} slots left`
                                 : isFull

@@ -1099,14 +1099,17 @@ export default function InstructorDashboard() {
                               ...(isSelectedPanel ? s.previewCardSelected : {}),
                             }}
                           >
-                            <div style={s.previewTop}>
-                              <strong>{room}</strong>
-                              <span>{summary.label}</span>
+                            <div style={s.previewMainText}>
+                              {formatPanelDate(previewAnchorDate)}
                             </div>
 
-                            <div style={s.previewDate}>{formatPanelDate(previewAnchorDate)}</div>
+                            <div style={s.previewDate}>
+                              {room}
+                            </div>
 
-                            <div style={s.previewDetail}>{summary.detail}</div>
+                            <div style={s.previewDetail}>
+                              {summary.detail}
+                            </div>
                           </button>
                         );
                       })}
@@ -1141,14 +1144,17 @@ export default function InstructorDashboard() {
                               ...(isSelectedPanel ? s.previewCardSelected : {}),
                             }}
                           >
-                            <div style={s.previewTop}>
-                              <strong>{formatPanelDate(previewDate)}</strong>
-                              <span>{summary.label}</span>
+                            <div style={s.previewMainText}>
+                              {formatPanelDate(previewDate)}
                             </div>
 
-                            <div style={s.previewDate}>{previewAnchorLab}</div>
+                            <div style={s.previewDate}>
+                              {previewAnchorLab}
+                            </div>
 
-                            <div style={s.previewDetail}>{summary.detail}</div>
+                            <div style={s.previewDetail}>
+                              {summary.detail}
+                            </div>
                           </button>
                         );
                       })}
@@ -1691,19 +1697,30 @@ const s: Record<string, CSSProperties> = {
   },
 
   previewCardSuccess: {
-    borderColor: "rgba(80, 150, 70, 0.45)",
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
   },
 
   previewCardWarning: {
-    borderColor: "rgba(244, 163, 64, 0.55)",
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
   },
 
   previewCardDanger: {
-    borderColor: "rgba(226, 75, 74, 0.55)",
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
   },
 
   previewCardMuted: {
-    opacity: 0.75,
+    background: "var(--surface-2)",
+    borderColor: "var(--border)",
+    opacity: 0.8,
+  },
+
+  previewMainText: {
+    fontSize: 14,
+    fontWeight: 800,
+    color: "var(--text)",
   },
 
   previewCardSelected: {
@@ -1733,8 +1750,8 @@ const s: Record<string, CSSProperties> = {
 
   selectedScheduleHeader: {
     border: "1px solid var(--border)",
-    background: "var(--surface-soft)",
-    borderRadius: 14,
+    borderRadius: 12,
+    background: "var(--surface-2)",
     padding: 14,
   },
 
