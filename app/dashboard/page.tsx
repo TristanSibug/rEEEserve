@@ -2000,6 +2000,7 @@ const s: { [k: string]: React.CSSProperties } = {
 
   legend: {
     display: "flex",
+    marginTop: 12,
     gap: 14,
     fontSize: 11,
     color: "var(--muted)",
