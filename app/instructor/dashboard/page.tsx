@@ -6,6 +6,7 @@ import Link from "next/link";
 
 type Tab = "classes" | "reservations";
 type ScheduleMode = "none" | "dateFirst" | "roomFirst" | "both";
+type ScheduleChangeSource = "dropdown" | "panel";
 
 type ScheduleSlot = {
   id: number | string;
@@ -700,65 +701,115 @@ export default function InstructorDashboard() {
     fetchMyReservations();
   }
 
-  function handleDateChange(selectedDate: string) {
+  function handleDateChange(
+    selectedDate: string,
+    source: ScheduleChangeSource = "dropdown"
+  ) {
+    const currentLab = lab;
+    const currentMode = scheduleMode;
+    const currentPreviewAnchorDate = previewAnchorDate;
+    const currentPreviewAnchorLab = previewAnchorLab;
+
     setDate(selectedDate);
 
-    if (!selectedDate && !lab) {
+    if (!selectedDate && !currentLab) {
       setScheduleMode("none");
       setPreviewAnchorDate("");
       setPreviewAnchorLab("");
       return;
     }
 
-    if (!selectedDate && lab) {
+    if (!selectedDate && currentLab) {
       const defaultDate = getDefaultScheduleDate();
 
       setDate(defaultDate);
       setScheduleMode("roomFirst");
-      setPreviewAnchorLab(lab);
+      setPreviewAnchorLab(currentLab);
       setPreviewAnchorDate(defaultDate);
       return;
     }
 
-    if (selectedDate && lab) {
+    if (selectedDate && currentLab) {
+      /*
+        Important:
+        If the user clicked one of the 3 preview panels, do NOT move the
+        preview anchor. This keeps the same 3 panels visible, just like the
+        student dashboard behavior.
+      */
+      if (
+        source === "panel" &&
+        (currentMode === "roomFirst" || currentMode === "both") &&
+        currentPreviewAnchorDate &&
+        currentPreviewAnchorLab
+      ) {
+        setScheduleMode(currentMode);
+        setPreviewAnchorDate(currentPreviewAnchorDate);
+        setPreviewAnchorLab(currentPreviewAnchorLab);
+        return;
+      }
+
+      /*
+        Dropdown date change while a lab is already selected:
+        this means the user intentionally changed both filters, so this
+        selected date becomes the first panel.
+      */
       setScheduleMode("both");
       setPreviewAnchorDate(selectedDate);
-      setPreviewAnchorLab(lab);
+      setPreviewAnchorLab(currentLab);
       return;
     }
 
-    if (selectedDate && !lab) {
+    if (selectedDate && !currentLab) {
       setScheduleMode("dateFirst");
       setPreviewAnchorDate(selectedDate);
       setPreviewAnchorLab("");
     }
   }
 
-  function handleLabChange(selectedLab: string) {
+  function handleLabChange(
+    selectedLab: string,
+    source: ScheduleChangeSource = "dropdown"
+  ) {
+    const currentDate = date;
+    const currentMode = scheduleMode;
+    const currentPreviewAnchorDate = previewAnchorDate;
+
     setLab(selectedLab);
 
-    if (!selectedLab && !date) {
+    if (!selectedLab && !currentDate) {
       setScheduleMode("none");
       setPreviewAnchorDate("");
       setPreviewAnchorLab("");
       return;
     }
 
-    if (!selectedLab && date) {
+    if (!selectedLab && currentDate) {
       setScheduleMode("dateFirst");
-      setPreviewAnchorDate(date);
+      setPreviewAnchorDate(currentDate);
       setPreviewAnchorLab("");
       return;
     }
 
-    if (selectedLab && date) {
+    if (selectedLab && currentDate) {
+
+      if (
+        source === "panel" &&
+        currentMode === "dateFirst" &&
+        currentPreviewAnchorDate
+      ) {
+        setScheduleMode("dateFirst");
+        setPreviewAnchorDate(currentPreviewAnchorDate);
+        setPreviewAnchorLab("");
+        return;
+      }
+
       setScheduleMode("both");
-      setPreviewAnchorDate(date);
+      setPreviewAnchorDate(currentDate);
       setPreviewAnchorLab(selectedLab);
       return;
     }
 
-    if (selectedLab && !date) {
+    if (selectedLab && !currentDate) {
       const defaultDate = getDefaultScheduleDate();
 
       setDate(defaultDate);
@@ -782,6 +833,8 @@ export default function InstructorDashboard() {
       previewAnchorDate
       ? getPreviewDates(previewAnchorDate)
       : [];
+
+  const selectedPreviewKey = lab && date ? previewKey(date, lab) : "";
 
   return (
     <div style={s.page}>
@@ -1038,13 +1091,13 @@ export default function InstructorDashboard() {
                           previewAnchorDate,
                           previewSlots[key] ?? []
                         );
-                        const isSelectedRoom = room === lab;
+                        const isSelectedPanel = selectedPreviewKey === key;
 
                         return (
                           <button
-                            key={room}
+                            key={key}
                             type="button"
-                            onClick={() => handleLabChange(room)}
+                            onClick={() => handleLabChange(room, "panel")}
                             style={{
                               ...s.previewCard,
                               ...(summary.tone === "success"
@@ -1054,7 +1107,7 @@ export default function InstructorDashboard() {
                                   : summary.tone === "muted"
                                     ? s.previewCardMuted
                                     : s.previewCardDanger),
-                              ...(isSelectedRoom ? s.previewCardSelected : {}),
+                              ...(isSelectedPanel ? s.previewCardSelected : {}),
                             }}
                           >
                             <div style={s.previewTop}>
@@ -1062,9 +1115,7 @@ export default function InstructorDashboard() {
                               <span>{summary.label}</span>
                             </div>
 
-                            <div style={s.previewDate}>
-                              {formatPanelDate(previewAnchorDate)}
-                            </div>
+                            <div style={s.previewDate}>{formatPanelDate(previewAnchorDate)}</div>
 
                             <div style={s.previewDetail}>{summary.detail}</div>
                           </button>
@@ -1082,13 +1133,13 @@ export default function InstructorDashboard() {
                           previewDate,
                           previewSlots[key] ?? []
                         );
-                        const isSelectedDate = previewDate === date;
+                        const isSelectedPanel = selectedPreviewKey === key;
 
                         return (
                           <button
-                            key={previewDate}
+                            key={key}
                             type="button"
-                            onClick={() => handleDateChange(previewDate)}
+                            onClick={() => handleDateChange(previewDate, "panel")}
                             style={{
                               ...s.previewCard,
                               ...(summary.tone === "success"
@@ -1098,7 +1149,7 @@ export default function InstructorDashboard() {
                                   : summary.tone === "muted"
                                     ? s.previewCardMuted
                                     : s.previewCardDanger),
-                              ...(isSelectedDate ? s.previewCardSelected : {}),
+                              ...(isSelectedPanel ? s.previewCardSelected : {}),
                             }}
                           >
                             <div style={s.previewTop}>
@@ -1107,6 +1158,7 @@ export default function InstructorDashboard() {
                             </div>
 
                             <div style={s.previewDate}>{previewAnchorLab}</div>
+
                             <div style={s.previewDetail}>{summary.detail}</div>
                           </button>
                         );
@@ -1673,8 +1725,8 @@ const s: Record<string, CSSProperties> = {
   },
 
   previewCardSelected: {
-    boxShadow: "0 0 0 3px var(--primary-soft)",
-    borderColor: "var(--primary)",
+    outline: "2px solid var(--primary)",
+    outlineOffset: 2,
   },
 
   previewTop: {
