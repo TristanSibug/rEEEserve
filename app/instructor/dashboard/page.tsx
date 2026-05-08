@@ -1779,18 +1779,14 @@ const s: Record<string, CSSProperties> = {
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 18,
-    padding: "10px 28px",
+    padding: "14px 28px",
     marginTop: "auto",
-    borderTop: "1px solid var(--border)",
-    background: "var(--surface)",
   },
 
   footerLink: {
     color: "var(--muted)",
     textDecoration: "none",
     fontSize: 13,
-    fontWeight: 600,
-    lineHeight: 1,
   },
 
   previewTop: {
