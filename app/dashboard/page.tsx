@@ -2063,8 +2063,9 @@ const s: { [k: string]: React.CSSProperties } = {
   footer: {
     display: "flex",
     justifyContent: "center",
+    alignItems: "center",
     gap: 18,
-    padding: "20px 16px 28px",
+    padding: "10px 16px",
     marginTop: "auto",
     borderTop: "1px solid var(--border)",
     background: "var(--surface)",
@@ -2075,5 +2076,6 @@ const s: { [k: string]: React.CSSProperties } = {
     textDecoration: "none",
     fontSize: 13,
     fontWeight: 600,
+    lineHeight: 1,
   },
 };
