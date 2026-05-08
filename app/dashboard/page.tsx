@@ -1908,7 +1908,7 @@ const s: { [k: string]: React.CSSProperties } = {
 
   panelMainText: {
     fontSize: 14,
-    fontWeight: 800,
+    fontWeight: 700,
     color: "var(--text)",
   },
 

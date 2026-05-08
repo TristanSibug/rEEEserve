@@ -149,12 +149,15 @@ const s: { [k: string]: React.CSSProperties } = {
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
   },
+
   logo: {
-    fontSize: 22,
-    fontWeight: 700,
+    fontSize: 20,
+    fontWeight: 800,
     textDecoration: "none",
     color: "var(--text)",
+    letterSpacing: -0.5,
   },
+
   main: {
     flex: 1,
     display: "flex",
