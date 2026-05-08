@@ -1776,10 +1776,10 @@ const s: Record<string, CSSProperties> = {
 
   footer: {
     display: "flex",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     gap: 18,
-    padding: "10px 16px",
+    padding: "10px 28px",
     marginTop: "auto",
     borderTop: "1px solid var(--border)",
     background: "var(--surface)",
