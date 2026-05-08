@@ -138,17 +138,17 @@ const styles: Record<string, CSSProperties> = {
   nav: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
     padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
   },
 
   logo: {
-    fontSize: 22,
-    fontWeight: 700,
+    fontSize: 20,
+    fontWeight: 800,
     textDecoration: "none",
     color: "var(--text)",
+    letterSpacing: -0.5,
   },
 
   logoBlue: {
@@ -254,7 +254,7 @@ const styles: Record<string, CSSProperties> = {
     borderTop: "1px solid var(--border)",
     background: "var(--surface)",
     display: "flex",
-    gap: 20,
+    gap: 18,
   },
 
   footerLink: {
