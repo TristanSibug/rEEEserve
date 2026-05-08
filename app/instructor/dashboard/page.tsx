@@ -1691,9 +1691,10 @@ const s: Record<string, CSSProperties> = {
     background: "var(--surface-soft)",
     color: "var(--text)",
     borderRadius: 16,
-    padding: 14,
+    padding: "24px 18px",
     cursor: "pointer",
     textAlign: "left",
+    minHeight: 132,
     transition: "transform 120ms ease, box-shadow 120ms ease",
   },
 
@@ -1815,19 +1816,6 @@ const s: Record<string, CSSProperties> = {
     fontWeight: 600,
   },
 
-  previewMainText: {
-    fontSize: 14,
-    fontWeight: 800,
-    color: "var(--text)",
-  },
-
-  previewSubText: {
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: 800,
-    color: "var(--text)",
-  },
-
   previewCardSelected: {
     outline: "2px solid var(--primary)",
     outlineOffset: 2,
@@ -1846,10 +1834,26 @@ const s: Record<string, CSSProperties> = {
     color: "var(--muted)",
   },
 
+  previewMainText: {
+    fontSize: 16,
+    fontWeight: 800,
+    lineHeight: 1.35,
+    color: "var(--text)",
+  },
+
+  previewSubText: {
+    marginTop: 14,
+    fontSize: 13,
+    fontWeight: 800,
+    lineHeight: 1.25,
+    color: "var(--text)",
+  },
+
   previewDetail: {
     marginTop: 8,
     fontSize: 13,
     fontWeight: 400,
+    lineHeight: 1.3,
     color: "var(--muted)",
   },
 };
