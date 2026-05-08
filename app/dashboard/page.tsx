@@ -1494,8 +1494,7 @@ const s: { [k: string]: React.CSSProperties } = {
     flexDirection: "column",
     background: "var(--page-bg)",
     color: "var(--text)",
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    fontFamily: "sans-serif",
   },
 
   nav: {
