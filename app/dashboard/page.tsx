@@ -1495,214 +1495,146 @@ const s: { [k: string]: React.CSSProperties } = {
     flexDirection: "column",
     background: "var(--page-bg)",
     color: "var(--text)",
-    fontFamily: "sans-serif",
+    fontFamily:
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
 
   nav: {
+    height: 64,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "18px 28px",
+    padding: "0 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
   },
 
   logo: {
-    fontSize: 22,
-    fontWeight: 700,
+    fontSize: 20,
+    fontWeight: 800,
     textDecoration: "none",
     color: "var(--text)",
+    letterSpacing: -0.5,
   },
 
   sn: {
-    fontSize: 13,
-    color: "var(--muted)",
+    fontSize: 12,
+    fontWeight: 700,
+    color: "var(--primary)",
+    background: "var(--primary-soft)",
+    border: "1px solid var(--primary-border)",
+    padding: "6px 10px",
+    borderRadius: 999,
+    maxWidth: 220,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
 
   body: {
     flex: 1,
-    padding: 28,
-    maxWidth: 980,
     width: "100%",
+    maxWidth: 980,
+    margin: "0 auto",
+    padding: "28px 18px 34px",
     boxSizing: "border-box",
   },
 
+  welcome: {
+    margin: "0 0 22px",
+    fontSize: 22,
+    fontWeight: 700,
+    letterSpacing: -0.3,
+    textAlign: "left",
+  },
+
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: 500,
-    color: "var(--muted-2)",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    margin: "0 0 10px",
+    fontSize: 16,
+    fontWeight: 800,
+    color: "var(--text)",
+    margin: 0,
+  },
+
+  resShell: {
+    position: "relative",
+    marginTop: 24,
+    marginBottom: 24,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    borderRadius: 18,
+    boxShadow: "var(--shadow-sm)",
+    padding: "34px 18px 18px",
+  },
+
+  resFloatingTitle: {
+    position: "absolute",
+    top: -16,
+    left: 18,
+    padding: "8px 16px",
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    fontSize: 16,
+    fontWeight: 800,
+    boxShadow: "var(--shadow-sm)",
+  },
+
+  scheduleShell: {
+    position: "relative",
+    marginTop: 30,
+    marginBottom: 24,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    borderRadius: 18,
+    boxShadow: "var(--shadow-sm)",
+    padding: "34px 18px 18px",
+  },
+
+  scheduleFloatingTitle: {
+    position: "absolute",
+    top: -16,
+    left: 18,
+    padding: "8px 16px",
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    fontSize: 16,
+    fontWeight: 800,
+    boxShadow: "var(--shadow-sm)",
   },
 
   resCard: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
-  },
-
-  btn: {
-    padding: "9px 18px",
-    background: "var(--primary)",
-    color: "#fff",
-    borderRadius: 8,
-    fontSize: 13,
-    fontWeight: 500,
-    textDecoration: "none",
-    whiteSpace: "nowrap",
-    border: "none",
-    cursor: "pointer",
-  },
-
-  filters: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 10,
-    padding: "14px 16px",
-    borderBottom: "1px solid var(--border)",
-  },
-
-  select: {
-    padding: "9px 12px",
-    border: "1px solid var(--border-strong)",
-    borderRadius: 8,
-    fontSize: 13,
-    background: "var(--select-bg)",
-    color: "var(--text)",
-    width: "100%",
-    minWidth: 0,
-  },
-
-  emptyBox: {
-    textAlign: "center",
-    padding: 18,
-    color: "var(--muted-3)",
-    fontSize: 13,
-    border: "1px solid var(--border)",
-    borderRadius: 10,
-    background: "var(--surface-2)",
-    margin: 16,
-  },
-
-  slotGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: 8,
-    padding: 16,
-  },
-
-  slotPill: {
-    position: "relative",
-    border: "1px solid",
-    borderRadius: 14,
-    padding: "8px 10px",
-    fontSize: 12,
-    fontWeight: 500,
-    textAlign: "center",
-    minHeight: 48,
-    overflow: "hidden",
-    cursor: "default",
-  },
-  availablePill: {
-    background: "var(--success-bg)",
-    borderColor: "var(--success-border)",
-    color: "var(--success-text)",
-  },
-
-  occupiedPill: {
-    background: "var(--danger-bg)",
-    borderColor: "var(--danger-border)",
-    color: "var(--danger-text)",
-  },
-
-  selectedPill: {
-    background: "var(--primary-soft)",
-    borderColor: "var(--primary)",
-    color: "var(--primary)",
-  },
-
-  reservedByMePill: {
-    background: "var(--warning-bg)",
-    borderColor: "var(--warning-border)",
-    color: "var(--warning-text)",
-  },
-
-  slotTimeText: {
-    display: "block",
-    fontSize: 11,
-    lineHeight: 1.1,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  slotInfoText: {
-    display: "block",
-    marginTop: 3,
-    fontSize: 11,
-    fontWeight: 600,
-    lineHeight: 1.1,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  legend: {
-    display: "flex",
-    gap: 14,
-    padding: "0 16px 14px",
-    fontSize: 11,
-    color: "var(--muted)",
-    flexWrap: "wrap",
-  },
-  legendItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 5,
-  },
-  dot: {
-    width: 9,
-    height: 9,
-    borderRadius: 99,
-  },
-  resItem: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
     gap: 12,
-    padding: "10px 12px",
-    border: "1px solid var(--border)",
-    borderRadius: 10,
-    background: "var(--surface-2)",
   },
-  cartBox: {
-    margin: "12px 16px",
-    padding: 12,
-    border: "1px solid var(--primary-border)",
-    borderRadius: 10,
-    background: "var(--primary-soft)",
-    color: "var(--text)",
+
+  scheduleCard: {
     display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    flexWrap: "wrap",
+    flexDirection: "column",
+    gap: 16,
   },
-  slotSpacer: {
-    visibility: "hidden",
-  },
+
   resHeaderRow: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     gap: 12,
     marginBottom: 14,
   },
+
   tabGroup: {
     display: "flex",
     gap: 6,
     background: "var(--tab-bg)",
-    padding: 4,
-    borderRadius: 999,
+    border: "1px solid var(--border)",
+    padding: 5,
+    borderRadius: 16,
   },
 
   tabButton: {
@@ -1710,9 +1642,9 @@ const s: { [k: string]: React.CSSProperties } = {
     background: "transparent",
     color: "var(--muted)",
     fontSize: 13,
-    fontWeight: 500,
-    padding: "7px 14px",
-    borderRadius: 999,
+    fontWeight: 700,
+    padding: "9px 14px",
+    borderRadius: 12,
     cursor: "pointer",
   },
 
@@ -1720,49 +1652,48 @@ const s: { [k: string]: React.CSSProperties } = {
     background: "var(--surface)",
     color: "var(--primary)",
     boxShadow: "var(--shadow-sm)",
+    fontWeight: 800,
   },
 
-  cancelBtn: {
-    border: "1px solid var(--danger-border-2)",
-    background: "var(--danger-bg-2)",
-    color: "var(--danger-text-2)",
-    fontSize: 12,
-    fontWeight: 500,
-    padding: "6px 10px",
-    borderRadius: 999,
-    cursor: "pointer",
-  },
-  pastResItem: {
-    background: "var(--surface-3)",
-    borderColor: "var(--border)",
-    color: "var(--muted)",
+  filters: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 10,
   },
 
-  footer: {
-    padding: "14px 28px",
-    borderTop: "1px solid var(--border)",
+  select: {
+    width: "100%",
+    border: "1px solid var(--border)",
     background: "var(--surface)",
-    display: "flex",
-    gap: 20,
-    marginTop: "auto",
+    color: "var(--text)",
+    borderRadius: 12,
+    padding: "11px 12px",
+    fontSize: 14,
+    outline: "none",
+    minWidth: 0,
   },
 
-  footerLink: {
-    fontSize: 13,
+  emptyBox: {
+    border: "1px dashed var(--border-strong)",
+    background: "var(--surface-2)",
     color: "var(--muted)",
-    textDecoration: "none",
+    borderRadius: 16,
+    padding: 18,
+    textAlign: "center",
+    fontSize: 14,
   },
 
   resGroupList: {
-    display: "grid",
+    display: "flex",
+    flexDirection: "column",
     gap: 10,
     width: "100%",
   },
 
   dayGroupCard: {
     border: "1px solid var(--border)",
-    borderRadius: 12,
     background: "var(--surface-2)",
+    borderRadius: 16,
     overflow: "hidden",
   },
 
@@ -1771,7 +1702,7 @@ const s: { [k: string]: React.CSSProperties } = {
     border: "none",
     background: "transparent",
     color: "var(--text)",
-    padding: "14px 16px",
+    padding: 14,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1781,15 +1712,16 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   roomGroupList: {
-    display: "grid",
+    display: "flex",
+    flexDirection: "column",
     gap: 8,
     padding: "0 12px 12px",
   },
 
   roomGroupCard: {
     border: "1px solid var(--border)",
-    borderRadius: 10,
     background: "var(--surface)",
+    borderRadius: 14,
     overflow: "hidden",
   },
 
@@ -1798,7 +1730,7 @@ const s: { [k: string]: React.CSSProperties } = {
     border: "none",
     background: "transparent",
     color: "var(--text)",
-    padding: "12px 14px",
+    padding: 12,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1807,27 +1739,8 @@ const s: { [k: string]: React.CSSProperties } = {
     textAlign: "left",
   },
 
-  timeslotList: {
-    display: "grid",
-    gap: 8,
-    padding: "0 12px 12px",
-  },
-
-  timeslotRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    padding: "10px 12px",
-    border: "1px solid var(--border)",
-    borderRadius: 10,
-    background: "var(--surface-2)",
-    color: "var(--text)",
-    flexWrap: "wrap",
-  },
-
   groupSubtext: {
-    marginTop: 3,
+    marginTop: 4,
     fontSize: 12,
     color: "var(--muted)",
   },
@@ -1837,22 +1750,105 @@ const s: { [k: string]: React.CSSProperties } = {
     alignItems: "center",
     gap: 8,
     fontSize: 12,
+    fontWeight: 700,
     color: "var(--muted)",
     whiteSpace: "nowrap",
   },
 
   chevron: {
+    width: 24,
+    height: 24,
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 22,
-    height: 22,
     borderRadius: 999,
-    background: "var(--surface)",
-    border: "1px solid var(--border-strong)",
-    color: "var(--primary)",
+    background: "var(--tab-bg)",
+    color: "var(--text)",
+    border: "1px solid var(--border)",
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 800,
+    lineHeight: 1,
+  },
+
+  timeslotList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    padding: "0 12px 12px",
+  },
+
+  timeslotRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    border: "1px solid var(--border)",
+    background: "var(--surface-2)",
+    borderRadius: 12,
+    padding: 12,
+    color: "var(--text)",
+    flexWrap: "wrap",
+  },
+
+  cancelBtn: {
+    border: "1px solid var(--danger-border-2)",
+    background: "var(--danger-bg-2)",
+    color: "var(--danger-text-2)",
+    borderRadius: 10,
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 800,
+  },
+
+  pastResItem: {
+    background: "var(--surface-3)",
+    borderColor: "var(--border)",
+    color: "var(--muted)",
+  },
+
+  previewGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: 12,
+  },
+
+  previewCard: {
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    padding: 14,
+    background: "var(--surface-2)",
+    color: "var(--text)",
+    textAlign: "left",
+    cursor: "pointer",
+    minHeight: 112,
+    transition: "transform 120ms ease, box-shadow 120ms ease",
+  },
+
+  previewCardSuccess: {
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+  },
+
+  previewCardWarning: {
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+  },
+
+  previewCardDanger: {
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+  },
+
+  previewCardMuted: {
+    background: "var(--surface-2)",
+    borderColor: "var(--border)",
+    opacity: 0.8,
+  },
+
+  previewCardSelected: {
+    outline: "2px solid var(--primary)",
+    outlineOffset: 2,
   },
 
   panelGrid: {
@@ -1908,7 +1904,7 @@ const s: { [k: string]: React.CSSProperties } = {
 
   panelBadge: {
     fontSize: 11,
-    fontWeight: 700,
+    fontWeight: 800,
     padding: "4px 8px",
     borderRadius: 999,
     background: "var(--surface)",
@@ -1919,7 +1915,7 @@ const s: { [k: string]: React.CSSProperties } = {
 
   panelMainText: {
     fontSize: 14,
-    fontWeight: 700,
+    fontWeight: 800,
     color: "var(--text)",
   },
 
@@ -1930,109 +1926,150 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   selectedScheduleHeader: {
-    margin: "4px 16px 0",
     padding: "12px 14px",
     border: "1px solid var(--border)",
     borderRadius: 12,
     background: "var(--surface-2)",
   },
 
-  previewGrid: {
+  slotGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-    gap: 12,
-    padding: 16,
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: 8,
   },
 
-  previewCard: {
-    border: "1px solid var(--border)",
+  slotPill: {
+    position: "relative",
+    border: "1px solid",
     borderRadius: 14,
-    padding: 14,
-    background: "var(--surface-2)",
-    color: "var(--text)",
-    textAlign: "left",
-    cursor: "pointer",
-    minHeight: 112,
+    padding: "8px 10px",
+    fontSize: 12,
+    fontWeight: 600,
+    textAlign: "center",
+    minHeight: 48,
+    overflow: "hidden",
+    cursor: "default",
   },
 
-  previewCardSuccess: {
+  availablePill: {
     background: "var(--success-bg)",
     borderColor: "var(--success-border)",
+    color: "var(--success-text)",
   },
 
-  previewCardWarning: {
-    background: "var(--warning-bg)",
-    borderColor: "var(--warning-border)",
-  },
-
-  previewCardDanger: {
+  occupiedPill: {
     background: "var(--danger-bg)",
     borderColor: "var(--danger-border)",
+    color: "var(--danger-text)",
   },
 
-  previewCardMuted: {
-    background: "var(--surface-2)",
-    borderColor: "var(--border)",
+  selectedPill: {
+    background: "var(--primary-soft)",
+    borderColor: "var(--primary)",
+    color: "var(--primary)",
   },
 
-  previewCardSelected: {
-    outline: "2px solid var(--primary)",
-    outlineOffset: 2,
+  reservedByMePill: {
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+    color: "var(--warning-text)",
   },
 
-  resShell: {
-    position: "relative",
-    marginTop: 24,
-    marginBottom: 24,
-    border: "1px solid var(--border)",
-    background: "var(--surface)",
-    borderRadius: 18,
-    boxShadow: "var(--shadow-sm)",
-    padding: "34px 18px 18px",
+  slotTimeText: {
+    display: "block",
+    fontSize: 11,
+    lineHeight: 1.1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
-  resFloatingTitle: {
-    position: "absolute",
-    top: -16,
-    left: 18,
-    padding: "8px 16px",
-    borderRadius: 14,
-    border: "1px solid var(--border)",
-    background: "var(--surface)",
-    color: "var(--text)",
-    fontSize: 16,
+  slotInfoText: {
+    display: "block",
+    marginTop: 3,
+    fontSize: 11,
     fontWeight: 700,
-    boxShadow: "var(--shadow-sm)",
+    lineHeight: 1.1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
-  scheduleShell: {
-    position: "relative",
-    marginTop: 30,
-    marginBottom: 24,
-    border: "1px solid var(--border)",
-    background: "var(--surface)",
-    borderRadius: 18,
-    boxShadow: "var(--shadow-sm)",
-    padding: "34px 18px 18px",
-  },
-
-  scheduleFloatingTitle: {
-    position: "absolute",
-    top: -16,
-    left: 18,
-    padding: "8px 16px",
-    borderRadius: 14,
-    border: "1px solid var(--border)",
-    background: "var(--surface)",
-    color: "var(--text)",
-    fontSize: 16,
-    fontWeight: 700,
-    boxShadow: "var(--shadow-sm)",
-  },
-
-  scheduleCard: {
+  legend: {
     display: "flex",
-    flexDirection: "column",
-    gap: 16,
+    gap: 14,
+    fontSize: 11,
+    color: "var(--muted)",
+    flexWrap: "wrap",
+  },
+
+  legendItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+  },
+
+  dot: {
+    width: 9,
+    height: 9,
+    borderRadius: 99,
+  },
+
+  cartBox: {
+    padding: 12,
+    border: "1px solid var(--primary-border)",
+    borderRadius: 12,
+    background: "var(--primary-soft)",
+    color: "var(--text)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+
+  btn: {
+    border: "none",
+    background: "var(--primary)",
+    color: "#fff",
+    borderRadius: 12,
+    padding: "10px 14px",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: 13,
+    textDecoration: "none",
+    whiteSpace: "nowrap",
+  },
+
+  resItem: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "10px 12px",
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    background: "var(--surface-2)",
+  },
+
+  slotSpacer: {
+    visibility: "hidden",
+  },
+
+  footer: {
+    display: "flex",
+    justifyContent: "center",
+    gap: 18,
+    padding: "20px 16px 28px",
+    marginTop: "auto",
+    borderTop: "1px solid var(--border)",
+    background: "var(--surface)",
+  },
+
+  footerLink: {
+    color: "var(--muted)",
+    textDecoration: "none",
+    fontSize: 13,
+    fontWeight: 600,
   },
 };
