@@ -1809,19 +1809,18 @@ const s: { [k: string]: React.CSSProperties } = {
 
   previewGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-    gap: 12,
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 10,
   },
 
   previewCard: {
     border: "1px solid var(--border)",
-    borderRadius: 14,
-    padding: 14,
-    background: "var(--surface-2)",
+    background: "var(--surface-soft)",
     color: "var(--text)",
-    textAlign: "left",
+    borderRadius: 16,
+    padding: 14,
     cursor: "pointer",
-    minHeight: 112,
+    textAlign: "left",
     transition: "transform 120ms ease, box-shadow 120ms ease",
   },
 
@@ -1926,16 +1925,16 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   selectedScheduleHeader: {
-    padding: "12px 14px",
     border: "1px solid var(--border)",
-    borderRadius: 12,
-    background: "var(--surface-2)",
+    background: "var(--surface-soft)",
+    borderRadius: 14,
+    padding: 14,
   },
 
   slotGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: 8,
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: 10,
   },
 
   slotPill: {

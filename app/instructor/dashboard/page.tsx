@@ -845,14 +845,6 @@ export default function InstructorDashboard() {
 
         <div style={s.navRight}>
           <span style={s.badge}>Instructor</span>
-
-          <button
-            type="button"
-            style={s.logout}
-            onClick={() => router.push("/")}
-          >
-            Log out
-          </button>
         </div>
       </nav>
 
@@ -1334,17 +1326,6 @@ const s: Record<string, CSSProperties> = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-  },
-
-  logout: {
-    border: "1px solid var(--border)",
-    background: "var(--surface)",
-    color: "var(--text-soft)",
-    borderRadius: 999,
-    padding: "8px 12px",
-    cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 600,
   },
 
   body: {
