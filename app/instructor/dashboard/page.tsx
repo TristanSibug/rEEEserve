@@ -1292,11 +1292,10 @@ const s: Record<string, CSSProperties> = {
   },
 
   nav: {
-    height: 64,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 28px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
     position: "sticky",
