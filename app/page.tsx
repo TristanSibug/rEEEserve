@@ -126,8 +126,7 @@ export default function Home() {
         <Link href="/about" style={s.footerLink}>
           About
         </Link>
-        <Link href="/help" style={s.footerLink}>
-          Help
+        <Link href="/help" style={s.footerLink}>Help
         </Link>
       </footer>
     </div>
@@ -256,10 +255,13 @@ const s: { [k: string]: React.CSSProperties } = {
     fontWeight: 500,
   },
   footer: {
+    display: "flex",
+    justifyContent: "flex-start",
+    alignItems: "center",
     padding: "14px 28px",
+    marginTop: "auto",
     borderTop: "1px solid var(--border)",
     background: "var(--surface)",
-    display: "flex",
     gap: 20,
   },
   footerLink: {
