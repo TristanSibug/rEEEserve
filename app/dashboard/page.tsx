@@ -967,7 +967,7 @@ export default function Dashboard() {
 
         <div style={s.resShell}>
           <div style={s.resFloatingTitle}>
-            Reservations
+            My Reservations
           </div>
 
           <div style={s.resHeaderRow}>
@@ -1461,13 +1461,13 @@ export default function Dashboard() {
                 </span>
 
                 <span style={s.legendItem}>
-                  <span style={{ ...s.dot, background: "var(--danger-border)" }} />
-                  Occupied / Full
+                  <span style={{ ...s.dot, background: "var(--warning-border)" }} />
+                  Your reservation
                 </span>
 
                 <span style={s.legendItem}>
-                  <span style={{ ...s.dot, background: "var(--warning-border)" }} />
-                  Your reservation
+                  <span style={{ ...s.dot, background: "var(--danger-border)" }} />
+                  Occupied / Full
                 </span>
               </div>
             </>

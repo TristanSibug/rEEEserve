@@ -1034,7 +1034,7 @@ export default function InstructorDashboard() {
               </div>
 
               <div style={s.floatingSection}>
-                <div style={s.floatingSectionTitle}>Reserve a lab</div>
+                <div style={s.floatingSectionTitle}>Lab Schedules</div>
 
                 <div style={s.scheduleCard}>
                   <div style={s.filters}>
