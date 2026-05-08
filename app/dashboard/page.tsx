@@ -1244,8 +1244,7 @@ export default function Dashboard() {
 
           {!lab && !date && (
             <div style={s.emptyBox}>
-              Select a date to compare all rooms, or select a lab to view the next
-              three available days.
+              Select a date or lab to view the schedule
             </div>
           )}
 
@@ -1521,14 +1520,14 @@ const s: { [k: string]: React.CSSProperties } = {
   },
 
   sn: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: "var(--primary)",
-    background: "var(--primary-soft)",
-    border: "1px solid var(--primary-border)",
-    padding: "6px 10px",
-    borderRadius: 999,
-    maxWidth: 220,
+    fontSize: 13,
+    fontWeight: 600,
+    color: "var(--muted)",
+    background: "transparent",
+    border: "none",
+    padding: 0,
+    borderRadius: 0,
+    maxWidth: 260,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
@@ -1659,6 +1658,7 @@ const s: { [k: string]: React.CSSProperties } = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 10,
+    marginBottom: 10,
   },
 
   select: {

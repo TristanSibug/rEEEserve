@@ -1323,13 +1323,17 @@ const s: Record<string, CSSProperties> = {
   },
 
   badge: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: "var(--primary)",
-    background: "var(--primary-soft)",
-    border: "1px solid var(--primary-border)",
-    padding: "6px 10px",
-    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: 600,
+    color: "var(--muted)",
+    background: "transparent",
+    border: "none",
+    padding: 0,
+    borderRadius: 0,
+    maxWidth: 260,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
 
   logout: {
