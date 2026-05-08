@@ -1753,80 +1753,25 @@ const s: Record<string, CSSProperties> = {
     marginBottom: 14,
   },
 
-  slotGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-    gap: 10,
-  },
-
-  slotPill: {
-    minHeight: 68,
-    borderRadius: 16,
-    border: "1px solid transparent",
-    padding: "10px 12px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    justifyContent: "center",
-    gap: 4,
-    textAlign: "left",
-  },
-
-  availablePill: {
-    background: "rgba(151, 196, 89, 0.16)",
-    borderColor: "rgba(151, 196, 89, 0.45)",
-    color: "var(--text)",
-  },
-
-  reservedByMePill: {
-    background: "rgba(244, 163, 64, 0.18)",
-    borderColor: "rgba(244, 163, 64, 0.55)",
-    color: "var(--text)",
-  },
-
-  reservedPill: {
-    background: "rgba(226, 75, 74, 0.13)",
-    borderColor: "rgba(226, 75, 74, 0.45)",
-    color: "var(--text)",
-  },
-
-  occupiedPill: {
-    background: "rgba(226, 75, 74, 0.18)",
-    borderColor: "rgba(226, 75, 74, 0.5)",
-    color: "var(--text)",
-  },
-
-  slotTimeText: {
-    fontSize: 14,
-    fontWeight: 800,
-  },
-
-  slotInfoText: {
-    fontSize: 12,
-    color: "var(--muted)",
-    lineHeight: 1.35,
-  },
-
   legend: {
     display: "flex",
-    flexWrap: "wrap",
-    gap: 10,
-    alignItems: "center",
+    marginTop: 12,
+    gap: 14,
+    fontSize: 11,
     color: "var(--muted)",
-    fontSize: 12,
+    flexWrap: "wrap",
   },
 
   legendItem: {
-    display: "inline-flex",
+    display: "flex",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
 
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    display: "inline-block",
+    width: 9,
+    height: 9,
+    borderRadius: 99,
   },
 
   footer: {
@@ -1856,4 +1801,67 @@ const s: Record<string, CSSProperties> = {
     color: "var(--muted)",
   },
 
+  slotGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: 8,
+    marginTop: 2,
+  },
+
+  slotPill: {
+    position: "relative",
+    border: "1px solid",
+    borderRadius: 14,
+    padding: "8px 10px",
+    fontSize: 12,
+    fontWeight: 600,
+    textAlign: "center",
+    minHeight: 48,
+    overflow: "hidden",
+    cursor: "default",
+  },
+
+  availablePill: {
+    background: "var(--success-bg)",
+    borderColor: "var(--success-border)",
+    color: "var(--success-text)",
+  },
+
+  reservedByMePill: {
+    background: "var(--warning-bg)",
+    borderColor: "var(--warning-border)",
+    color: "var(--warning-text)",
+  },
+
+  reservedPill: {
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+    color: "var(--danger-text)",
+  },
+
+  occupiedPill: {
+    background: "var(--danger-bg)",
+    borderColor: "var(--danger-border)",
+    color: "var(--danger-text)",
+  },
+
+  slotTimeText: {
+    display: "block",
+    fontSize: 11,
+    lineHeight: 1.1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+
+  slotInfoText: {
+    display: "block",
+    marginTop: 3,
+    fontSize: 11,
+    fontWeight: 700,
+    lineHeight: 1.1,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
 };
