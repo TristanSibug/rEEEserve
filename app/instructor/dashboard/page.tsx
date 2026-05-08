@@ -1071,6 +1071,7 @@ export default function InstructorDashboard() {
                     <div style={s.emptyBox}>Loading schedules...</div>
                   )}
 
+
                   {!loadingPreviewSlots && dateFirstRoomPanels.length > 0 && (
                     <div style={s.previewGrid}>
                       {dateFirstRoomPanels.map(room => {
@@ -1100,11 +1101,11 @@ export default function InstructorDashboard() {
                             }}
                           >
                             <div style={s.previewMainText}>
-                              {formatPanelDate(previewAnchorDate)}
+                              {room}
                             </div>
 
-                            <div style={s.previewDate}>
-                              {room}
+                            <div style={s.previewSubText}>
+                              {formatPanelDate(previewAnchorDate)}
                             </div>
 
                             <div style={s.previewDetail}>
@@ -1148,7 +1149,7 @@ export default function InstructorDashboard() {
                               {formatPanelDate(previewDate)}
                             </div>
 
-                            <div style={s.previewDate}>
+                            <div style={s.previewSubText}>
                               {previewAnchorLab}
                             </div>
 
@@ -1717,37 +1718,6 @@ const s: Record<string, CSSProperties> = {
     opacity: 0.8,
   },
 
-  previewMainText: {
-    fontSize: 14,
-    fontWeight: 800,
-    color: "var(--text)",
-  },
-
-  previewCardSelected: {
-    outline: "2px solid var(--primary)",
-    outlineOffset: 2,
-  },
-
-  previewTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 10,
-    fontSize: 13,
-  },
-
-  previewDate: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "var(--muted)",
-  },
-
-  previewDetail: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: 700,
-    color: "var(--text)",
-  },
-
   selectedScheduleHeader: {
     border: "1px solid var(--border)",
     borderRadius: 12,
@@ -1843,5 +1813,43 @@ const s: Record<string, CSSProperties> = {
     textDecoration: "none",
     fontSize: 13,
     fontWeight: 600,
+  },
+
+  previewMainText: {
+    fontSize: 14,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+
+  previewSubText: {
+    marginTop: 8,
+    fontSize: 12,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+
+  previewCardSelected: {
+    outline: "2px solid var(--primary)",
+    outlineOffset: 2,
+  },
+
+  previewTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 10,
+    fontSize: 13,
+  },
+
+  previewDate: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+
+  previewDetail: {
+    marginTop: 8,
+    fontSize: 13,
+    fontWeight: 400,
+    color: "var(--muted)",
   },
 };
