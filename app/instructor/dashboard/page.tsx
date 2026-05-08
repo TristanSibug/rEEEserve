@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 type Tab = "classes" | "reservations";
@@ -65,8 +64,6 @@ const teachingClasses = [
 const RESERVATION_LEAD_TIME_MINUTES = 60;
 
 export default function InstructorDashboard() {
-  const router = useRouter();
-
   const [activeTab, setActiveTab] = useState<Tab>("classes");
   const [username, setUsername] = useState("Instructor");
 

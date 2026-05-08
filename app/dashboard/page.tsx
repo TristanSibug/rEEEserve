@@ -1807,12 +1807,6 @@ const s: { [k: string]: React.CSSProperties } = {
     color: "var(--muted)",
   },
 
-  previewGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    gap: 10,
-  },
-
   previewCard: {
     border: "1px solid var(--border)",
     background: "var(--surface-soft)",
@@ -1924,17 +1918,27 @@ const s: { [k: string]: React.CSSProperties } = {
     color: "var(--muted)",
   },
 
+  previewGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    gap: 12,
+    marginBottom: 14,
+  },
+
   selectedScheduleHeader: {
+    padding: "12px 14px",
     border: "1px solid var(--border)",
-    background: "var(--surface-soft)",
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 12,
+    background: "var(--surface-2)",
+    marginTop: 4,
+    marginBottom: 14,
   },
 
   slotGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-    gap: 10,
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: 8,
+    marginTop: 2,
   },
 
   slotPill: {
