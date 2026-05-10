@@ -1229,7 +1229,7 @@ export default function InstructorDashboard() {
                                 {hasCourse
                                   ? slot.course_name
                                   : isReservedByMe
-                                    ? `Reserved by you • ${slot.slots_left}/${slot.capacity} slots left`
+                                    ? `Reserved by ${username} • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
                                     : isAvailable
                                       ? `${slot.slots_left}/${slot.capacity} slots left`
                                       : isFull
@@ -1804,8 +1804,8 @@ const s: Record<string, CSSProperties> = {
 
   slotGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: 8,
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 10,
     marginTop: 2,
   },
 
@@ -1813,13 +1813,43 @@ const s: Record<string, CSSProperties> = {
     position: "relative",
     border: "1px solid",
     borderRadius: 14,
-    padding: "8px 10px",
+    padding: "12px 10px",
     fontSize: 12,
     fontWeight: 600,
     textAlign: "center",
-    minHeight: 48,
-    overflow: "hidden",
+    minHeight: 76,
     cursor: "default",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    boxSizing: "border-box",
+    whiteSpace: "normal",
+    overflow: "visible",
+  },
+
+  slotTimeText: {
+    display: "block",
+    width: "100%",
+    fontSize: 12,
+    fontWeight: 800,
+    lineHeight: 1.2,
+    whiteSpace: "normal",
+    overflow: "visible",
+  },
+
+  slotInfoText: {
+    display: "block",
+    width: "100%",
+    maxWidth: "100%",
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: 700,
+    lineHeight: 1.25,
+    whiteSpace: "normal",
+    overflow: "visible",
+    overflowWrap: "break-word",
   },
 
   availablePill: {
@@ -1846,23 +1876,4 @@ const s: Record<string, CSSProperties> = {
     color: "var(--danger-text)",
   },
 
-  slotTimeText: {
-    display: "block",
-    fontSize: 11,
-    lineHeight: 1.1,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-
-  slotInfoText: {
-    display: "block",
-    marginTop: 3,
-    fontSize: 11,
-    fontWeight: 700,
-    lineHeight: 1.1,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
 };
