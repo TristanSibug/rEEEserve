@@ -1124,9 +1124,6 @@ export default function AdminDashboard() {
         <div>
           <p style={s.adminAttendanceEyebrow}>Attendance Authentication</p>
           <h2 style={s.adminAttendanceTitle}>Rotating QR Check-in</h2>
-          <p style={s.adminAttendanceDesc}>
-            Generate a live QR code for students to scan when they arrive at the lab.
-          </p>
         </div>
 
         <a href="/admin/attendance" style={s.adminAttendanceButton}>
@@ -2185,13 +2182,6 @@ const s: Record<string, CSSProperties> = {
     fontWeight: 850,
     color: "var(--text)",
     letterSpacing: -0.4,
-  },
-
-  adminAttendanceDesc: {
-    margin: 0,
-    fontSize: 14,
-    color: "var(--muted)",
-    lineHeight: 1.5,
   },
 
   adminAttendanceButton: {
