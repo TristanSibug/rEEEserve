@@ -1238,43 +1238,55 @@ export default function AdminDashboard() {
                           {statusLabel(item.status)}
                         </span>
                       </td>
-                      <td style={s.td}>
+                      <td style={s.actionTd}>
                         {activityView === "ongoing" && canManageReservation(item) && (
-                          <div style={s.actionStack}>
-                            <button style={s.actionBtn} onClick={() => openEditItem(item)} type="button">
+                          <div style={s.actionGroup}>
+                            <button
+                              style={s.actionBtn}
+                              onClick={() => openEditItem(item)}
+                            >
                               Edit
                             </button>
+
                             <button
-                              style={{ ...s.actionBtn, ...s.actionBtnDanger }}
+                              style={{ ...s.actionBtn, color: "#A32D2D" }}
                               onClick={() =>
                                 item.kind === "student"
                                   ? handleRemoveStudentReservation(item.id)
                                   : handleRemoveInstructorReservation(item.id)
                               }
-                              type="button"
                             >
                               Remove
                             </button>
                           </div>
                         )}
 
-                        {activityView === "pending" && item.kind === "student" && canManageReservation(item) && (
-                          <div style={s.actionStack}>
-                            <button style={s.actionBtn} onClick={() => handleApprove(Number(item.id))} type="button">
-                              Approve
-                            </button>
-                            <button style={s.actionBtn} onClick={() => openEditItem(item)} type="button">
-                              Edit
-                            </button>
-                            <button
-                              style={{ ...s.actionBtn, ...s.actionBtnDanger }}
-                              onClick={() => handleRemoveStudentReservation(item.id)}
-                              type="button"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        )}
+                        {activityView === "pending" &&
+                          item.kind === "student" &&
+                          canManageReservation(item) && (
+                            <div style={s.actionGroup}>
+                              <button
+                                style={{ ...s.actionBtn, color: "#3B6D11" }}
+                                onClick={() => handleApprove(Number(item.id))}
+                              >
+                                Approve
+                              </button>
+
+                              <button
+                                style={s.actionBtn}
+                                onClick={() => openEditItem(item)}
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                style={{ ...s.actionBtn, color: "#A32D2D" }}
+                                onClick={() => handleRemoveStudentReservation(item.id)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          )}
 
                         {activityView === "past" && (
                           <span style={s.pastText}>Finished</span>
@@ -1284,8 +1296,7 @@ export default function AdminDashboard() {
                           <span style={s.pastText}>Cancelled</span>
                         )}
 
-                        {(activityView === "ongoing" ||
-                          activityView === "pending") &&
+                        {(activityView === "ongoing" || activityView === "pending") &&
                           !canManageReservation(item) && (
                             <span style={s.pastText}>Locked</span>
                           )}
@@ -2094,6 +2105,19 @@ const s: Record<string, CSSProperties> = {
     alignItems: "stretch",
     gap: 6,
     width: 78,
+  },
+
+  actionGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "nowrap",
+  },
+
+  actionTd: {
+    padding: "14px 18px",
+    minWidth: 170,
+    whiteSpace: "nowrap",
   },
 
   actionBtn: {
