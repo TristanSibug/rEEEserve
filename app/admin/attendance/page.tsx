@@ -100,51 +100,56 @@ export default function AdminAttendancePage() {
           </p>
         </div>
 
-        <div style={s.grid}>
-          <div style={s.card}>
-            <div style={s.infoBox}>
-              <strong>One QR for all rooms</strong>
-              <p style={s.infoText}>
-                This QR is not tied to EEEI 301, 305, or 308. The system detects
-                the student&apos;s active reservation automatically after scanning.
-              </p>
+        <div style={s.qrCard}>
+          <div style={s.qrHeader}>
+            <div>
+              <p style={s.roomText}>All reservation rooms</p>
+              <h2 style={s.qrTitle}>Attendance QR</h2>
             </div>
 
-            <div style={s.infoBox}>
-              <strong>Screenshot protection</strong>
-              <p style={s.infoText}>
-                The QR changes every 30 seconds. Old screenshots expire and
-                cannot be used for check-in later.
-              </p>
-            </div>
-
-            <button type="button" style={s.btn} onClick={fetchQr}>
-              Generate new QR now
-            </button>
+            <div style={s.timer}>{secondsLeft}s</div>
           </div>
 
-          <div style={s.qrCard}>
-            <div style={s.qrHeader}>
-              <div>
-                <p style={s.roomText}>All reservation rooms</p>
-                <h2 style={s.qrTitle}>Attendance QR</h2>
-              </div>
-
-              <div style={s.timer}>{secondsLeft}s</div>
-            </div>
-
-            <div style={s.qrBox}>
-              {qr?.scan_url ? (
-                <QRCodeSVG value={qr.scan_url} size={280} />
-              ) : (
-                <div style={s.qrPlaceholder}>QR unavailable</div>
-              )}
-            </div>
-
-            <p style={s.status}>{statusText}</p>
-
-            {error && <p style={s.error}>{error}</p>}
+          <div style={s.qrBox}>
+            {qr?.scan_url ? (
+              <QRCodeSVG value={qr.scan_url} size={300} />
+            ) : (
+              <div style={s.qrPlaceholder}>QR unavailable</div>
+            )}
           </div>
+
+          <p style={s.status}>{statusText}</p>
+
+          <button
+            type="button"
+            style={{
+              ...s.btn,
+              opacity: loading ? 0.75 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+            onClick={fetchQr}
+            disabled={loading}
+          >
+            {loading ? "Generating..." : "Generate new QR now"}
+          </button>
+
+          <div style={s.infoBox}>
+            <strong>One QR for all rooms</strong>
+            <p style={s.infoText}>
+              This QR is not tied to EEEI 301, 305, or 308. The system detects
+              the student&apos;s active reservation automatically after scanning.
+            </p>
+          </div>
+
+          <div style={s.infoBox}>
+            <strong>Screenshot protection</strong>
+            <p style={s.infoText}>
+              The QR changes every 30 seconds. Old screenshots expire and cannot
+              be used for check-in later.
+            </p>
+          </div>
+
+          {error && <p style={s.error}>{error}</p>}
         </div>
       </section>
     </main>
@@ -165,7 +170,7 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 28px",
+    padding: "0 76px 0 28px",
     borderBottom: "1px solid var(--border, #e5e7eb)",
     background: "var(--surface, #ffffff)",
     position: "sticky",
@@ -183,19 +188,20 @@ const s: Record<string, React.CSSProperties> = {
 
   navLink: {
     fontSize: 14,
-    fontWeight: 700,
+    fontWeight: 800,
     color: "#185FA5",
     textDecoration: "none",
+    marginRight: 34,
   },
 
   shell: {
-    maxWidth: 1050,
+    maxWidth: 760,
     margin: "0 auto",
     padding: "34px 20px 60px",
   },
 
   header: {
-    marginBottom: 24,
+    marginBottom: 22,
   },
 
   eyebrow: {
@@ -221,53 +227,11 @@ const s: Record<string, React.CSSProperties> = {
     lineHeight: 1.6,
   },
 
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "minmax(260px, 360px) 1fr",
-    gap: 18,
-    alignItems: "stretch",
-  },
-
-  card: {
-    background: "var(--surface, #ffffff)",
-    border: "1px solid var(--border, #e5e7eb)",
-    borderRadius: 22,
-    padding: 22,
-    boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
-  },
-
-  infoBox: {
-    padding: 14,
-    borderRadius: 16,
-    background: "var(--soft, #f3f4f6)",
-    border: "1px solid var(--border, #e5e7eb)",
-    marginBottom: 16,
-  },
-
-  infoText: {
-    margin: "6px 0 0",
-    fontSize: 13,
-    color: "var(--muted, #6b7280)",
-    lineHeight: 1.5,
-  },
-
-  btn: {
-    width: "100%",
-    border: "none",
-    borderRadius: 14,
-    padding: "12px 16px",
-    fontSize: 14,
-    fontWeight: 800,
-    color: "#ffffff",
-    background: "#185FA5",
-    cursor: "pointer",
-  },
-
   qrCard: {
     background: "var(--surface, #ffffff)",
     border: "1px solid var(--border, #e5e7eb)",
-    borderRadius: 22,
-    padding: 24,
+    borderRadius: 24,
+    padding: 28,
     boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
     display: "flex",
     flexDirection: "column",
@@ -279,7 +243,7 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 22,
   },
 
   roomText: {
@@ -291,7 +255,8 @@ const s: Record<string, React.CSSProperties> = {
 
   qrTitle: {
     margin: "3px 0 0",
-    fontSize: 24,
+    fontSize: 26,
+    letterSpacing: -0.5,
   },
 
   timer: {
@@ -305,8 +270,8 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   qrBox: {
-    width: 330,
-    height: 330,
+    width: 360,
+    height: 360,
     maxWidth: "100%",
     display: "flex",
     alignItems: "center",
@@ -322,15 +287,46 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   status: {
-    margin: "16px 0 0",
+    margin: "18px 0 12px",
     color: "var(--muted, #6b7280)",
     fontSize: 14,
     fontWeight: 700,
+    textAlign: "center",
+  },
+
+  btn: {
+    border: "none",
+    borderRadius: 14,
+    padding: "12px 18px",
+    fontSize: 14,
+    fontWeight: 800,
+    color: "#ffffff",
+    background: "#185FA5",
+    cursor: "pointer",
+    marginBottom: 20,
+  },
+
+  infoBox: {
+    width: "100%",
+    padding: 14,
+    borderRadius: 16,
+    background: "var(--soft, #f3f4f6)",
+    border: "1px solid var(--border, #e5e7eb)",
+    marginTop: 12,
+  },
+
+  infoText: {
+    margin: "6px 0 0",
+    fontSize: 13,
+    color: "var(--muted, #6b7280)",
+    lineHeight: 1.5,
   },
 
   error: {
     color: "#dc2626",
     fontSize: 14,
     fontWeight: 700,
+    marginTop: 14,
+    textAlign: "center",
   },
 };
