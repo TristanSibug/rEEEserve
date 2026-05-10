@@ -12,6 +12,13 @@ export default function AttendanceScannerPage() {
     setError("");
 
     try {
+      const oldScanner = scannerRef.current;
+
+      if (oldScanner) {
+        await oldScanner.stop().catch(() => { });
+        oldScanner.clear();
+      }
+
       const scanner = new Html5Qrcode("attendance-reader");
       scannerRef.current = scanner;
 
@@ -22,9 +29,16 @@ export default function AttendanceScannerPage() {
           qrbox: { width: 250, height: 250 },
         },
         async (decodedText) => {
-          await scanner.stop();
+          await scanner.stop().catch(() => { });
 
-          const url = new URL(decodedText);
+          let url: URL;
+
+          try {
+            url = new URL(decodedText);
+          } catch {
+            setError("This is not a valid rEEEserve attendance QR code.");
+            return;
+          }
 
           if (url.pathname !== "/attendance/scan") {
             setError("This is not a valid rEEEserve attendance QR code.");
@@ -38,7 +52,9 @@ export default function AttendanceScannerPage() {
             return;
           }
 
-          window.location.href = `/attendance/scan?token=${encodeURIComponent(token)}`;
+          window.location.href = `/attendance/scan?token=${encodeURIComponent(
+            token
+          )}`;
         },
         () => { }
       );
@@ -73,7 +89,7 @@ export default function AttendanceScannerPage() {
     <main style={s.page}>
       <nav style={s.nav}>
         <a href="/dashboard" style={s.logo}>
-          REEE<span style={{ color: "#185FA5" }}>serve</span>
+          rEEE<span style={{ color: "#185FA5" }}>serve</span>
         </a>
 
         <a href="/dashboard" style={s.navLink}>
@@ -89,7 +105,9 @@ export default function AttendanceScannerPage() {
             You must be logged in and have an active reservation for the room.
           </p>
 
-          <div id="attendance-reader" style={s.reader} />
+          <div style={s.readerWrap}>
+            <div id="attendance-reader" style={s.reader} />
+          </div>
 
           {!started && !error && <p style={s.status}>Starting camera...</p>}
 
@@ -110,10 +128,9 @@ export default function AttendanceScannerPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "var(--bg, #f6f8fb)",
-    color: "var(--text, #111827)",
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    background: "var(--bg)",
+    color: "var(--text)",
+    fontFamily: "sans-serif",
   },
 
   nav: {
@@ -121,45 +138,50 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 28px",
-    borderBottom: "1px solid var(--border, #e5e7eb)",
-    background: "var(--surface, #ffffff)",
+    padding: "0 92px 0 28px",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
   },
 
   logo: {
     fontSize: 20,
     fontWeight: 800,
     textDecoration: "none",
-    color: "var(--text, #111827)",
+    color: "var(--text)",
     letterSpacing: -0.5,
   },
 
   navLink: {
     fontSize: 14,
-    fontWeight: 700,
-    color: "#185FA5",
+    fontWeight: 800,
+    color: "#60a5fa",
     textDecoration: "none",
+    marginRight: 46,
   },
 
   shell: {
-    maxWidth: 620,
+    maxWidth: 660,
     margin: "0 auto",
     padding: "34px 20px 60px",
   },
 
   card: {
-    background: "var(--surface, #ffffff)",
-    border: "1px solid var(--border, #e5e7eb)",
-    borderRadius: 22,
-    padding: 24,
-    boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    border: "1px solid var(--border)",
+    borderRadius: 24,
+    padding: 28,
+    boxShadow: "0 14px 40px rgba(0, 0, 0, 0.16)",
   },
 
   eyebrow: {
     margin: 0,
     fontSize: 13,
     fontWeight: 800,
-    color: "#185FA5",
+    color: "#60a5fa",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
@@ -168,30 +190,41 @@ const s: Record<string, React.CSSProperties> = {
     margin: "6px 0 8px",
     fontSize: 30,
     letterSpacing: -0.8,
+    color: "var(--text)",
   },
 
   desc: {
     margin: "0 0 20px",
-    color: "var(--muted, #6b7280)",
+    color: "var(--muted)",
     lineHeight: 1.6,
+  },
+
+  readerWrap: {
+    width: "100%",
+    overflow: "hidden",
+    borderRadius: 18,
+    border: "1px solid var(--border)",
+    background: "#000000",
   },
 
   reader: {
     width: "100%",
+    minHeight: 390,
     overflow: "hidden",
     borderRadius: 18,
-    border: "1px solid var(--border, #e5e7eb)",
+    background: "#000000",
+    color: "#ffffff",
   },
 
   status: {
     marginTop: 14,
-    color: "var(--muted, #6b7280)",
+    color: "var(--muted)",
     fontWeight: 700,
   },
 
   error: {
     marginTop: 14,
-    color: "#dc2626",
+    color: "#f87171",
     fontWeight: 700,
     lineHeight: 1.5,
   },
