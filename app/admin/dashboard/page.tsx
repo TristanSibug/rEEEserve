@@ -154,6 +154,10 @@ export default function AdminDashboard() {
     ]);
   }
 
+  function startsAtHalfHour(t: string) {
+    return normalizeTime(t).endsWith(":30");
+  }
+
   async function fetchStudentReservations() {
     const res = await fetch("/api/admin/reservations");
     const data = await res.json();
@@ -1349,7 +1353,7 @@ export default function AdminDashboard() {
                       onClick={() => openSlotAction(slot)}
                       style={{
                         ...s.slotPill,
-                        ...(index === 0 ? { gridColumn: "2 / 3" } : {}),
+                        ...(startsAtHalfHour(slot.time_start) ? { gridColumn: "2 / 3" } : {}),
                         ...(isAvailable
                           ? s.availablePill
                           : isReserved || isFull

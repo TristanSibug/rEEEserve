@@ -192,6 +192,10 @@ export default function InstructorDashboard() {
     setMyReservations(Array.isArray(data.current) ? data.current : []);
   }
 
+  function startsAtHalfHour(t: string) {
+    return normalizeTime(t).endsWith(":30");
+  }
+
   function normalizeTime(t: string) {
     if (!t) return "00:00:00";
 
@@ -1210,6 +1214,7 @@ export default function InstructorDashboard() {
                               disabled={!isClickable}
                               style={{
                                 ...s.slotPill,
+                                ...(startsAtHalfHour(slot.time_start) ? { gridColumn: "2 / 3" } : {}),
                                 ...(isReservedByMe
                                   ? s.reservedByMePill
                                   : isAvailable
@@ -1229,7 +1234,7 @@ export default function InstructorDashboard() {
                                 {hasCourse
                                   ? slot.course_name
                                   : isReservedByMe
-                                    ? `Reserved by ${username} • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
+                                    ? `Reserved by you • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
                                     : isAvailable
                                       ? `${slot.slots_left}/${slot.capacity} slots left`
                                       : isFull

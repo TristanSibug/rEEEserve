@@ -310,6 +310,10 @@ export default function Dashboard() {
     return t.slice(0, 5);
   }
 
+  function startsAtHalfHour(t: string) {
+    return normalizeTime(t).endsWith(":30");
+  }
+
   function fmt(t: string) {
     const clean = normalizeTime(t);
     const [h, m] = clean.split(":").map(Number);
@@ -1398,6 +1402,7 @@ export default function Dashboard() {
                       }}
                       style={{
                         ...s.slotPill,
+                        ...(startsAtHalfHour(slot.time_start) ? { gridColumn: "2 / 3" } : {}),
                         ...(isSelected
                           ? s.selectedPill
                           : isReservedByMe
@@ -1418,7 +1423,7 @@ export default function Dashboard() {
                           : isSelected
                             ? "Selected"
                             : isReservedByMe
-                              ? `Reserved by ${formatNameFromEmail(email)} • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
+                              ? `Reserved by you • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
                               : isAvailable
                                 ? `${slot.slots_left}/${slot.capacity} slots left`
                                 : isFull
