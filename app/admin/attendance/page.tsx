@@ -137,10 +137,10 @@ export default function AdminAttendancePage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "var(--bg, #f6f8fb)",
-    color: "var(--text, #111827)",
+    background: "var(--bg)",
+    color: "var(--text)",
     fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      "sans-serif",
   },
 
   nav: {
@@ -148,9 +148,9 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 76px 0 28px",
-    borderBottom: "1px solid var(--border, #e5e7eb)",
-    background: "var(--surface, #ffffff)",
+    padding: "0 92px 0 28px",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
     position: "sticky",
     top: 0,
     zIndex: 20,
@@ -160,16 +160,16 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 20,
     fontWeight: 800,
     textDecoration: "none",
-    color: "var(--text, #111827)",
+    color: "var(--text)",
     letterSpacing: -0.5,
   },
 
   navLink: {
     fontSize: 14,
     fontWeight: 800,
-    color: "#185FA5",
+    color: "#60a5fa",
     textDecoration: "none",
-    marginRight: 34,
+    marginRight: 46,
   },
 
   shell: {
@@ -186,7 +186,7 @@ const s: Record<string, React.CSSProperties> = {
     margin: 0,
     fontSize: 13,
     fontWeight: 800,
-    color: "#185FA5",
+    color: "#60a5fa",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
@@ -196,21 +196,23 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 34,
     lineHeight: 1.1,
     letterSpacing: -1,
+    color: "var(--text)",
   },
 
   desc: {
     margin: 0,
     maxWidth: 700,
-    color: "var(--muted, #6b7280)",
+    color: "var(--muted)",
     lineHeight: 1.6,
   },
 
   qrCard: {
-    background: "var(--surface, #ffffff)",
-    border: "1px solid var(--border, #e5e7eb)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    border: "1px solid var(--border)",
     borderRadius: 24,
     padding: 28,
-    boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
+    boxShadow: "0 14px 40px rgba(0, 0, 0, 0.16)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -228,13 +230,14 @@ const s: Record<string, React.CSSProperties> = {
     margin: 0,
     fontSize: 14,
     fontWeight: 800,
-    color: "#185FA5",
+    color: "#60a5fa",
   },
 
   qrTitle: {
     margin: "3px 0 0",
     fontSize: 26,
     letterSpacing: -0.5,
+    color: "var(--text)",
   },
 
   timer: {
@@ -242,8 +245,8 @@ const s: Record<string, React.CSSProperties> = {
     textAlign: "center",
     padding: "8px 10px",
     borderRadius: 999,
-    background: "#fff7ed",
-    color: "#c2410c",
+    background: "rgba(251, 146, 60, 0.14)",
+    color: "#fb923c",
     fontWeight: 900,
   },
 
@@ -266,7 +269,7 @@ const s: Record<string, React.CSSProperties> = {
 
   status: {
     margin: "18px 0 12px",
-    color: "var(--muted, #6b7280)",
+    color: "var(--muted)",
     fontSize: 14,
     fontWeight: 700,
     textAlign: "center",
@@ -285,7 +288,7 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   error: {
-    color: "#dc2626",
+    color: "#f87171",
     fontSize: 14,
     fontWeight: 700,
     marginTop: 14,
