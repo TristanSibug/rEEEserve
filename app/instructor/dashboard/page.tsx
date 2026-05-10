@@ -1234,7 +1234,7 @@ export default function InstructorDashboard() {
                                 {hasCourse
                                   ? slot.course_name
                                   : isReservedByMe
-                                    ? `Reserved by you • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
+                                    ? `Click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
                                     : isAvailable
                                       ? `${slot.slots_left}/${slot.capacity} slots left`
                                       : isFull

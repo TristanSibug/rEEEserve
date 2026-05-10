@@ -1423,7 +1423,7 @@ export default function Dashboard() {
                           : isSelected
                             ? "Selected"
                             : isReservedByMe
-                              ? `Reserved by you • click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
+                              ? `Click to cancel • ${slot.slots_left}/${slot.capacity} slots left`
                               : isAvailable
                                 ? `${slot.slots_left}/${slot.capacity} slots left`
                                 : isFull
