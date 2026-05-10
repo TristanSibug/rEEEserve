@@ -973,9 +973,6 @@ export default function Dashboard() {
           <div>
             <p style={s.attendanceEyebrow}>Attendance Check-in</p>
             <h2 style={s.attendanceTitle}>Scan the lab QR code</h2>
-            <p style={s.attendanceDesc}>
-              Use this when you arrive at the lab for your active reservation.
-            </p>
           </div>
 
           <a href="/attendance" style={s.attendanceButton}>
@@ -2133,13 +2130,6 @@ const s: { [k: string]: React.CSSProperties } = {
     fontWeight: 850,
     color: "var(--text)",
     letterSpacing: -0.4,
-  },
-
-  attendanceDesc: {
-    margin: 0,
-    fontSize: 14,
-    color: "var(--muted)",
-    lineHeight: 1.5,
   },
 
   attendanceButton: {
