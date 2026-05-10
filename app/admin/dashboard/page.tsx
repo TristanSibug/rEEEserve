@@ -1699,10 +1699,11 @@ const s: Record<string, CSSProperties> = {
   },
 
   logo: {
-    fontSize: 22,
-    fontWeight: 700,
+    fontSize: 20,
+    fontWeight: 800,
     textDecoration: "none",
     color: "var(--text)",
+    letterSpacing: -0.5,
   },
 
   logoBlue: {
