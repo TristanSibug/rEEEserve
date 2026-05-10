@@ -1120,6 +1120,20 @@ export default function AdminDashboard() {
         </div>
       </nav>
 
+      <section style={s.adminAttendanceStrip}>
+        <div>
+          <p style={s.adminAttendanceEyebrow}>Attendance Authentication</p>
+          <h2 style={s.adminAttendanceTitle}>Rotating QR Check-in</h2>
+          <p style={s.adminAttendanceDesc}>
+            Generate a live QR code for students to scan when they arrive at the lab.
+          </p>
+        </div>
+
+        <a href="/admin/attendance" style={s.adminAttendanceButton}>
+          Open attendance QR
+        </a>
+      </section>
+
       <div style={s.body}>
         <div style={s.stats}>
           {[
@@ -2139,5 +2153,58 @@ const s: Record<string, CSSProperties> = {
     color: "var(--danger-text)",
     border: "1px solid var(--danger-border)",
     background: "var(--surface)",
+  },
+
+  adminAttendanceStrip: {
+    maxWidth: 1180,
+    margin: "22px auto 0",
+    padding: 18,
+    borderRadius: 20,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+    flexWrap: "wrap",
+  },
+
+  adminAttendanceEyebrow: {
+    margin: 0,
+    fontSize: 12,
+    fontWeight: 800,
+    color: "#185FA5",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
+
+  adminAttendanceTitle: {
+    margin: "4px 0 4px",
+    fontSize: 20,
+    fontWeight: 850,
+    color: "var(--text)",
+    letterSpacing: -0.4,
+  },
+
+  adminAttendanceDesc: {
+    margin: 0,
+    fontSize: 14,
+    color: "var(--muted)",
+    lineHeight: 1.5,
+  },
+
+  adminAttendanceButton: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "11px 15px",
+    borderRadius: 14,
+    background: "#185FA5",
+    color: "#ffffff",
+    textDecoration: "none",
+    fontSize: 14,
+    fontWeight: 800,
+    whiteSpace: "nowrap",
   },
 };

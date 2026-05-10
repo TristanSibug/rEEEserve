@@ -969,6 +969,20 @@ export default function Dashboard() {
           !
         </p>
 
+        <div style={s.attendanceCard}>
+          <div>
+            <p style={s.attendanceEyebrow}>Attendance Check-in</p>
+            <h2 style={s.attendanceTitle}>Scan the lab QR code</h2>
+            <p style={s.attendanceDesc}>
+              Use this when you arrive at the lab for your active reservation.
+            </p>
+          </div>
+
+          <a href="/attendance" style={s.attendanceButton}>
+            Scan attendance QR
+          </a>
+        </div>
+
         <div style={s.resShell}>
           <div style={s.resFloatingTitle}>
             My Reservations
@@ -2088,5 +2102,57 @@ const s: { [k: string]: React.CSSProperties } = {
     color: "var(--muted)",
     textDecoration: "none",
     fontSize: 13,
+  },
+
+  attendanceCard: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+    padding: 18,
+    marginBottom: 18,
+    borderRadius: 20,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+    flexWrap: "wrap",
+  },
+
+  attendanceEyebrow: {
+    margin: 0,
+    fontSize: 12,
+    fontWeight: 800,
+    color: "#185FA5",
+    textTransform: "uppercase",
+    letterSpacing: 0.7,
+  },
+
+  attendanceTitle: {
+    margin: "4px 0 4px",
+    fontSize: 20,
+    fontWeight: 850,
+    color: "var(--text)",
+    letterSpacing: -0.4,
+  },
+
+  attendanceDesc: {
+    margin: 0,
+    fontSize: 14,
+    color: "var(--muted)",
+    lineHeight: 1.5,
+  },
+
+  attendanceButton: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "11px 15px",
+    borderRadius: 14,
+    background: "#185FA5",
+    color: "#ffffff",
+    textDecoration: "none",
+    fontSize: 14,
+    fontWeight: 800,
+    whiteSpace: "nowrap",
   },
 };
