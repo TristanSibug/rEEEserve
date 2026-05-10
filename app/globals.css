@@ -91,6 +91,19 @@ html[data-theme="dark"] {
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
+select,
+option,
+button,
+input {
+  color-scheme: light dark;
+}
+
+select {
+  background-color: var(--select-bg);
+  color: var(--text);
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -175,9 +188,6 @@ body {
   transform: translateY(-22px);
 }
 
-/* Dark mode:
-   - moon goes downward and disappears
-   - sun sweeps downward into place */
 html[data-theme="dark"] .theme-toggle-single-icon-moon {
   opacity: 0;
   transform: translateY(22px);
@@ -187,10 +197,6 @@ html[data-theme="dark"] .theme-toggle-single-icon-sun {
   opacity: 1;
   transform: translateY(0);
 }
-
-/* Returning to light mode:
-   - sun goes upward and disappears
-   - moon sweeps upward into place */
 
 @media (max-width: 640px) {
   .theme-toggle-single {
@@ -205,17 +211,3 @@ html[data-theme="dark"] .theme-toggle-single-icon-sun {
     height: 18px;
   }
 }
-
-/*
-select,
-option,
-button,
-input {
-  color-scheme: light dark;
-}
-
-select {
-  background-color: var(--select-bg);
-  color: var(--text);
-}
-*/
