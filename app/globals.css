@@ -144,9 +144,18 @@ body {
 .theme-toggle-icon {
   position: relative;
   z-index: 2;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
   user-select: none;
+  color: #111111;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 900;
+  transition: color 160ms ease, text-shadow 160ms ease;
+}
+
+html[data-theme="dark"] .theme-toggle-icon {
+  color: #facc15;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.28);
 }
 
 .theme-toggle-thumb {
