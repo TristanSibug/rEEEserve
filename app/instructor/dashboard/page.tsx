@@ -1299,7 +1299,7 @@ const s: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "18px 28px",
+    padding: "18px 74px 18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
     position: "sticky",

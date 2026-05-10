@@ -1506,7 +1506,7 @@ const s: { [k: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "18px 28px",
+    padding: "18px 74px 18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
     position: "sticky",
@@ -1519,7 +1519,7 @@ const s: { [k: string]: React.CSSProperties } = {
     fontWeight: 800,
     textDecoration: "none",
     color: "var(--text)",
-    letterSpacing: -0.5,
+
   },
 
   sn: {
