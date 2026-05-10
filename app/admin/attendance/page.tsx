@@ -92,19 +92,13 @@ export default function AdminAttendancePage() {
 
       <section style={s.shell}>
         <div style={s.header}>
-          <p style={s.eyebrow}>Attendance Authentication</p>
-          <h1 style={s.title}>Single Rotating QR Check-in</h1>
-          <p style={s.desc}>
-            Display this QR code at the staff lab. Students can scan it to check
-            in for whichever active reservation they currently have.
-          </p>
+          <p style={s.eyebrow}>Attendance QR</p>
         </div>
 
         <div style={s.qrCard}>
           <div style={s.qrHeader}>
             <div>
-              <p style={s.roomText}>All reservation rooms</p>
-              <h2 style={s.qrTitle}>Attendance QR</h2>
+              <p style={s.roomText}>All lab rooms</p>
             </div>
 
             <div style={s.timer}>{secondsLeft}s</div>
@@ -132,22 +126,6 @@ export default function AdminAttendancePage() {
           >
             {loading ? "Generating..." : "Generate new QR now"}
           </button>
-
-          <div style={s.infoBox}>
-            <strong>One QR for all rooms</strong>
-            <p style={s.infoText}>
-              This QR is not tied to EEEI 301, 305, or 308. The system detects
-              the student&apos;s active reservation automatically after scanning.
-            </p>
-          </div>
-
-          <div style={s.infoBox}>
-            <strong>Screenshot protection</strong>
-            <p style={s.infoText}>
-              The QR changes every 30 seconds. Old screenshots expire and cannot
-              be used for check-in later.
-            </p>
-          </div>
 
           {error && <p style={s.error}>{error}</p>}
         </div>
@@ -304,22 +282,6 @@ const s: Record<string, React.CSSProperties> = {
     background: "#185FA5",
     cursor: "pointer",
     marginBottom: 20,
-  },
-
-  infoBox: {
-    width: "100%",
-    padding: 14,
-    borderRadius: 16,
-    background: "var(--soft, #f3f4f6)",
-    border: "1px solid var(--border, #e5e7eb)",
-    marginTop: 12,
-  },
-
-  infoText: {
-    margin: "6px 0 0",
-    fontSize: 13,
-    color: "var(--muted, #6b7280)",
-    lineHeight: 1.5,
   },
 
   error: {
