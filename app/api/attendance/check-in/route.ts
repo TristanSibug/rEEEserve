@@ -93,25 +93,64 @@ export async function POST(request: Request) {
       "id, room_name, reserved_date, time_start, time_end, status, attendance_status"
     )
     .eq("student_email", user.email)
-    .eq("room_name", qrToken.room_name)
     .eq("reserved_date", today)
     .eq("status", "approved")
+    .order("room_name", { ascending: true })
     .order("time_start", { ascending: true });
 
   if (reservationError) {
-    return NextResponse.json({ error: reservationError.message }, { status: 500 });
+    return NextResponse.json(
+      { error: reservationError.message },
+      { status: 500 }
+    );
   }
 
-  const rows = (reservations ?? []) as ReservationRow[];
+  const allRows = (reservations ?? []) as ReservationRow[];
 
-  if (rows.length === 0) {
+  if (allRows.length === 0) {
     return NextResponse.json(
       {
-        error: `You do not have an approved reservation for ${qrToken.room_name} today.`,
+        error: "You do not have an approved reservation today.",
       },
       { status: 404 }
     );
   }
+
+  const activeRows = allRows.filter((reservation) => {
+    const start = timeToMinutes(normalizeTime(reservation.time_start));
+    const end = timeToMinutes(normalizeTime(reservation.time_end));
+
+    const checkInWindowStart = start - 10;
+    const checkInWindowEnd = end;
+
+    return nowMinutes >= checkInWindowStart && nowMinutes < checkInWindowEnd;
+  });
+
+  if (activeRows.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "You do not have an active reservation right now. Check-in opens 10 minutes before your reserved timeslot.",
+      },
+      { status: 409 }
+    );
+  }
+
+  const activeRooms = Array.from(new Set(activeRows.map((row) => row.room_name)));
+
+  if (activeRooms.length > 1) {
+    return NextResponse.json(
+      {
+        error:
+          "Multiple active reservations were found in different rooms. Please contact staff.",
+      },
+      { status: 409 }
+    );
+  }
+
+  const activeRoom = activeRooms[0];
+
+  const rows = allRows.filter((reservation) => reservation.room_name === activeRoom);
 
   const activeIndex = rows.findIndex((reservation) => {
     const start = timeToMinutes(normalizeTime(reservation.time_start));
@@ -138,14 +177,16 @@ export async function POST(request: Request) {
 
   while (
     left > 0 &&
-    normalizeTime(rows[left - 1].time_end) === normalizeTime(rows[left].time_start)
+    normalizeTime(rows[left - 1].time_end) ===
+    normalizeTime(rows[left].time_start)
   ) {
     left--;
   }
 
   while (
     right < rows.length - 1 &&
-    normalizeTime(rows[right].time_end) === normalizeTime(rows[right + 1].time_start)
+    normalizeTime(rows[right].time_end) ===
+    normalizeTime(rows[right + 1].time_start)
   ) {
     right++;
   }
@@ -161,7 +202,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       already_checked_in: true,
-      room_name: qrToken.room_name,
+      room_name: activeRoom,
       reserved_date: today,
       time_start: normalizeTime(continuousBlock[0].time_start),
       time_end: normalizeTime(continuousBlock[continuousBlock.length - 1].time_end),
@@ -187,18 +228,18 @@ export async function POST(request: Request) {
 
   await supabase.from("reservation_activity_log").insert({
     action_type: "student_checked_in",
-    room_name: qrToken.room_name,
+    room_name: activeRoom,
     action_date: today,
     time_start: normalizeTime(continuousBlock[0].time_start),
     time_end: normalizeTime(continuousBlock[continuousBlock.length - 1].time_end),
     student_email: user.email,
-    details: "Student checked in using rotating QR attendance.",
+    details: "Student checked in using single rotating QR attendance.",
   });
 
   return NextResponse.json({
     ok: true,
     already_checked_in: false,
-    room_name: qrToken.room_name,
+    room_name: activeRoom,
     reserved_date: today,
     time_start: normalizeTime(continuousBlock[0].time_start),
     time_end: normalizeTime(continuousBlock[continuousBlock.length - 1].time_end),

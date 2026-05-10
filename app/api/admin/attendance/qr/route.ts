@@ -5,7 +5,6 @@ import { createClient } from "../../../../../utils/supabase/server";
 
 export const runtime = "nodejs";
 
-const VALID_ROOMS = ["EEEI 301", "EEEI 305", "EEEI 308"];
 const TOKEN_LIFETIME_SECONDS = 30;
 
 export async function GET(request: Request) {
@@ -18,21 +17,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
-  const { searchParams, origin } = new URL(request.url);
-  const roomName = String(searchParams.get("room") ?? "").trim();
-
-  if (!VALID_ROOMS.includes(roomName)) {
-    return NextResponse.json({ error: "Invalid room selected." }, { status: 400 });
-  }
+  const { origin } = new URL(request.url);
 
   const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + TOKEN_LIFETIME_SECONDS * 1000).toISOString();
+  const expiresAt = new Date(
+    Date.now() + TOKEN_LIFETIME_SECONDS * 1000
+  ).toISOString();
 
   const { data, error } = await supabase
     .from("attendance_qr_tokens")
     .insert({
       token,
-      room_name: roomName,
+      room_name: null,
       expires_at: expiresAt,
     })
     .select("id, token, room_name, expires_at")

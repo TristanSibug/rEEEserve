@@ -3,19 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
-const ROOMS = ["EEEI 301", "EEEI 305", "EEEI 308"];
-
 type QrPayload = {
   id: string;
   token: string;
-  room_name: string;
+  room_name: string | null;
   expires_at: string;
   scan_url: string;
   lifetime_seconds: number;
 };
 
 export default function AdminAttendancePage() {
-  const [room, setRoom] = useState("EEEI 301");
   const [qr, setQr] = useState<QrPayload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,10 +23,9 @@ export default function AdminAttendancePage() {
     setError("");
 
     try {
-      const res = await fetch(
-        `/api/admin/attendance/qr?room=${encodeURIComponent(room)}`,
-        { cache: "no-store" }
-      );
+      const res = await fetch("/api/admin/attendance/qr", {
+        cache: "no-store",
+      });
 
       const data = await res.json();
 
@@ -56,7 +52,7 @@ export default function AdminAttendancePage() {
     }, 25000);
 
     return () => window.clearInterval(interval);
-  }, [room]);
+  }, []);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -97,33 +93,28 @@ export default function AdminAttendancePage() {
       <section style={s.shell}>
         <div style={s.header}>
           <p style={s.eyebrow}>Attendance Authentication</p>
-          <h1 style={s.title}>Rotating QR Check-in</h1>
+          <h1 style={s.title}>Single Rotating QR Check-in</h1>
           <p style={s.desc}>
-            Display this QR code near the lab entrance. Students must be logged in
-            and must have an active reservation for the selected room.
+            Display this QR code at the staff lab. Students can scan it to check
+            in for whichever active reservation they currently have.
           </p>
         </div>
 
         <div style={s.grid}>
           <div style={s.card}>
-            <label style={s.label}>Room</label>
-            <select
-              value={room}
-              onChange={(e) => setRoom(e.target.value)}
-              style={s.select}
-            >
-              {ROOMS.map((roomName) => (
-                <option key={roomName} value={roomName}>
-                  {roomName}
-                </option>
-              ))}
-            </select>
+            <div style={s.infoBox}>
+              <strong>One QR for all rooms</strong>
+              <p style={s.infoText}>
+                This QR is not tied to EEEI 301, 305, or 308. The system detects
+                the student&apos;s active reservation automatically after scanning.
+              </p>
+            </div>
 
             <div style={s.infoBox}>
-              <strong>How this works</strong>
+              <strong>Screenshot protection</strong>
               <p style={s.infoText}>
-                The QR changes every 30 seconds. A screenshot of an old QR will
-                expire and cannot be used later.
+                The QR changes every 30 seconds. Old screenshots expire and
+                cannot be used for check-in later.
               </p>
             </div>
 
@@ -135,7 +126,7 @@ export default function AdminAttendancePage() {
           <div style={s.qrCard}>
             <div style={s.qrHeader}>
               <div>
-                <p style={s.roomText}>{room}</p>
+                <p style={s.roomText}>All reservation rooms</p>
                 <h2 style={s.qrTitle}>Attendance QR</h2>
               </div>
 
@@ -243,24 +234,6 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 22,
     padding: 22,
     boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
-  },
-
-  label: {
-    display: "block",
-    marginBottom: 8,
-    fontSize: 13,
-    fontWeight: 800,
-  },
-
-  select: {
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: 14,
-    border: "1px solid var(--border, #d1d5db)",
-    background: "var(--surface, #ffffff)",
-    color: "var(--text, #111827)",
-    fontSize: 15,
-    marginBottom: 16,
   },
 
   infoBox: {
