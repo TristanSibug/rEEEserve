@@ -92,7 +92,7 @@ export default function AdminAttendancePage() {
 
       <section style={s.shell}>
         <div style={s.header}>
-          <p style={s.eyebrow}>Attendance QR</p>
+          <h1 style={s.title}>Attendance QR</h1>
         </div>
 
         <div style={s.qrCard}>
