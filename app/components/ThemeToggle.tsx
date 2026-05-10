@@ -31,7 +31,13 @@ function SunIcon() {
 
 function MoonIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+    <svg
+      className="theme-toggle-moon-svg"
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      fill="currentColor"
+    >
       <path d="M21 14.6A8.5 8.5 0 0 1 9.4 3a7 7 0 1 0 11.6 11.6Z" />
     </svg>
   );

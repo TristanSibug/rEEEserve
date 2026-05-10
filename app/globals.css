@@ -176,6 +176,11 @@ body {
   flex-shrink: 0;
 }
 
+.theme-toggle-moon-svg {
+  transform: scale(1.28);
+  transform-origin: center;
+}
+
 .theme-toggle-single-icon-moon {
   color: #111111;
   opacity: 1;
@@ -209,5 +214,10 @@ html[data-theme="dark"] .theme-toggle-single-icon-sun {
   .theme-toggle-single-icon svg {
     width: 18px;
     height: 18px;
+  }
+
+  .theme-toggle-moon-svg {
+    width: 20px;
+    height: 20px;
   }
 }
