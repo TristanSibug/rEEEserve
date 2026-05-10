@@ -1,106 +1,159 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { useEffect, useMemo, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 
-export default function AttendanceScannerPage() {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+const ROOMS = ["EEEI 301", "EEEI 305", "EEEI 308"];
+
+type QrPayload = {
+  id: string;
+  token: string;
+  room_name: string;
+  expires_at: string;
+  scan_url: string;
+  lifetime_seconds: number;
+};
+
+export default function AdminAttendancePage() {
+  const [room, setRoom] = useState("EEEI 301");
+  const [qr, setQr] = useState<QrPayload | null>(null);
   const [error, setError] = useState("");
-  const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(0);
 
-  async function startScanner() {
+  async function fetchQr() {
+    setLoading(true);
     setError("");
 
     try {
-      const scanner = new Html5Qrcode("attendance-reader");
-      scannerRef.current = scanner;
-
-      await scanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        async (decodedText) => {
-          await scanner.stop();
-
-          const url = new URL(decodedText);
-
-          if (url.pathname !== "/attendance/scan") {
-            setError("This is not a valid rEEEserve attendance QR code.");
-            return;
-          }
-
-          const token = url.searchParams.get("token");
-
-          if (!token) {
-            setError("This QR code does not contain an attendance token.");
-            return;
-          }
-
-          window.location.href = `/attendance/scan?token=${encodeURIComponent(token)}`;
-        },
-        () => { }
+      const res = await fetch(
+        `/api/admin/attendance/qr?room=${encodeURIComponent(room)}`,
+        { cache: "no-store" }
       );
 
-      setStarted(true);
-    } catch (err) {
-      console.error(err);
-      setError(
-        "Could not start the camera. Please allow camera access, or use your phone camera app to scan the QR code."
-      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        setQr(null);
+        setError(data.error ?? "Failed to generate QR code.");
+        return;
+      }
+
+      setQr(data);
+    } catch {
+      setQr(null);
+      setError("Failed to generate QR code.");
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    startScanner();
+    fetchQr();
 
-    return () => {
-      const scanner = scannerRef.current;
+    const interval = window.setInterval(() => {
+      fetchQr();
+    }, 25000);
 
-      if (scanner) {
-        scanner
-          .stop()
-          .catch(() => { })
-          .finally(() => {
-            scanner.clear();
-          });
+    return () => window.clearInterval(interval);
+  }, [room]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (!qr?.expires_at) {
+        setSecondsLeft(0);
+        return;
       }
-    };
-  }, []);
+
+      const diff = Math.max(
+        0,
+        Math.ceil((new Date(qr.expires_at).getTime() - Date.now()) / 1000)
+      );
+
+      setSecondsLeft(diff);
+    }, 500);
+
+    return () => window.clearInterval(interval);
+  }, [qr]);
+
+  const statusText = useMemo(() => {
+    if (loading && !qr) return "Generating QR code...";
+    if (!qr) return "No QR code available.";
+    return `Refreshes automatically. Expires in ${secondsLeft}s.`;
+  }, [loading, qr, secondsLeft]);
 
   return (
     <main style={s.page}>
       <nav style={s.nav}>
-        <a href="/dashboard" style={s.logo}>
+        <a href="/admin/dashboard" style={s.logo}>
           REEE<span style={{ color: "#185FA5" }}>serve</span>
         </a>
 
-        <a href="/dashboard" style={s.navLink}>
-          Back to dashboard
+        <a href="/admin/dashboard" style={s.navLink}>
+          Back to admin dashboard
         </a>
       </nav>
 
       <section style={s.shell}>
-        <div style={s.card}>
-          <p style={s.eyebrow}>Attendance</p>
-          <h1 style={s.title}>Scan the lab QR code</h1>
+        <div style={s.header}>
+          <p style={s.eyebrow}>Attendance Authentication</p>
+          <h1 style={s.title}>Rotating QR Check-in</h1>
           <p style={s.desc}>
-            You must be logged in and have an active reservation for the room.
+            Display this QR code near the lab entrance. Students must be logged in
+            and must have an active reservation for the selected room.
           </p>
+        </div>
 
-          <div id="attendance-reader" style={s.reader} />
+        <div style={s.grid}>
+          <div style={s.card}>
+            <label style={s.label}>Room</label>
+            <select
+              value={room}
+              onChange={(e) => setRoom(e.target.value)}
+              style={s.select}
+            >
+              {ROOMS.map((roomName) => (
+                <option key={roomName} value={roomName}>
+                  {roomName}
+                </option>
+              ))}
+            </select>
 
-          {!started && !error && <p style={s.status}>Starting camera...</p>}
+            <div style={s.infoBox}>
+              <strong>How this works</strong>
+              <p style={s.infoText}>
+                The QR changes every 30 seconds. A screenshot of an old QR will
+                expire and cannot be used later.
+              </p>
+            </div>
 
-          {error && (
-            <>
-              <p style={s.error}>{error}</p>
-              <button type="button" style={s.btn} onClick={startScanner}>
-                Try again
-              </button>
-            </>
-          )}
+            <button type="button" style={s.btn} onClick={fetchQr}>
+              Generate new QR now
+            </button>
+          </div>
+
+          <div style={s.qrCard}>
+            <div style={s.qrHeader}>
+              <div>
+                <p style={s.roomText}>{room}</p>
+                <h2 style={s.qrTitle}>Attendance QR</h2>
+              </div>
+
+              <div style={s.timer}>{secondsLeft}s</div>
+            </div>
+
+            <div style={s.qrBox}>
+              {qr?.scan_url ? (
+                <QRCodeSVG value={qr.scan_url} size={280} />
+              ) : (
+                <div style={s.qrPlaceholder}>QR unavailable</div>
+              )}
+            </div>
+
+            <p style={s.status}>{statusText}</p>
+
+            {error && <p style={s.error}>{error}</p>}
+          </div>
         </div>
       </section>
     </main>
@@ -124,6 +177,9 @@ const s: Record<string, React.CSSProperties> = {
     padding: "0 28px",
     borderBottom: "1px solid var(--border, #e5e7eb)",
     background: "var(--surface, #ffffff)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
   },
 
   logo: {
@@ -142,17 +198,13 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   shell: {
-    maxWidth: 620,
+    maxWidth: 1050,
     margin: "0 auto",
     padding: "34px 20px 60px",
   },
 
-  card: {
-    background: "var(--surface, #ffffff)",
-    border: "1px solid var(--border, #e5e7eb)",
-    borderRadius: 22,
-    padding: 24,
-    boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
+  header: {
+    marginBottom: 24,
   },
 
   eyebrow: {
@@ -166,38 +218,68 @@ const s: Record<string, React.CSSProperties> = {
 
   title: {
     margin: "6px 0 8px",
-    fontSize: 30,
-    letterSpacing: -0.8,
+    fontSize: 34,
+    lineHeight: 1.1,
+    letterSpacing: -1,
   },
 
   desc: {
-    margin: "0 0 20px",
+    margin: 0,
+    maxWidth: 700,
     color: "var(--muted, #6b7280)",
     lineHeight: 1.6,
   },
 
-  reader: {
-    width: "100%",
-    overflow: "hidden",
-    borderRadius: 18,
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "minmax(260px, 360px) 1fr",
+    gap: 18,
+    alignItems: "stretch",
+  },
+
+  card: {
+    background: "var(--surface, #ffffff)",
     border: "1px solid var(--border, #e5e7eb)",
+    borderRadius: 22,
+    padding: 22,
+    boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
   },
 
-  status: {
-    marginTop: 14,
+  label: {
+    display: "block",
+    marginBottom: 8,
+    fontSize: 13,
+    fontWeight: 800,
+  },
+
+  select: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: 14,
+    border: "1px solid var(--border, #d1d5db)",
+    background: "var(--surface, #ffffff)",
+    color: "var(--text, #111827)",
+    fontSize: 15,
+    marginBottom: 16,
+  },
+
+  infoBox: {
+    padding: 14,
+    borderRadius: 16,
+    background: "var(--soft, #f3f4f6)",
+    border: "1px solid var(--border, #e5e7eb)",
+    marginBottom: 16,
+  },
+
+  infoText: {
+    margin: "6px 0 0",
+    fontSize: 13,
     color: "var(--muted, #6b7280)",
-    fontWeight: 700,
-  },
-
-  error: {
-    marginTop: 14,
-    color: "#dc2626",
-    fontWeight: 700,
     lineHeight: 1.5,
   },
 
   btn: {
-    marginTop: 12,
+    width: "100%",
     border: "none",
     borderRadius: 14,
     padding: "12px 16px",
@@ -206,5 +288,76 @@ const s: Record<string, React.CSSProperties> = {
     color: "#ffffff",
     background: "#185FA5",
     cursor: "pointer",
+  },
+
+  qrCard: {
+    background: "var(--surface, #ffffff)",
+    border: "1px solid var(--border, #e5e7eb)",
+    borderRadius: 22,
+    padding: 24,
+    boxShadow: "0 14px 40px rgba(15, 23, 42, 0.06)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+
+  qrHeader: {
+    width: "100%",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  roomText: {
+    margin: 0,
+    fontSize: 14,
+    fontWeight: 800,
+    color: "#185FA5",
+  },
+
+  qrTitle: {
+    margin: "3px 0 0",
+    fontSize: 24,
+  },
+
+  timer: {
+    minWidth: 58,
+    textAlign: "center",
+    padding: "8px 10px",
+    borderRadius: 999,
+    background: "#fff7ed",
+    color: "#c2410c",
+    fontWeight: 900,
+  },
+
+  qrBox: {
+    width: 330,
+    height: 330,
+    maxWidth: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 24,
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+  },
+
+  qrPlaceholder: {
+    color: "#9ca3af",
+    fontWeight: 700,
+  },
+
+  status: {
+    margin: "16px 0 0",
+    color: "var(--muted, #6b7280)",
+    fontSize: 14,
+    fontWeight: 700,
+  },
+
+  error: {
+    color: "#dc2626",
+    fontSize: 14,
+    fontWeight: 700,
   },
 };
