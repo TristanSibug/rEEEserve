@@ -1122,12 +1122,11 @@ export default function AdminDashboard() {
 
       <section style={s.adminAttendanceStrip}>
         <div>
-          <p style={s.adminAttendanceEyebrow}>Attendance Authentication</p>
-          <h2 style={s.adminAttendanceTitle}>Rotating QR Check-in</h2>
+          <h2 style={s.adminAttendanceTitle}>Attendance Authentication</h2>
         </div>
 
         <a href="/admin/attendance" style={s.adminAttendanceButton}>
-          Open attendance QR
+          Open QR
         </a>
       </section>
 

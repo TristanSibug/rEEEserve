@@ -82,7 +82,7 @@ export default function AdminAttendancePage() {
     <main style={s.page}>
       <nav style={s.nav}>
         <a href="/admin/dashboard" style={s.logo}>
-          REEE<span style={{ color: "#185FA5" }}>serve</span>
+          rEEE<span style={{ color: "#185FA5" }}>serve</span>
         </a>
 
         <a href="/admin/dashboard" style={s.navLink}>
