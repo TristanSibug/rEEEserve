@@ -971,12 +971,11 @@ export default function Dashboard() {
 
         <div style={s.attendanceCard}>
           <div>
-            <p style={s.attendanceEyebrow}>Attendance Check-in</p>
-            <h2 style={s.attendanceTitle}>Scan the lab QR code</h2>
+            <h2 style={s.attendanceTitle}>Attendance Check-in</h2>
           </div>
 
           <a href="/attendance" style={s.attendanceButton}>
-            Scan attendance QR
+            Scan QR
           </a>
         </div>
 

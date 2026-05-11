@@ -84,10 +84,6 @@ export default function AdminAttendancePage() {
         <a href="/admin/dashboard" style={s.logo}>
           rEEE<span style={{ color: "#185FA5" }}>serve</span>
         </a>
-
-        <a href="/admin/dashboard" style={s.navLink}>
-          Back to admin dashboard
-        </a>
       </nav>
 
       <section style={s.shell}>
@@ -130,6 +126,11 @@ export default function AdminAttendancePage() {
           {error && <p style={s.error}>{error}</p>}
         </div>
       </section>
+      <div style={s.bottomBackWrap}>
+  <a href="/admin/dashboard" style={s.bottomBackLink}>
+    ← Back to admin dashboard
+  </a>
+</div>
     </main>
   );
 }
@@ -142,19 +143,19 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily:
       "sans-serif",
   },
-
-  nav: {
-    height: 64,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 92px 0 28px",
-    borderBottom: "1px solid var(--border)",
-    background: "var(--surface)",
-    position: "sticky",
-    top: 0,
-    zIndex: 20,
-  },
+  
+nav: {
+  height: 64,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "0 20px",
+  borderBottom: "1px solid var(--border)",
+  background: "var(--surface)",
+  position: "sticky",
+  top: 0,
+  zIndex: 20,
+},
 
   logo: {
     fontSize: 20,
@@ -294,4 +295,28 @@ const s: Record<string, React.CSSProperties> = {
     marginTop: 14,
     textAlign: "center",
   },
+
+  bottomBackWrap: {
+  width: "100%",
+  display: "flex",
+  justifyContent: "center",
+  marginTop: 24,
+},
+
+bottomBackLink: {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "100%",
+  maxWidth: 360,
+  padding: "12px 16px",
+  borderRadius: 14,
+  border: "1px solid var(--border)",
+  background: "var(--surface)",
+  color: "var(--text)",
+  textDecoration: "none",
+  fontSize: 14,
+  fontWeight: 700,
+  boxShadow: "0 10px 24px rgba(15, 23, 42, 0.06)",
+},
 };

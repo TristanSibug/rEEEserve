@@ -1126,7 +1126,7 @@ export default function AdminDashboard() {
         </div>
 
         <a href="/admin/attendance" style={s.adminAttendanceButton}>
-          Open QR
+          Generate QR
         </a>
       </section>
 
