@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import Link from "next/link";
 
 type QrPayload = {
   id: string;
@@ -127,9 +128,9 @@ export default function AdminAttendancePage() {
         </div>
       </section>
       <div style={s.bottomBackWrap}>
-  <a href="/admin/dashboard" style={s.bottomBackLink}>
+  <Link href="/admin/dashboard" style={s.bottomBackLink}>
     ← Back to admin dashboard
-  </a>
+  </Link>
 </div>
     </main>
   );
@@ -143,12 +144,11 @@ const s: Record<string, React.CSSProperties> = {
     fontFamily:
       "sans-serif",
   },
-  
+
 nav: {
   height: 64,
   display: "flex",
   alignItems: "center",
-  justifyContent: "center",
   padding: "0 20px",
   borderBottom: "1px solid var(--border)",
   background: "var(--surface)",
@@ -310,6 +310,7 @@ bottomBackLink: {
   width: "100%",
   maxWidth: 360,
   padding: "12px 16px",
+  marginBottom: 40,
   borderRadius: 14,
   border: "1px solid var(--border)",
   background: "var(--surface)",
