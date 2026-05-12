@@ -152,6 +152,7 @@ const s: Record<string, React.CSSProperties> = {
   nav: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
     padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
