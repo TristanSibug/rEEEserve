@@ -165,7 +165,7 @@ export default function Dashboard() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      const activeEmail = demoEmail || user?.email || "";
+      const activeEmail = user?.email?.toLowerCase() || demoEmail || "";
 
       if (!activeEmail) {
         router.push("/");

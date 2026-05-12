@@ -58,18 +58,20 @@ async function getActiveStudentEmail(
   supabase: SupabaseServerClient,
   cookieStore: CookieStore
 ) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const realEmail = user?.email?.toLowerCase() ?? "";
+
+  if (realEmail) return realEmail;
+
   const demoEmail =
     process.env.DEMO_LOGIN_ENABLED === "true"
       ? cookieStore.get("demo_email")?.value?.toLowerCase() ?? ""
       : "";
 
-  if (demoEmail) return demoEmail;
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return user?.email?.toLowerCase() ?? "";
+  return demoEmail;
 }
 
 export async function GET() {
