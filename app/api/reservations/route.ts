@@ -51,7 +51,7 @@ function isPastOrTooSoon(date: string, timeStart: string) {
   if (date < today) return true;
   if (date > today) return false;
 
-  return timeToMinutes(timeStart) < nowMinutes + 30;
+  return timeToMinutes(timeStart) < nowMinutes + 60;
 }
 
 async function getActiveStudentEmail(

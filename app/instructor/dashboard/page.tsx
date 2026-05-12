@@ -47,20 +47,19 @@ const roomCapacity: Record<string, number> = {
   "EEEI 308": 16,
 };
 
-const teachingClasses = [
-  {
-    name: "EEE 121",
-    lab: "EEEI 399",
-    days: "M, W",
-    timeslot: "11:30 AM – 2:30 PM",
-  },
-  {
-    name: "EEE 128",
-    lab: "EEEI 001",
-    days: "S",
-    timeslot: "8:00 AM – 11:00 AM",
-  },
-];
+type InstructorClass = {
+  assignment_id: number;
+  schedule_id: number;
+  course_name: string;
+  room_name: string;
+  day_of_week: number;
+  day_label: string;
+  time_start: string;
+  time_end: string;
+  status: string;
+  class_share_enabled: boolean;
+  shared_walkin_slots: number;
+};
 
 const RESERVATION_LEAD_TIME_MINUTES = 60;
 
@@ -74,6 +73,8 @@ export default function InstructorDashboard() {
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [myReservations, setMyReservations] = useState<InstructorReservation[]>([]);
+  const [myClasses, setMyClasses] = useState<InstructorClass[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
   const [creatingReservation, setCreatingReservation] = useState(false);
 
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("none");
@@ -87,6 +88,10 @@ export default function InstructorDashboard() {
 
   useEffect(() => {
     setUsername("Instructor");
+  }, []);
+
+  useEffect(() => {
+    fetchMyClasses();
   }, []);
 
   useEffect(() => {
@@ -178,6 +183,25 @@ export default function InstructorDashboard() {
       setPreviewSlots(Object.fromEntries(entries));
     } finally {
       setLoadingPreviewSlots(false);
+    }
+  }
+
+  async function fetchMyClasses() {
+    setLoadingClasses(true);
+
+    try {
+      const res = await fetch("/api/instructor/classes");
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Failed to fetch instructor classes:", data);
+        setMyClasses([]);
+        return;
+      }
+
+      setMyClasses(Array.isArray(data) ? data : []);
+    } finally {
+      setLoadingClasses(false);
     }
   }
 
@@ -876,47 +900,73 @@ export default function InstructorDashboard() {
           </div>
 
           {activeTab === "classes" && (
-            <div>
-              <div style={s.sectionHeader}>
-                <div>
-                  <p style={s.sectionSubtitle}>
-                    Placeholder. Not working yet (Class sharing & No lab class implementation).
-                  </p>
+            <div style={s.content}>
+              <section style={s.floatingSection}>
+                <div style={s.floatingSectionTitle}>My Classes</div>
+
+                <div style={s.sectionHeader}>
+                  <div>
+                    <h2 style={s.sectionTitle}>Assigned Lab Classes</h2>
+                    <p style={s.sectionSubtitle}>
+                      These are the lab classes assigned to your instructor email.
+                    </p>
+                  </div>
                 </div>
 
-                <button type="button" style={s.btn}>
-                  Edit Classes
-                </button>
-              </div>
-
-              <div style={s.classGrid}>
-                {teachingClasses.map(cls => (
-                  <div key={`${cls.name}-${cls.lab}-${cls.days}`} style={s.classCard}>
-                    <div style={s.classCardTop}>
-                      <div>
-                        <div style={s.classCode}>{cls.name}</div>
-                        <div style={s.classLab}>{cls.lab}</div>
-                      </div>
-
-                      <button type="button" style={s.classCancelBtn}>
-                        Cancel
-                      </button>
-                    </div>
-
-                    <div style={s.classMetaGrid}>
-                      <div style={s.classMetaItem}>
-                        <span style={s.classMetaLabel}>Days</span>
-                        <strong style={s.classMetaValue}>{cls.days}</strong>
-                      </div>
-
-                      <div style={s.classMetaItem}>
-                        <span style={s.classMetaLabel}>Timeslot</span>
-                        <strong style={s.classMetaValue}>{cls.timeslot}</strong>
-                      </div>
-                    </div>
+                {loadingClasses ? (
+                  <p style={s.emptyText}>Loading classes...</p>
+                ) : myClasses.length === 0 ? (
+                  <div style={s.emptyBox}>
+                    No assigned classes found for your instructor account.
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div style={s.classGrid}>
+                    {myClasses.map(cls => (
+                      <div key={cls.assignment_id} style={s.classCard}>
+                        <div style={s.classCardTop}>
+                          <div>
+                            <div style={s.classCode}>{cls.course_name}</div>
+                            <div style={s.classLab}>{cls.room_name}</div>
+                          </div>
+
+                          <button
+                            type="button"
+                            style={s.classShareBtn}
+                            disabled
+                            title="Walk-in sharing will be connected to QR scan later."
+                          >
+                            Share
+                          </button>
+                        </div>
+
+                        <div style={s.classMetaGrid}>
+                          <div style={s.classMetaItem}>
+                            <span style={s.classMetaLabel}>Day</span>
+                            <span style={s.classMetaValue}>{cls.day_label}</span>
+                          </div>
+
+                          <div style={s.classMetaItem}>
+                            <span style={s.classMetaLabel}>Timeslot</span>
+                            <span style={s.classMetaValue}>
+                              {fmt(cls.time_start)} – {fmt(cls.time_end)}
+                            </span>
+                          </div>
+
+                          <div style={s.classMetaItem}>
+                            <span style={s.classMetaLabel}>Class Sharing</span>
+                            <span style={s.classMetaValue}>
+                              {cls.class_share_enabled
+                                ? `${cls.shared_walkin_slots} walk-in slot${cls.shared_walkin_slots === 1 ? "" : "s"
+                                } shared`
+                                : "Not shared"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
           )}
 
@@ -1496,6 +1546,18 @@ const s: Record<string, CSSProperties> = {
     cursor: "pointer",
     fontSize: 12,
     fontWeight: 700,
+  },
+
+  classShareBtn: {
+    border: "1px solid var(--primary)",
+    background: "var(--primary-soft)",
+    color: "var(--primary)",
+    borderRadius: 999,
+    padding: "7px 12px",
+    cursor: "not-allowed",
+    fontSize: 12,
+    fontWeight: 800,
+    opacity: 0.75,
   },
 
   classMetaGrid: {

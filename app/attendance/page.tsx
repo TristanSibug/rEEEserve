@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import { useRouter } from "next/navigation";
 import ThemeToggle from "../components/ThemeToggle";
 import Link from "next/link";
 
@@ -9,6 +10,7 @@ export default function AttendanceScannerPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [error, setError] = useState("");
   const [started, setStarted] = useState(false);
+  const router = useRouter();
 
   async function startScanner() {
     setError("");
@@ -54,9 +56,8 @@ export default function AttendanceScannerPage() {
             return;
           }
 
-          window.location.href = `/attendance/scan?token=${encodeURIComponent(
-            token
-          )}`;
+          // window.location.href = `/attendance/scan?token=${encodeURIComponent(token)}`;
+          router.push(`/attendance/scan?token=${encodeURIComponent(token)}`);
         },
         () => { }
       );
