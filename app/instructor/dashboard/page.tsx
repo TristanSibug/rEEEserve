@@ -968,15 +968,6 @@ export default function InstructorDashboard() {
               <section style={s.floatingSection}>
                 <div style={s.floatingSectionTitle}>My Classes</div>
 
-                <div style={s.sectionHeader}>
-                  <div>
-                    <h2 style={s.sectionTitle}>Assigned Lab Classes</h2>
-                    <p style={s.sectionSubtitle}>
-                      View your assigned classes and mark upcoming meetings as no class.
-                    </p>
-                  </div>
-                </div>
-
                 {loadingClasses ? (
                   <p style={s.emptyText}>Loading classes...</p>
                 ) : myClasses.length === 0 ? (
