@@ -1116,9 +1116,6 @@ export default function AdminDashboard() {
 
         <div style={s.navRight}>
           <span style={s.badge}>Admin</span>
-          <button style={s.logout} onClick={() => router.push("/")}>
-            Log out
-          </button>
           <ThemeToggle />
         </div>
       </nav>
@@ -1128,9 +1125,9 @@ export default function AdminDashboard() {
           <h2 style={s.adminAttendanceTitle}>Attendance Authentication</h2>
         </div>
 
-        <a href="/admin/attendance" style={s.adminAttendanceButton}>
+        <Link href="/admin/attendance" style={s.adminAttendanceButton}>
           Generate QR
-        </a>
+        </Link>
       </section>
 
       <div style={s.body}>
@@ -1752,16 +1749,6 @@ const s: Record<string, CSSProperties> = {
     fontWeight: 500,
     padding: "3px 8px",
     borderRadius: 99,
-  },
-
-  logout: {
-    fontSize: 12,
-    color: "var(--muted)",
-    background: "none",
-    border: "1px solid var(--border-strong)",
-    padding: "4px 10px",
-    borderRadius: 6,
-    cursor: "pointer",
   },
 
   body: {

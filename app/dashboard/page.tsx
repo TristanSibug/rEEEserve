@@ -978,9 +978,9 @@ export default function Dashboard() {
             <h2 style={s.attendanceTitle}>Attendance Check-in</h2>
           </div>
 
-          <a href="/attendance" style={s.attendanceButton}>
+          <Link href="/attendance" style={s.attendanceButton}>
             Scan QR
-          </a>
+          </Link>
         </div>
 
         <div style={s.resShell}>
@@ -1495,12 +1495,12 @@ export default function Dashboard() {
       </div>
 
       <footer style={s.footer}>
-        <a href="/about" style={s.footerLink}>
+        <Link href="/about" style={s.footerLink}>
           About
-        </a>
-        <a href="/help" style={s.footerLink}>
+        </Link>
+        <Link href="/help" style={s.footerLink}>
           Help
-        </a>
+        </Link>
       </footer>
     </div>
   );

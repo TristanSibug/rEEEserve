@@ -110,9 +110,9 @@ function ScanContent() {
 
               <p style={s.desc}>{result.message}</p>
 
-              <a href="/dashboard" style={s.btnLink}>
+              <Link href="/dashboard" style={s.btnLink}>
                 Return to dashboard
-              </a>
+              </Link>
             </>
           )}
 
@@ -124,13 +124,13 @@ function ScanContent() {
               <p style={s.error}>{result.error}</p>
 
               <div style={s.actions}>
-                <a href="/attendance" style={s.btnLink}>
+                <Link href="/attendance" style={s.btnLink}>
                   Scan again
-                </a>
+                </Link>
 
-                <a href="/dashboard" style={s.secondaryLink}>
+                <Link href="/dashboard" style={s.secondaryLink}>
                   Back to dashboard
-                </a>
+                </Link>
               </div>
             </>
           )}
