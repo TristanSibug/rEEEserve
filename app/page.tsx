@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "../utils/supabase/client";
+import ThemeToggle from "./components/ThemeToggle";
 import Link from "next/link";
 
 type DemoRole = "student" | "instructor" | "admin";
@@ -37,6 +38,9 @@ export default function Home() {
         <Link href="/" style={s.logo}>
           rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </Link>
+        <div style={s.navRight}>
+          <ThemeToggle />
+        </div>
       </nav>
 
       <main style={s.main}>
@@ -141,12 +145,25 @@ const s: { [k: string]: React.CSSProperties } = {
     background: "var(--page-bg)",
     fontFamily: "sans-serif",
   },
+
   nav: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
     padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
   },
 
   logo: {

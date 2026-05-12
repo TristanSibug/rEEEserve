@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "../../components/ThemeToggle";
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -51,6 +52,9 @@ export default function AdminLogin() {
         <Link href="/" style={styles.logo}>
           rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </Link>
+        <div style={styles.navRight}>
+          <ThemeToggle />
+        </div>
       </nav>
 
       <section style={styles.main}>
@@ -138,9 +142,21 @@ const styles: Record<string, CSSProperties> = {
   nav: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
     padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
   },
 
   logo: {

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import ThemeToggle from "../components/ThemeToggle";
+import Link from "next/link";
 
 export default function AttendanceScannerPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -88,13 +90,12 @@ export default function AttendanceScannerPage() {
   return (
     <main style={s.page}>
       <nav style={s.nav}>
-        <a href="/dashboard" style={s.logo}>
+        <Link href="/dashboard" style={s.logo}>
           rEEE<span style={{ color: "#185FA5" }}>serve</span>
-        </a>
-
-        <a href="/dashboard" style={s.navLink}>
-          Back to dashboard
-        </a>
+        </Link>
+        <div style={s.navRight}>
+          <ThemeToggle />
+        </div>
       </nav>
 
       <section style={s.shell}>
@@ -134,16 +135,23 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   nav: {
-    height: 64,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 92px 0 28px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
     position: "sticky",
     top: 0,
     zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
   },
 
   logo: {

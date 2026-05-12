@@ -2,6 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import ThemeToggle from "@/app/components/ThemeToggle";
+import Link from "next/link";
 
 type CheckInResult = {
   ok?: boolean;
@@ -54,13 +56,12 @@ function ScanContent() {
   return (
     <main style={s.page}>
       <nav style={s.nav}>
-        <a href="/dashboard" style={s.logo}>
-          REEE<span style={{ color: "#185FA5" }}>serve</span>
-        </a>
-
-        <a href="/dashboard" style={s.navLink}>
-          Back to dashboard
-        </a>
+        <Link href="/dashboard" style={s.logo}>
+          rEEE<span style={{ color: "#185FA5" }}>serve</span>
+        </Link>
+        <div style={s.navRight}>
+          <ThemeToggle />
+        </div>
       </nav>
 
       <section style={s.shell}>
@@ -177,13 +178,23 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   nav: {
-    height: 64,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 28px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border, #e5e7eb)",
     background: "var(--surface, #ffffff)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
   },
 
   logo: {

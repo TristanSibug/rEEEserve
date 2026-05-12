@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import ThemeToggle from "../../components/ThemeToggle";
 import Link from "next/link";
 
 type QrPayload = {
@@ -82,9 +83,12 @@ export default function AdminAttendancePage() {
   return (
     <main style={s.page}>
       <nav style={s.nav}>
-        <a href="/admin/dashboard" style={s.logo}>
+        <Link href="/admin/dashboard" style={s.logo}>
           rEEE<span style={{ color: "#185FA5" }}>serve</span>
-        </a>
+        </Link>
+        <div style={s.navRight}>
+          <ThemeToggle />
+        </div>
       </nav>
 
       <section style={s.shell}>
@@ -128,10 +132,10 @@ export default function AdminAttendancePage() {
         </div>
       </section>
       <div style={s.bottomBackWrap}>
-  <Link href="/admin/dashboard" style={s.bottomBackLink}>
-    ← Back to admin dashboard
-  </Link>
-</div>
+        <Link href="/admin/dashboard" style={s.bottomBackLink}>
+          ← Back to admin dashboard
+        </Link>
+      </div>
     </main>
   );
 }
@@ -145,17 +149,24 @@ const s: Record<string, React.CSSProperties> = {
       "sans-serif",
   },
 
-nav: {
-  height: 64,
-  display: "flex",
-  alignItems: "center",
-  padding: "0 20px",
-  borderBottom: "1px solid var(--border)",
-  background: "var(--surface)",
-  position: "sticky",
-  top: 0,
-  zIndex: 20,
-},
+  nav: {
+    display: "flex",
+    alignItems: "center",
+    padding: "18px 28px",
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
+  },
 
   logo: {
     fontSize: 20,
@@ -297,27 +308,27 @@ nav: {
   },
 
   bottomBackWrap: {
-  width: "100%",
-  display: "flex",
-  justifyContent: "center",
-  marginTop: 24,
-},
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+    marginTop: 24,
+  },
 
-bottomBackLink: {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "100%",
-  maxWidth: 360,
-  padding: "12px 16px",
-  marginBottom: 40,
-  borderRadius: 14,
-  border: "1px solid var(--border)",
-  background: "var(--surface)",
-  color: "var(--text)",
-  textDecoration: "none",
-  fontSize: 14,
-  fontWeight: 700,
-  boxShadow: "0 10px 24px rgba(15, 23, 42, 0.06)",
-},
+  bottomBackLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    maxWidth: 360,
+    padding: "12px 16px",
+    marginBottom: 40,
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    textDecoration: "none",
+    fontSize: 14,
+    fontWeight: 700,
+    boxShadow: "0 10px 24px rgba(15, 23, 42, 0.06)",
+  },
 };

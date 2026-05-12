@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../utils/supabase/client";
+import ThemeToggle from "@/app/components/ThemeToggle";
 
 type StudentReservation = {
   id: number;
@@ -1112,7 +1113,8 @@ export default function AdminDashboard() {
           rEEE<span style={s.logoBlue}>serve</span>
         </a>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={s.navRight}>
+          <ThemeToggle />
           <span style={s.badge}>Admin</span>
           <button style={s.logout} onClick={() => router.push("/")}>
             Log out
@@ -1714,9 +1716,20 @@ const s: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "18px 74px 18px 28px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
   },
 
   logo: {

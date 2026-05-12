@@ -130,10 +130,7 @@ body {
 }
 
 .theme-toggle-single {
-  position: fixed;
-  top: 13px;
-  right: 22px;
-  z-index: 9999;
+  position: relative;
 
   width: 38px;
   height: 38px;
@@ -148,6 +145,8 @@ body {
 
   cursor: pointer;
   overflow: hidden;
+
+  flex-shrink: 0;
 
   transition: background-color 160ms ease, transform 120ms ease;
 }
@@ -200,8 +199,6 @@ html[data-theme="dark"] .theme-toggle-single-icon-sun {
 
 @media (max-width: 640px) {
   .theme-toggle-single {
-    top: 13px;
-    right: 16px;
     width: 36px;
     height: 36px;
   }

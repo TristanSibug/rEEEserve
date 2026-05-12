@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../utils/supabase/client";
+import ThemeToggle from "../components/ThemeToggle";
 import Link from "next/link";
 
 type Slot = {
@@ -957,7 +958,10 @@ export default function Dashboard() {
         <Link href="/" style={s.logo}>
           rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </Link>
-        <span style={s.sn}>{email}</span>
+        <div style={s.navRight}>
+          <ThemeToggle />
+          <span style={s.sn}>{email}</span>
+        </div>
       </nav>
 
       <div style={s.body}>
@@ -1516,12 +1520,20 @@ const s: { [k: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "18px 74px 18px 28px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
     position: "sticky",
     top: 0,
     zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
   },
 
   logo: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import ThemeToggle from "../../components/ThemeToggle";
 import Link from "next/link";
 
 type Tab = "classes" | "reservations";
@@ -1299,12 +1300,20 @@ const s: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "18px 74px 18px 28px",
+    padding: "18px 28px",
     borderBottom: "1px solid var(--border)",
     background: "var(--surface)",
     position: "sticky",
     top: 0,
     zIndex: 20,
+  },
+
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
+    flexShrink: 0,
   },
 
   logo: {
@@ -1313,12 +1322,6 @@ const s: Record<string, CSSProperties> = {
     textDecoration: "none",
     color: "var(--text)",
     letterSpacing: -0.5,
-  },
-
-  navRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
   },
 
   badge: {
