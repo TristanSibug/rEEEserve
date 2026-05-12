@@ -1325,18 +1325,14 @@ const s: Record<string, CSSProperties> = {
     letterSpacing: -0.5,
   },
 
+
   badge: {
+    background: "var(--primary-soft)",
+    color: "var(--primary)",
     fontSize: 13,
     fontWeight: 600,
-    color: "var(--muted)",
-    background: "transparent",
-    border: "none",
-    padding: 0,
-    borderRadius: 0,
-    maxWidth: 260,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
+    padding: "3px 8px",
+    borderRadius: 99,
   },
 
   body: {

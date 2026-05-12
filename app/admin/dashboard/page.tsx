@@ -1745,8 +1745,8 @@ const s: Record<string, CSSProperties> = {
   badge: {
     background: "var(--primary-soft)",
     color: "var(--primary)",
-    fontSize: 11,
-    fontWeight: 500,
+    fontSize: 13,
+    fontWeight: 600,
     padding: "3px 8px",
     borderRadius: 99,
   },
