@@ -959,8 +959,8 @@ export default function Dashboard() {
           rEEE<span style={{ color: "var(--primary)" }}>serve</span>
         </Link>
         <div style={s.navRight}>
-          <ThemeToggle />
           <span style={s.sn}>{email}</span>
+          <ThemeToggle />
         </div>
       </nav>
 
@@ -1552,7 +1552,7 @@ const s: { [k: string]: React.CSSProperties } = {
     border: "none",
     padding: 0,
     borderRadius: 0,
-    maxWidth: 260,
+    maxWidth: 220,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",

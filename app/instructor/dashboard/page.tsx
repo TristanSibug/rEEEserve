@@ -847,6 +847,7 @@ export default function InstructorDashboard() {
 
         <div style={s.navRight}>
           <span style={s.badge}>Instructor</span>
+          <ThemeToggle />
         </div>
       </nav>
 

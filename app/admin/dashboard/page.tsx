@@ -3,7 +3,8 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../utils/supabase/client";
-import ThemeToggle from "@/app/components/ThemeToggle";
+import ThemeToggle from "../../components/ThemeToggle";
+import Link from "next/link";
 
 type StudentReservation = {
   id: number;
@@ -1109,16 +1110,16 @@ export default function AdminDashboard() {
   return (
     <div style={s.page}>
       <nav style={s.nav}>
-        <a href="/" style={s.logo}>
+        <Link href="/" style={s.logo}>
           rEEE<span style={s.logoBlue}>serve</span>
-        </a>
+        </Link>
 
         <div style={s.navRight}>
-          <ThemeToggle />
           <span style={s.badge}>Admin</span>
           <button style={s.logout} onClick={() => router.push("/")}>
             Log out
           </button>
+          <ThemeToggle />
         </div>
       </nav>
 
