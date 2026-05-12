@@ -32,7 +32,9 @@ export async function GET(request: Request) {
 
   const { data: weeklySchedules, error: weeklyError } = await supabase
     .from("weekly_lab_schedules")
-    .select("id, room_name, day_of_week, course_name, time_start, time_end, status")
+    .select(
+      "id, room_name, day_of_week, course_name, time_start, time_end, status"
+    )
     .eq("room_name", room)
     .eq("day_of_week", dayOfWeek);
 
@@ -40,9 +42,40 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: weeklyError.message }, { status: 500 });
   }
 
+  const weeklyScheduleIds = (weeklySchedules ?? []).map(
+    schedule => schedule.id
+  );
+
+  let noClassScheduleIds = new Set<number>();
+
+  if (weeklyScheduleIds.length > 0) {
+    const { data: noClassDates, error: noClassError } = await supabase
+      .from("instructor_class_no_class_dates")
+      .select("weekly_lab_schedule_id")
+      .eq("no_class_date", date)
+      .in("weekly_lab_schedule_id", weeklyScheduleIds);
+
+    if (noClassError) {
+      return NextResponse.json(
+        { error: noClassError.message },
+        { status: 500 }
+      );
+    }
+
+    noClassScheduleIds = new Set(
+      (noClassDates ?? []).map(item => Number(item.weekly_lab_schedule_id))
+    );
+  }
+
+  const activeWeeklySchedules = (weeklySchedules ?? []).filter(
+    schedule => !noClassScheduleIds.has(Number(schedule.id))
+  );
+
   const { data: roomBlocks, error: blockError } = await supabase
     .from("room_schedule_blocks")
-    .select("id, room_name, block_date, time_start, time_end, block_type, label, created_by_staff_id, created_by_role")
+    .select(
+      "id, room_name, block_date, time_start, time_end, block_type, label, created_by_staff_id, created_by_role"
+    )
     .eq("room_name", room)
     .eq("block_date", date);
 
@@ -58,10 +91,13 @@ export async function GET(request: Request) {
     .in("status", ["approved"]);
 
   if (reservationError) {
-    return NextResponse.json({ error: reservationError.message }, { status: 500 });
+    return NextResponse.json(
+      { error: reservationError.message },
+      { status: 500 }
+    );
   }
 
-  const formattedWeekly = (weeklySchedules ?? []).map(item => ({
+  const formattedWeekly = activeWeeklySchedules.map(item => ({
     id: `weekly-${item.id}`,
     room_name: item.room_name,
     schedule_date: date,

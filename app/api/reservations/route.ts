@@ -228,6 +228,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: weeklyError.message }, { status: 500 });
   }
 
+  const weeklyScheduleIds = (weeklySchedules ?? []).map(
+    schedule => schedule.id
+  );
+
+  let noClassScheduleIds = new Set<number>();
+
+  if (weeklyScheduleIds.length > 0) {
+    const { data: noClassDates, error: noClassError } = await supabase
+      .from("instructor_class_no_class_dates")
+      .select("weekly_lab_schedule_id")
+      .eq("no_class_date", date)
+      .in("weekly_lab_schedule_id", weeklyScheduleIds);
+
+    if (noClassError) {
+      return NextResponse.json(
+        { error: noClassError.message },
+        { status: 500 }
+      );
+    }
+
+    noClassScheduleIds = new Set(
+      (noClassDates ?? []).map(item => Number(item.weekly_lab_schedule_id))
+    );
+  }
+
+  const activeWeeklySchedules = (weeklySchedules ?? []).filter(
+    schedule => !noClassScheduleIds.has(Number(schedule.id))
+  );
+
   const { data: roomSchedules, error: roomError } = await supabase
     .from("room_schedule_blocks")
     .select("id, time_start, time_end")
@@ -239,7 +268,7 @@ export async function POST(request: Request) {
   }
 
   const blockingSchedules = [
-    ...(weeklySchedules ?? []),
+    ...activeWeeklySchedules,
     ...(roomSchedules ?? []),
   ];
 

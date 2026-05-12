@@ -47,6 +47,12 @@ const roomCapacity: Record<string, number> = {
   "EEEI 308": 16,
 };
 
+type InstructorClassDate = {
+  date: string;
+  no_class: boolean;
+  no_class_id: number | null;
+};
+
 type InstructorClass = {
   assignment_id: number;
   schedule_id: number;
@@ -59,6 +65,7 @@ type InstructorClass = {
   status: string;
   class_share_enabled: boolean;
   shared_walkin_slots: number;
+  upcoming_dates: InstructorClassDate[];
 };
 
 const RESERVATION_LEAD_TIME_MINUTES = 60;
@@ -75,6 +82,10 @@ export default function InstructorDashboard() {
   const [myReservations, setMyReservations] = useState<InstructorReservation[]>([]);
   const [myClasses, setMyClasses] = useState<InstructorClass[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
+
+  const [updatingClassDateKey, setUpdatingClassDateKey] = useState<string | null>(
+    null
+  );
   const [creatingReservation, setCreatingReservation] = useState(false);
 
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("none");
@@ -727,6 +738,59 @@ export default function InstructorDashboard() {
     fetchMyReservations();
   }
 
+  async function toggleNoClass(
+    cls: InstructorClass,
+    classDate: InstructorClassDate
+  ) {
+    const nextHoldNoClass = !classDate.no_class;
+
+    const confirmed = window.confirm(
+      nextHoldNoClass
+        ? `Hold no class for ${cls.course_name} on ${formatPanelDate(
+          classDate.date
+        )}?\n\nThis will free ${cls.room_name} from ${fmt(
+          cls.time_start
+        )} to ${fmt(cls.time_end)} as regular reservable timeslots.`
+        : `Restore class for ${cls.course_name} on ${formatPanelDate(
+          classDate.date
+        )}?\n\nThis will block ${cls.room_name} again for the class schedule.`
+    );
+
+    if (!confirmed) return;
+
+    const key = `${cls.assignment_id}-${classDate.date}`;
+    setUpdatingClassDateKey(key);
+
+    try {
+      const res = await fetch("/api/instructor/classes", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assignment_id: cls.assignment_id,
+          no_class_date: classDate.date,
+          hold_no_class: nextHoldNoClass,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error ?? "Failed to update class date.");
+        return;
+      }
+
+      await fetchMyClasses();
+      await fetchSlots();
+      await fetchPreviewSlots();
+
+      alert(nextHoldNoClass ? "No class date saved." : "Class date restored.");
+    } finally {
+      setUpdatingClassDateKey(null);
+    }
+  }
+
   function handleDateChange(
     selectedDate: string,
     source: ScheduleChangeSource = "dropdown"
@@ -904,6 +968,15 @@ export default function InstructorDashboard() {
               <section style={s.floatingSection}>
                 <div style={s.floatingSectionTitle}>My Classes</div>
 
+                <div style={s.sectionHeader}>
+                  <div>
+                    <h2 style={s.sectionTitle}>Assigned Lab Classes</h2>
+                    <p style={s.sectionSubtitle}>
+                      View your assigned classes and mark upcoming meetings as no class.
+                    </p>
+                  </div>
+                </div>
+
                 {loadingClasses ? (
                   <p style={s.emptyText}>Loading classes...</p>
                 ) : myClasses.length === 0 ? (
@@ -951,6 +1024,65 @@ export default function InstructorDashboard() {
                                 } shared`
                                 : "Not shared"}
                             </span>
+                          </div>
+                        </div>
+
+                        <div style={s.noClassBox}>
+                          <div style={s.noClassHeader}>
+                            <div>
+                              <div style={s.noClassTitle}>Upcoming class dates</div>
+                              <div style={s.noClassSubtitle}>
+                                Showing the next 5 {cls.day_label}s.
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={s.noClassList}>
+                            {cls.upcoming_dates.map(classDate => {
+                              const key = `${cls.assignment_id}-${classDate.date}`;
+                              const isUpdating = updatingClassDateKey === key;
+
+                              return (
+                                <div key={classDate.date} style={s.noClassRow}>
+                                  <div>
+                                    <div style={s.noClassDate}>
+                                      {formatPanelDate(classDate.date)}
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        ...s.noClassStatus,
+                                        ...(classDate.no_class
+                                          ? s.noClassStatusOpen
+                                          : s.noClassStatusBlocked),
+                                      }}
+                                    >
+                                      {classDate.no_class
+                                        ? "No class — lab is open for reservations"
+                                        : "Class scheduled — lab is blocked"}
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    style={{
+                                      ...s.noClassBtn,
+                                      ...(classDate.no_class
+                                        ? s.restoreClassBtn
+                                        : s.holdNoClassBtn),
+                                    }}
+                                    disabled={isUpdating}
+                                    onClick={() => toggleNoClass(cls, classDate)}
+                                  >
+                                    {isUpdating
+                                      ? "Updating..."
+                                      : classDate.no_class
+                                        ? "Restore class"
+                                        : "Hold no class"}
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -1932,6 +2064,88 @@ const s: Record<string, CSSProperties> = {
     background: "var(--danger-bg)",
     borderColor: "var(--danger-border)",
     color: "var(--danger-text)",
+  },
+
+  noClassBox: {
+    marginTop: 16,
+    paddingTop: 14,
+    borderTop: "1px solid var(--border)",
+  },
+
+  noClassHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 10,
+  },
+
+  noClassTitle: {
+    fontSize: 14,
+    fontWeight: 900,
+    color: "var(--text)",
+  },
+
+  noClassSubtitle: {
+    marginTop: 2,
+    fontSize: 12,
+    color: "var(--muted)",
+  },
+
+  noClassList: {
+    display: "grid",
+    gap: 8,
+  },
+
+  noClassRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: 12,
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    background: "var(--bg)",
+  },
+
+  noClassDate: {
+    fontSize: 13,
+    fontWeight: 800,
+    color: "var(--text)",
+  },
+
+  noClassStatus: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: 700,
+  },
+
+  noClassStatusBlocked: {
+    color: "#b91c1c",
+  },
+
+  noClassStatusOpen: {
+    color: "#166534",
+  },
+
+  noClassBtn: {
+    border: "none",
+    borderRadius: 999,
+    padding: "8px 12px",
+    fontSize: 12,
+    fontWeight: 900,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+
+  holdNoClassBtn: {
+    background: "#fee2e2",
+    color: "#b91c1c",
+  },
+
+  restoreClassBtn: {
+    background: "#dcfce7",
+    color: "#166534",
   },
 
 };
