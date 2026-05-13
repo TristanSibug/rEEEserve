@@ -2,7 +2,7 @@
 
 import { CSSProperties, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import ThemeToggle from "../../components/ThemeToggle";
+// import ThemeToggle from "../../components/ThemeToggle";
 import Link from "next/link";
 
 type ScanState =
@@ -238,7 +238,7 @@ function StudentQrScanContent() {
           rEEE<span style={s.logoBlue}>serve</span>
         </Link>
         <div style={s.navRight}>
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
 
           <button type="button" style={s.navBtn} onClick={() => router.push("/dashboard")}>
             Dashboard
