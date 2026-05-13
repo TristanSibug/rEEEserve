@@ -177,6 +177,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const requestedSlots = Number(body.slots);
+    const requestedRoom = String(body.room_name ?? "").trim();
 
     if (!Number.isInteger(requestedSlots)) {
       return NextResponse.json(
@@ -188,6 +189,20 @@ export async function POST(request: Request) {
     if (requestedSlots < 1 || requestedSlots > MAX_WALK_IN_SLOTS) {
       return NextResponse.json(
         { error: "Walk-in duration must be between 30 minutes and 3 hours." },
+        { status: 400 }
+      );
+    }
+
+    if (!requestedRoom) {
+      return NextResponse.json(
+        { error: "Please choose a lab for your walk-in reservation." },
+        { status: 400 }
+      );
+    }
+
+    if (!ROOMS.includes(requestedRoom as any)) {
+      return NextResponse.json(
+        { error: "Invalid lab selected." },
         { status: 400 }
       );
     }
@@ -277,21 +292,18 @@ export async function POST(request: Request) {
       roomAvailability.push(availability);
     }
 
-    const candidateRooms = roomAvailability
-      .filter(room => room.continuous_slots >= requestedSlots)
-      .sort((a, b) => {
-        if (a.continuous_slots !== b.continuous_slots) {
-          return a.continuous_slots - b.continuous_slots;
-        }
-
-        return a.room_name.localeCompare(b.room_name);
-      });
-
-    const selectedRoom = candidateRooms[0];
+    const selectedRoom = roomAvailability.find(
+      room =>
+        room.room_name === requestedRoom &&
+        room.continuous_slots >= requestedSlots
+    );
 
     if (!selectedRoom) {
       return NextResponse.json(
-        { error: "No lab can accommodate that walk-in duration anymore." },
+        {
+          error:
+            "That lab is no longer available for the selected walk-in duration.",
+        },
         { status: 409 }
       );
     }

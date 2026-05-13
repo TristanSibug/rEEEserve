@@ -109,6 +109,9 @@ function StudentQrScanContent() {
   );
   const [walkInResult, setWalkInResult] = useState<WalkInResult | null>(null);
   const [creatingSlots, setCreatingSlots] = useState<number | null>(null);
+  const [selectedWalkInSlots, setSelectedWalkInSlots] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     runQrScan();
@@ -202,7 +205,7 @@ function StudentQrScanContent() {
     }
   }
 
-  async function createWalkIn(slots: number) {
+  async function createWalkIn(slots: number, roomName: string) {
     setCreatingSlots(slots);
     setMessage("");
 
@@ -210,7 +213,10 @@ function StudentQrScanContent() {
       const res = await fetch("/api/student/walk-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slots }),
+        body: JSON.stringify({
+          slots,
+          room_name: roomName,
+        }),
       });
 
       const data = await res.json();
@@ -373,46 +379,79 @@ function StudentQrScanContent() {
                   </p>
                 )}
 
-              <div style={s.roomGrid}>
-                {availability.rooms.map(room => (
-                  <div key={room.room_name} style={s.roomBox}>
-                    <strong>{room.room_name}</strong>
-                    <span style={s.roomSub}>
-                      {room.continuous_slots === 0
-                        ? "No continuous slot"
-                        : `${formatDuration(room.continuous_minutes)} available`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
               <p style={s.sectionLabel}>How long do you want to stay?</p>
 
               <div style={s.durationGrid}>
-                {availability.options.map(option => (
-                  <button
-                    key={option.slots}
-                    type="button"
-                    style={{
-                      ...s.durationBtn,
-                      opacity: creatingSlots === option.slots ? 0.7 : 1,
-                    }}
-                    disabled={creatingSlots !== null}
-                    onClick={() => createWalkIn(option.slots)}
-                  >
-                    {creatingSlots === option.slots
-                      ? "Creating..."
-                      : option.label}
-                  </button>
-                ))}
+                {availability.options.map(option => {
+                  const isSelected = selectedWalkInSlots === option.slots;
+
+                  return (
+                    <button
+                      key={option.slots}
+                      type="button"
+                      style={{
+                        ...s.durationBtn,
+                        ...(isSelected ? s.selectedDurationBtn : {}),
+                      }}
+                      disabled={creatingSlots !== null}
+                      onClick={() => {
+                        setSelectedWalkInSlots(option.slots);
+                        setMessage("");
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
+
+              {selectedWalkInSlots !== null && (
+                <>
+                  <p style={s.sectionLabel}>Choose a lab</p>
+
+                  <div style={s.roomGrid}>
+                    {availability.rooms
+                      .filter(room => room.continuous_slots >= selectedWalkInSlots)
+                      .map(room => (
+                        <button
+                          key={room.room_name}
+                          type="button"
+                          style={s.roomBtn}
+                          disabled={creatingSlots !== null}
+                          onClick={() => createWalkIn(selectedWalkInSlots, room.room_name)}
+                        >
+                          <strong>{room.room_name}</strong>
+                          <span style={s.roomSub}>
+                            {formatDuration(room.continuous_minutes)} available
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+
+                  {availability.rooms.filter(
+                    room => room.continuous_slots >= selectedWalkInSlots
+                  ).length === 0 && (
+                      <p style={s.errorText}>
+                        No lab can support that duration right now. Please choose a shorter
+                        duration.
+                      </p>
+                    )}
+                </>
+              )}
+
+              {creatingSlots !== null && (
+                <p style={s.text}>Creating your walk-in reservation...</p>
+              )}
 
               {message && <p style={s.errorText}>{message}</p>}
 
               <button
                 type="button"
                 style={{ ...s.btnOutline, marginTop: 16 }}
-                onClick={() => setState("no_reservation")}
+                onClick={() => {
+                  setSelectedWalkInSlots(null);
+                  setState("no_reservation");
+                }}
               >
                 Cancel walk-in
               </button>
@@ -742,5 +781,24 @@ const s: Record<string, CSSProperties> = {
     color: "var(--muted)",
     fontSize: 14,
     lineHeight: 1.5,
+  },
+
+  selectedDurationBtn: {
+    border: "2px solid #185FA5",
+    background: "#E6F1FB",
+    color: "#185FA5",
+  },
+
+  roomBtn: {
+    border: "1px solid var(--border)",
+    borderRadius: 14,
+    padding: "12px 8px",
+    background: "var(--surface)",
+    color: "var(--text)",
+    display: "grid",
+    gap: 4,
+    fontSize: 12,
+    cursor: "pointer",
+    textAlign: "center",
   },
 };
