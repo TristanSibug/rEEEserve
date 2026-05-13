@@ -299,10 +299,6 @@ function StudentQrScanContent() {
               <h1 style={s.title}>No active reservation</h1>
 
               <p style={s.text}>
-                You do not have an active reservation for this QR scan.
-              </p>
-
-              <p style={s.text}>
                 You may check if a walk-in reservation is available right now.
               </p>
 
