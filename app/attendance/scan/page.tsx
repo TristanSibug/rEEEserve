@@ -125,12 +125,17 @@ function StudentQrScanContent() {
       const noReservation =
         res.status === 404 ||
         data.code === "NO_RESERVATION" ||
-        errorText.includes("no reservation");
+        errorText.includes("no reservation") ||
+        errorText.includes("active reservation") ||
+        errorText.includes("check-in opens");
 
       if (noReservation) {
         setScanResult(data);
         setState("no_reservation");
-        setMessage("No reservation made.");
+        setMessage(data.error ?? data.message ?? "No reservation made.");
+
+        // Automatically check if walk-in is possible.
+        loadWalkInAvailability();
         return;
       }
 
@@ -267,23 +272,38 @@ function StudentQrScanContent() {
           {state === "no_reservation" && (
             <>
               <div style={{ ...s.statusIcon, ...s.warningIcon }}>!</div>
-              <h1 style={s.title}>No reservation made</h1>
+
+              <h1 style={s.title}>No active reservation</h1>
 
               <p style={s.text}>
                 You do not have an active reservation for this QR scan.
               </p>
 
-              {message && message !== "No reservation made." && (
-                <p style={s.errorText}>{message}</p>
+              {message && (
+                <p style={s.errorText}>
+                  {message}
+                </p>
               )}
 
+              <p style={s.text}>
+                Checking if a walk-in reservation is available right now...
+              </p>
+
               <div style={s.actions}>
-                <button type="button" style={s.btnOutline} onClick={() => router.back()}>
+                <button
+                  type="button"
+                  style={s.btnOutline}
+                  onClick={() => router.push("/dashboard")}
+                >
                   Go back
                 </button>
 
-                <button type="button" style={s.btn} onClick={loadWalkInAvailability}>
-                  Do walk-in
+                <button
+                  type="button"
+                  style={s.btn}
+                  onClick={loadWalkInAvailability}
+                >
+                  Check walk-in
                 </button>
               </div>
             </>
@@ -413,7 +433,7 @@ function StudentQrScanContent() {
               <p style={s.text}>{message}</p>
 
               <div style={s.actions}>
-                <button type="button" style={s.btnOutline} onClick={() => router.back()}>
+                <button type="button" style={s.btnOutline} onClick={() => router.push("/dashboard")}>
                   Go back
                 </button>
 
@@ -576,31 +596,33 @@ const s: Record<string, CSSProperties> = {
   },
 
   actions: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
     gap: 10,
     marginTop: 22,
   },
 
   btn: {
     width: "100%",
+    height: 48,
     border: "none",
     background: "#185FA5",
     color: "#fff",
     borderRadius: 14,
-    padding: "12px 16px",
+    padding: "0 16px",
     fontSize: 14,
     fontWeight: 800,
     cursor: "pointer",
-    marginTop: 20,
   },
 
   btnOutline: {
     width: "100%",
+    height: 48,
     border: "1px solid var(--border)",
     background: "var(--surface)",
     color: "var(--text)",
     borderRadius: 14,
-    padding: "12px 16px",
+    padding: "0 16px",
     fontSize: 14,
     fontWeight: 800,
     cursor: "pointer",
