@@ -271,6 +271,11 @@ export default function InstructorDashboard() {
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`;
   }
 
+  function getRoomCapacity(roomName: string) {
+    if (roomName === "EEEI 308") return 16;
+    return 10;
+  }
+
   function getManilaDateTime() {
     const parts = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Asia/Manila",
@@ -749,8 +754,10 @@ export default function InstructorDashboard() {
     let sharedWalkinSlots = cls.shared_walkin_slots || 1;
 
     if (nextShareEnabled) {
+      const roomCapacity = getRoomCapacity(cls.room_name);
+
       const input = window.prompt(
-        `How many walk-in slots do you want to share for ${cls.course_name}?\n\nAllowed: 1 to 6`,
+        `How many walk-in seats do you want to share for ${cls.course_name}?\n\nAllowed: 1 to ${roomCapacity}`,
         String(sharedWalkinSlots)
       );
 
@@ -761,11 +768,12 @@ export default function InstructorDashboard() {
       if (
         !Number.isInteger(sharedWalkinSlots) ||
         sharedWalkinSlots < 1 ||
-        sharedWalkinSlots > 6
+        sharedWalkinSlots > roomCapacity
       ) {
-        alert("Shared walk-in slots must be a whole number from 1 to 6.");
+        alert(`Shared walk-in seats must be a whole number from 1 to ${roomCapacity}.`);
         return;
       }
+
     } else {
       const confirmed = window.confirm(
         `Stop sharing walk-in slots for ${cls.course_name}?`
@@ -1095,7 +1103,7 @@ export default function InstructorDashboard() {
                             <span style={s.classMetaLabel}>Class Sharing</span>
                             <span style={s.classMetaValue}>
                               {cls.class_share_enabled
-                                ? `${cls.shared_walkin_slots} walk-in slot${cls.shared_walkin_slots === 1 ? "" : "s"
+                                ? `${cls.shared_walkin_slots} walk-in seat${cls.shared_walkin_slots === 1 ? "" : "s"
                                 } available during class`
                                 : "Not shared"}
                             </span>
