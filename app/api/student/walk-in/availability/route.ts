@@ -107,7 +107,7 @@ async function getAvailabilityForRoom(params: {
   const { supabase, room, date, dayOfWeek, startMinutes } = params;
 
   const slots = buildSlots(startMinutes, MAX_WALK_IN_SLOTS);
-  const capacity = ROOM_CAPACITY[room] ?? 10;
+  const baseCapacity = ROOM_CAPACITY[room] ?? 10;
 
   const { data: weeklySchedules, error: weeklyError } = await supabase
     .from("weekly_lab_schedules")
@@ -116,6 +116,34 @@ async function getAvailabilityForRoom(params: {
     .eq("day_of_week", dayOfWeek);
 
   if (weeklyError) throw new Error(weeklyError.message);
+
+  const weeklyScheduleIds = (weeklySchedules ?? []).map((schedule: any) =>
+    Number(schedule.id)
+  );
+
+  let classAssignments: any[] = [];
+  let noClassDates: any[] = [];
+
+  if (weeklyScheduleIds.length > 0) {
+    const { data: assignmentData, error: assignmentError } = await supabase
+      .from("instructor_class_assignments")
+      .select("weekly_lab_schedule_id, class_share_enabled, shared_walkin_slots")
+      .in("weekly_lab_schedule_id", weeklyScheduleIds);
+
+    if (assignmentError) throw new Error(assignmentError.message);
+
+    classAssignments = assignmentData ?? [];
+
+    const { data: noClassData, error: noClassError } = await supabase
+      .from("instructor_class_no_class_dates")
+      .select("weekly_lab_schedule_id, no_class_date")
+      .in("weekly_lab_schedule_id", weeklyScheduleIds)
+      .eq("no_class_date", date);
+
+    if (noClassError) throw new Error(noClassError.message);
+
+    noClassDates = noClassData ?? [];
+  }
 
   const { data: roomBlocks, error: blockError } = await supabase
     .from("room_schedule_blocks")
@@ -137,15 +165,58 @@ async function getAvailabilityForRoom(params: {
   let continuousSlots = 0;
 
   for (const slot of slots) {
-    const blockedByWeekly = (weeklySchedules ?? []).some((schedule: any) =>
-      overlaps(slot.time_start, slot.time_end, schedule.time_start, schedule.time_end)
-    );
-
     const blockedByRoomBlock = (roomBlocks ?? []).some((block: any) =>
       overlaps(slot.time_start, slot.time_end, block.time_start, block.time_end)
     );
 
-    if (blockedByWeekly || blockedByRoomBlock) break;
+    if (blockedByRoomBlock) break;
+
+    let slotCapacity = baseCapacity;
+    let blockedByWeeklyClass = false;
+
+    const overlappingWeeklySchedules = (weeklySchedules ?? []).filter(
+      (schedule: any) =>
+        overlaps(
+          slot.time_start,
+          slot.time_end,
+          schedule.time_start,
+          schedule.time_end
+        )
+    );
+
+    for (const schedule of overlappingWeeklySchedules) {
+      const scheduleId = Number(schedule.id);
+
+      const isNoClass = noClassDates.some(
+        item => Number(item.weekly_lab_schedule_id) === scheduleId
+      );
+
+      if (isNoClass) {
+        continue;
+      }
+
+      const enabledShares = classAssignments.filter(
+        assignment =>
+          Number(assignment.weekly_lab_schedule_id) === scheduleId &&
+          assignment.class_share_enabled === true &&
+          Number(assignment.shared_walkin_slots) > 0
+      );
+
+      if (enabledShares.length === 0) {
+        blockedByWeeklyClass = true;
+        break;
+      }
+
+      const sharedSlots = Math.max(
+        ...enabledShares.map(assignment =>
+          Number(assignment.shared_walkin_slots)
+        )
+      );
+
+      slotCapacity = Math.min(slotCapacity, sharedSlots);
+    }
+
+    if (blockedByWeeklyClass) break;
 
     const reservationCount = (reservations ?? []).filter((reservation: any) =>
       overlaps(
@@ -156,7 +227,7 @@ async function getAvailabilityForRoom(params: {
       )
     ).length;
 
-    if (reservationCount >= capacity) break;
+    if (reservationCount >= slotCapacity) break;
 
     continuousSlots++;
   }

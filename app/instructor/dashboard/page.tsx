@@ -86,6 +86,8 @@ export default function InstructorDashboard() {
   const [updatingClassDateKey, setUpdatingClassDateKey] = useState<string | null>(
     null
   );
+
+  const [updatingShareId, setUpdatingShareId] = useState<number | null>(null);
   const [expandedClassDatesId, setExpandedClassDatesId] = useState<number | null>(
     null
   );
@@ -741,6 +743,76 @@ export default function InstructorDashboard() {
     fetchMyReservations();
   }
 
+  async function toggleClassShare(cls: InstructorClass) {
+    const nextShareEnabled = !cls.class_share_enabled;
+
+    let sharedWalkinSlots = cls.shared_walkin_slots || 1;
+
+    if (nextShareEnabled) {
+      const input = window.prompt(
+        `How many walk-in slots do you want to share for ${cls.course_name}?\n\nAllowed: 1 to 6`,
+        String(sharedWalkinSlots)
+      );
+
+      if (input === null) return;
+
+      sharedWalkinSlots = Number(input);
+
+      if (
+        !Number.isInteger(sharedWalkinSlots) ||
+        sharedWalkinSlots < 1 ||
+        sharedWalkinSlots > 6
+      ) {
+        alert("Shared walk-in slots must be a whole number from 1 to 6.");
+        return;
+      }
+    } else {
+      const confirmed = window.confirm(
+        `Stop sharing walk-in slots for ${cls.course_name}?`
+      );
+
+      if (!confirmed) return;
+
+      sharedWalkinSlots = 0;
+    }
+
+    setUpdatingShareId(cls.assignment_id);
+
+    try {
+      const res = await fetch("/api/instructor/classes", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "share_class",
+          assignment_id: cls.assignment_id,
+          class_share_enabled: nextShareEnabled,
+          shared_walkin_slots: sharedWalkinSlots,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error ?? "Failed to update class sharing.");
+        return;
+      }
+
+      await fetchMyClasses();
+      await fetchSlots();
+      await fetchPreviewSlots();
+
+      alert(
+        nextShareEnabled
+          ? "Class sharing enabled."
+          : "Class sharing disabled."
+      );
+    } finally {
+      setUpdatingShareId(null);
+    }
+  }
+
   async function toggleNoClass(
     cls: InstructorClass,
     classDate: InstructorClassDate
@@ -989,11 +1061,20 @@ export default function InstructorDashboard() {
 
                           <button
                             type="button"
-                            style={s.classShareBtn}
-                            disabled
-                            title="Walk-in sharing will be connected to QR scan later."
+                            disabled={updatingShareId === cls.assignment_id}
+                            onClick={() => toggleClassShare(cls)}
+                            style={{
+                              ...s.classShareBtn,
+                              ...(cls.class_share_enabled ? s.classUnshareBtn : {}),
+                              opacity: updatingShareId === cls.assignment_id ? 0.65 : 1,
+                              cursor: updatingShareId === cls.assignment_id ? "not-allowed" : "pointer",
+                            }}
                           >
-                            Share
+                            {updatingShareId === cls.assignment_id
+                              ? "Updating..."
+                              : cls.class_share_enabled
+                                ? "Unshare"
+                                : "Share"}
                           </button>
                         </div>
 
@@ -1015,7 +1096,7 @@ export default function InstructorDashboard() {
                             <span style={s.classMetaValue}>
                               {cls.class_share_enabled
                                 ? `${cls.shared_walkin_slots} walk-in slot${cls.shared_walkin_slots === 1 ? "" : "s"
-                                } shared`
+                                } available during class`
                                 : "Not shared"}
                             </span>
                           </div>
@@ -1681,10 +1762,15 @@ const s: Record<string, CSSProperties> = {
     color: "var(--primary)",
     borderRadius: 999,
     padding: "7px 12px",
-    cursor: "not-allowed",
+    cursor: "pointer",
     fontSize: 12,
     fontWeight: 800,
-    opacity: 0.75,
+  },
+
+  classUnshareBtn: {
+    border: "1px solid var(--warning-border)",
+    background: "var(--warning-bg)",
+    color: "var(--warning-text)",
   },
 
   classMetaGrid: {

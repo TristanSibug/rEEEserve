@@ -254,14 +254,115 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
+  const action = String(body.action ?? "no_class");
 
   const assignmentId = Number(body.assignment_id);
+
+  if (!assignmentId) {
+    return NextResponse.json(
+      { error: "Missing class assignment." },
+      { status: 400 }
+    );
+  }
+
+  if (action === "share_class") {
+    const classShareEnabled = body.class_share_enabled === true;
+    const sharedWalkinSlots = classShareEnabled
+      ? Number(body.shared_walkin_slots)
+      : 0;
+
+    if (
+      classShareEnabled &&
+      (!Number.isInteger(sharedWalkinSlots) ||
+        sharedWalkinSlots < 1 ||
+        sharedWalkinSlots > 6)
+    ) {
+      return NextResponse.json(
+        { error: "Shared walk-in slots must be between 1 and 6." },
+        { status: 400 }
+      );
+    }
+
+    const { data: assignment, error: assignmentError } = await supabase
+      .from("instructor_class_assignments")
+      .select(
+        `
+      id,
+      instructor_email,
+      weekly_lab_schedule_id,
+      weekly_lab_schedules (
+        id,
+        room_name,
+        day_of_week,
+        course_name,
+        time_start,
+        time_end
+      )
+    `
+      )
+      .eq("id", assignmentId)
+      .ilike("instructor_email", auth.email)
+      .single();
+
+    if (assignmentError || !assignment) {
+      return NextResponse.json(
+        { error: "Class assignment not found." },
+        { status: 404 }
+      );
+    }
+
+    const schedule = Array.isArray(assignment.weekly_lab_schedules)
+      ? assignment.weekly_lab_schedules[0]
+      : assignment.weekly_lab_schedules;
+
+    if (!schedule) {
+      return NextResponse.json(
+        { error: "Class schedule not found." },
+        { status: 404 }
+      );
+    }
+
+    const { error: updateError } = await supabase
+      .from("instructor_class_assignments")
+      .update({
+        class_share_enabled: classShareEnabled,
+        shared_walkin_slots: sharedWalkinSlots,
+      })
+      .eq("id", assignment.id)
+      .ilike("instructor_email", auth.email);
+
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    await supabase.from("reservation_activity_log").insert({
+      action_type: classShareEnabled
+        ? "instructor_share_class"
+        : "instructor_unshare_class",
+      room_name: schedule.room_name,
+      action_date: getManilaToday(),
+      time_start: schedule.time_start,
+      time_end: schedule.time_end,
+      staff_id: null,
+      student_email: null,
+      details: classShareEnabled
+        ? `${schedule.course_name} shared ${sharedWalkinSlots} walk-in slot(s) during class time by ${auth.email}.`
+        : `${schedule.course_name} stopped sharing walk-in slots during class time by ${auth.email}.`,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      class_share_enabled: classShareEnabled,
+      shared_walkin_slots: sharedWalkinSlots,
+    });
+  }
+
   const noClassDate = String(body.no_class_date ?? "").trim();
   const holdNoClass = body.hold_no_class === true;
 
-  if (!assignmentId || !noClassDate) {
+  if (!noClassDate) {
     return NextResponse.json(
-      { error: "Missing class assignment or date." },
+      { error: "Missing class date." },
       { status: 400 }
     );
   }
