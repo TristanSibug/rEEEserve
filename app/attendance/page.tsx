@@ -2,26 +2,45 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { useRouter } from "next/navigation";
 import ThemeToggle from "../components/ThemeToggle";
 import Link from "next/link";
 
 export default function AttendanceScannerPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const hasScannedRef = useRef(false);
+
   const [error, setError] = useState("");
   const [started, setStarted] = useState(false);
-  const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
+
+  async function stopScanner() {
+    const scanner = scannerRef.current;
+
+    if (!scanner) return;
+
+    try {
+      await scanner.stop();
+    } catch {
+      // Scanner may already be stopped. Safe to ignore.
+    }
+
+    try {
+      await scanner.clear();
+    } catch {
+      // Clear may fail if scanner already cleaned up. Safe to ignore.
+    }
+
+    scannerRef.current = null;
+    setStarted(false);
+  }
 
   async function startScanner() {
     setError("");
+    setRedirecting(false);
+    hasScannedRef.current = false;
 
     try {
-      const oldScanner = scannerRef.current;
-
-      if (oldScanner) {
-        await oldScanner.stop().catch(() => { });
-        oldScanner.clear();
-      }
+      await stopScanner();
 
       const scanner = new Html5Qrcode("attendance-reader");
       scannerRef.current = scanner;
@@ -32,19 +51,22 @@ export default function AttendanceScannerPage() {
           fps: 10,
           qrbox: { width: 250, height: 250 },
         },
-        async (decodedText) => {
-          await scanner.stop().catch(() => { });
+        async decodedText => {
+          if (hasScannedRef.current) return;
+          hasScannedRef.current = true;
 
           let url: URL;
 
           try {
             url = new URL(decodedText);
           } catch {
+            hasScannedRef.current = false;
             setError("This is not a valid rEEEserve attendance QR code.");
             return;
           }
 
           if (url.pathname !== "/attendance/scan") {
+            hasScannedRef.current = false;
             setError("This is not a valid rEEEserve attendance QR code.");
             return;
           }
@@ -52,14 +74,24 @@ export default function AttendanceScannerPage() {
           const token = url.searchParams.get("token");
 
           if (!token) {
+            hasScannedRef.current = false;
             setError("This QR code does not contain an attendance token.");
             return;
           }
 
-          // window.location.href = `/attendance/scan?token=${encodeURIComponent(token)}`;
-          router.push(`/attendance/scan?token=${encodeURIComponent(token)}`);
+          setRedirecting(true);
+
+          await stopScanner();
+
+          // Use hard navigation instead of router.push.
+          // This avoids mobile browser crashes caused by navigating while camera is active.
+          window.location.href = `/attendance/scan?token=${encodeURIComponent(
+            token
+          )}`;
         },
-        () => { }
+        () => {
+          // Ignore repeated scan failures while camera is searching.
+        }
       );
 
       setStarted(true);
@@ -75,17 +107,10 @@ export default function AttendanceScannerPage() {
     startScanner();
 
     return () => {
-      const scanner = scannerRef.current;
-
-      if (scanner) {
-        scanner
-          .stop()
-          .catch(() => { })
-          .finally(() => {
-            scanner.clear();
-          });
-      }
+      stopScanner();
     };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -94,6 +119,7 @@ export default function AttendanceScannerPage() {
         <Link href="/dashboard" style={s.logo}>
           rEEE<span style={{ color: "#185FA5" }}>serve</span>
         </Link>
+
         <div style={s.navRight}>
           <ThemeToggle />
         </div>
@@ -102,20 +128,33 @@ export default function AttendanceScannerPage() {
       <section style={s.shell}>
         <div style={s.card}>
           <p style={s.eyebrow}>Attendance</p>
-          <h1 style={s.title}>Scan the lab QR code</h1>
+
+          <h1 style={s.title}>
+            {redirecting ? "Opening attendance page" : "Scan the lab QR code"}
+          </h1>
+
           <p style={s.desc}>
-            You must be logged in and have an active reservation for the room.
+            {redirecting
+              ? "Please wait while we open your QR scan result."
+              : "You must be logged in and have an active reservation for the room."}
           </p>
 
           <div style={s.readerWrap}>
             <div id="attendance-reader" style={s.reader} />
           </div>
 
-          {!started && !error && <p style={s.status}>Starting camera...</p>}
+          {!started && !error && !redirecting && (
+            <p style={s.status}>Starting camera...</p>
+          )}
+
+          {redirecting && (
+            <p style={s.status}>QR detected. Redirecting...</p>
+          )}
 
           {error && (
             <>
               <p style={s.error}>{error}</p>
+
               <button type="button" style={s.btn} onClick={startScanner}>
                 Try again
               </button>
@@ -130,9 +169,10 @@ export default function AttendanceScannerPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "var(--bg)",
+    background: "var(--background)",
     color: "var(--text)",
-    fontFamily: "sans-serif",
+    fontFamily:
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
 
   nav: {
@@ -163,14 +203,6 @@ const s: Record<string, React.CSSProperties> = {
     letterSpacing: -0.5,
   },
 
-  navLink: {
-    fontSize: 14,
-    fontWeight: 800,
-    color: "#60a5fa",
-    textDecoration: "none",
-    marginRight: 46,
-  },
-
   shell: {
     maxWidth: 660,
     margin: "0 auto",
@@ -183,14 +215,14 @@ const s: Record<string, React.CSSProperties> = {
     border: "1px solid var(--border)",
     borderRadius: 24,
     padding: 28,
-    boxShadow: "0 14px 40px rgba(0, 0, 0, 0.16)",
+    boxShadow: "var(--shadow)",
   },
 
   eyebrow: {
     margin: 0,
     fontSize: 13,
     fontWeight: 800,
-    color: "#60a5fa",
+    color: "#185FA5",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
@@ -204,7 +236,7 @@ const s: Record<string, React.CSSProperties> = {
 
   desc: {
     margin: "0 0 20px",
-    color: "var(--muted)",
+    color: "var(--muted-text)",
     lineHeight: 1.6,
   },
 
@@ -227,13 +259,13 @@ const s: Record<string, React.CSSProperties> = {
 
   status: {
     marginTop: 14,
-    color: "var(--muted)",
+    color: "var(--muted-text)",
     fontWeight: 700,
   },
 
   error: {
     marginTop: 14,
-    color: "#f87171",
+    color: "#A32D2D",
     fontWeight: 700,
     lineHeight: 1.5,
   },
