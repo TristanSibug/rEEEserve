@@ -86,6 +86,9 @@ export default function InstructorDashboard() {
   const [updatingClassDateKey, setUpdatingClassDateKey] = useState<string | null>(
     null
   );
+  const [expandedClassDatesId, setExpandedClassDatesId] = useState<number | null>(
+    null
+  );
   const [creatingReservation, setCreatingReservation] = useState(false);
 
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("none");
@@ -1019,62 +1022,72 @@ export default function InstructorDashboard() {
                         </div>
 
                         <div style={s.noClassBox}>
-                          <div style={s.noClassHeader}>
+                          <button
+                            type="button"
+                            style={s.dayGroupButton}
+                            onClick={() =>
+                              setExpandedClassDatesId(
+                                expandedClassDatesId === cls.assignment_id ? null : cls.assignment_id
+                              )
+                            }
+                          >
                             <div>
                               <div style={s.noClassTitle}>Upcoming class dates</div>
                               <div style={s.noClassSubtitle}>
-                                Showing the next 5 {cls.day_label}s.
+                                Showing the next {cls.upcoming_dates.length} {cls.day_label}
+                                {cls.upcoming_dates.length === 1 ? "" : "s"}.
                               </div>
                             </div>
-                          </div>
 
-                          <div style={s.noClassList}>
-                            {cls.upcoming_dates.map(classDate => {
-                              const key = `${cls.assignment_id}-${classDate.date}`;
-                              const isUpdating = updatingClassDateKey === key;
+                            <span style={s.groupRightText}>
+                              {cls.upcoming_dates.length}{" "}
+                              {cls.upcoming_dates.length === 1 ? "date" : "dates"}
+                              <span style={s.chevron}>
+                                {expandedClassDatesId === cls.assignment_id ? "−" : "+"}
+                              </span>
+                            </span>
+                          </button>
 
-                              return (
-                                <div key={classDate.date} style={s.noClassRow}>
-                                  <div>
-                                    <div style={s.noClassDate}>
-                                      {formatPanelDate(classDate.date)}
+                          {expandedClassDatesId === cls.assignment_id && (
+                            <div style={s.noClassList}>
+                              {cls.upcoming_dates.map(classDate => {
+                                const key = `${cls.assignment_id}-${classDate.date}`;
+                                const isUpdating = updatingClassDateKey === key;
+
+                                return (
+                                  <div key={key} style={s.noClassRow}>
+                                    <div>
+                                      <div style={s.noClassDate}>
+                                        {formatPanelDate(classDate.date)}
+                                      </div>
+
+                                      <div style={s.groupSubtext}>
+                                        {fmt(cls.time_start)} – {fmt(cls.time_end)}
+                                      </div>
                                     </div>
 
-                                    <div
+                                    <button
+                                      type="button"
+                                      disabled={isUpdating}
+                                      onClick={() => toggleNoClass(cls, classDate)}
                                       style={{
-                                        ...s.noClassStatus,
-                                        ...(classDate.no_class
-                                          ? s.noClassStatusOpen
-                                          : s.noClassStatusBlocked),
+                                        ...s.noClassBtn,
+                                        ...(classDate.no_class ? s.restoreClassBtn : s.holdNoClassBtn),
+                                        opacity: isUpdating ? 0.65 : 1,
+                                        cursor: isUpdating ? "not-allowed" : "pointer",
                                       }}
                                     >
-                                      {classDate.no_class
-                                        ? "No class — lab is open for reservations"
-                                        : "Class scheduled — lab is blocked"}
-                                    </div>
+                                      {isUpdating
+                                        ? "Updating..."
+                                        : classDate.no_class
+                                          ? "Restore class"
+                                          : "Hold no class"}
+                                    </button>
                                   </div>
-
-                                  <button
-                                    type="button"
-                                    style={{
-                                      ...s.noClassBtn,
-                                      ...(classDate.no_class
-                                        ? s.restoreClassBtn
-                                        : s.holdNoClassBtn),
-                                    }}
-                                    disabled={isUpdating}
-                                    onClick={() => toggleNoClass(cls, classDate)}
-                                  >
-                                    {isUpdating
-                                      ? "Updating..."
-                                      : classDate.no_class
-                                        ? "Restore class"
-                                        : "Hold no class"}
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -2061,6 +2074,9 @@ const s: Record<string, CSSProperties> = {
     marginTop: 16,
     paddingTop: 14,
     borderTop: "1px solid var(--border)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
   },
 
   noClassHeader: {
