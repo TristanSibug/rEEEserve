@@ -646,11 +646,12 @@ export default function Dashboard() {
       };
     }
 
-    if (available > 0) {
+    if (reservedByMe > 0) {
       return {
-        label: "Available",
-        detail: `${available} open slot${available === 1 ? "" : "s"}`,
-        tone: "success" as const,
+        label: "You have a reservation",
+        detail: `${reservedByMe} reserved slot${reservedByMe === 1 ? "" : "s"
+          } by you`,
+        tone: "warning" as const,
         available,
         full,
         occupied,
@@ -658,12 +659,11 @@ export default function Dashboard() {
       };
     }
 
-    if (reservedByMe > 0) {
+    if (available > 0) {
       return {
-        label: "You have a reservation",
-        detail: `${reservedByMe} reserved slot${reservedByMe === 1 ? "" : "s"
-          } by you`,
-        tone: "warning" as const,
+        label: "Available",
+        detail: `${available} open slot${available === 1 ? "" : "s"}`,
+        tone: "success" as const,
         available,
         full,
         occupied,
