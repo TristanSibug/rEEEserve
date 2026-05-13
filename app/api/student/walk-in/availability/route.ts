@@ -344,13 +344,17 @@ export async function GET() {
       ...roomAvailability.map(room => room.continuous_slots)
     );
 
-    const maxSlots = Math.min(
+    const maxRoomMinutes = maxRoomSlots * 30;
+
+    const selectableSlots = Math.min(
       MAX_WALK_IN_SLOTS,
       remainingDailySlots,
       maxRoomSlots
     );
 
-    const options = Array.from({ length: maxSlots }, (_, index) => {
+    const selectableMinutes = selectableSlots * 30;
+
+    const options = Array.from({ length: selectableSlots }, (_, index) => {
       const slots = index + 1;
       const minutes = slots * 30;
 
@@ -363,16 +367,24 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
-      available: maxSlots > 0,
+      available: selectableSlots > 0,
       message:
-        maxSlots > 0
+        selectableSlots > 0
           ? "Walk-in slots are available."
           : "No lab can accommodate a walk-in starting now.",
       date: today,
       start_time: minutesToTime(startMinutes),
-      max_slots: maxSlots,
-      max_minutes: maxSlots * 30,
-      max_label: getDurationLabel(maxSlots * 30),
+
+      // This is the real lab availability maximum.
+      max_slots: maxRoomSlots,
+      max_minutes: maxRoomMinutes,
+      max_label: getDurationLabel(maxRoomMinutes),
+
+      // This is what the student can actually choose after daily-limit rules.
+      selectable_slots: selectableSlots,
+      selectable_minutes: selectableMinutes,
+      selectable_label: getDurationLabel(selectableMinutes),
+
       options,
       rooms: roomAvailability,
       remaining_daily_minutes: remainingDailyMinutes,

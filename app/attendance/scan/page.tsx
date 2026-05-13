@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, Suspense, useEffect, useRef, useState } from "react";
+import { CSSProperties, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ThemeToggle from "../../components/ThemeToggle";
 import Link from "next/link";
@@ -32,9 +32,15 @@ type WalkInAvailability = {
   message: string;
   date: string;
   start_time: string | null;
+
   max_slots: number;
   max_minutes: number;
   max_label: string;
+
+  selectable_slots?: number;
+  selectable_minutes?: number;
+  selectable_label?: string;
+
   options: WalkInOption[];
   rooms: RoomAvailability[];
   remaining_daily_minutes?: number;
@@ -74,6 +80,21 @@ function formatDate(date: string) {
   });
 }
 
+function formatDuration(minutes: number) {
+  if (minutes < 60) {
+    return `${minutes} mins`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (remainingMinutes === 0) {
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+
+  return `${hours} hr ${remainingMinutes} mins`;
+}
+
 function StudentQrScanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -88,32 +109,12 @@ function StudentQrScanContent() {
   );
   const [walkInResult, setWalkInResult] = useState<WalkInResult | null>(null);
   const [creatingSlots, setCreatingSlots] = useState<number | null>(null);
-  const walkInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     runQrScan();
 
-    return () => {
-      clearWalkInTimer();
-    };
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
-
-  function clearWalkInTimer() {
-    if (walkInTimerRef.current) {
-      clearTimeout(walkInTimerRef.current);
-      walkInTimerRef.current = null;
-    }
-  }
-
-  function startWalkInCheckAfterPause() {
-    clearWalkInTimer();
-
-    walkInTimerRef.current = setTimeout(() => {
-      loadWalkInAvailability();
-    }, 2200);
-  }
 
   async function runQrScan() {
     if (!token) {
@@ -158,8 +159,6 @@ function StudentQrScanContent() {
           data.message ??
           "You do not have an active reservation for this QR scan."
         );
-
-        startWalkInCheckAfterPause();
         return;
       }
 
@@ -303,15 +302,15 @@ function StudentQrScanContent() {
                 You do not have an active reservation for this QR scan.
               </p>
 
-              {message && (
-                <p style={s.errorText}>
-                  {message}
-                </p>
-              )}
-
               <p style={s.text}>
-                Checking walk-in availability in a moment...
+                You may check if a walk-in reservation is available right now.
               </p>
+
+              {message &&
+                !message.toLowerCase().includes("active reservation") &&
+                !message.toLowerCase().includes("no reservation") && (
+                  <p style={s.errorText}>{message}</p>
+                )}
 
               <div style={s.actions}>
                 <button
@@ -325,12 +324,9 @@ function StudentQrScanContent() {
                 <button
                   type="button"
                   style={s.btn}
-                  onClick={() => {
-                    clearWalkInTimer();
-                    loadWalkInAvailability();
-                  }}
+                  onClick={loadWalkInAvailability}
                 >
-                  Check now
+                  Check walk-in
                 </button>
               </div>
             </>
@@ -369,6 +365,18 @@ function StudentQrScanContent() {
                 </div>
               </div>
 
+              {availability.remaining_daily_minutes !== undefined &&
+                availability.remaining_daily_minutes < availability.max_minutes && (
+                  <p style={s.text}>
+                    Your selectable duration is limited to{" "}
+                    <strong>
+                      {availability.selectable_label ??
+                        `${availability.remaining_daily_minutes} mins`}
+                    </strong>{" "}
+                    because of the 3-hour daily reservation limit.
+                  </p>
+                )}
+
               <div style={s.roomGrid}>
                 {availability.rooms.map(room => (
                   <div key={room.room_name} style={s.roomBox}>
@@ -376,7 +384,7 @@ function StudentQrScanContent() {
                     <span style={s.roomSub}>
                       {room.continuous_slots === 0
                         ? "No continuous slot"
-                        : `${room.continuous_minutes / 60} hr available`}
+                        : `${formatDuration(room.continuous_minutes)} available`}
                     </span>
                   </div>
                 ))}
@@ -661,11 +669,16 @@ const s: Record<string, CSSProperties> = {
     display: "grid",
     gap: 10,
     textAlign: "left",
-    background: "var(--muted)",
+    background: "#F3F4F6",
     border: "1px solid var(--border)",
     borderRadius: 18,
     padding: 14,
     marginTop: 18,
+  },
+
+  infoValue: {
+    color: "var(--text)",
+    fontWeight: 900,
   },
 
   infoRow: {
