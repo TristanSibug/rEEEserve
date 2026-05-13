@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, Suspense, useEffect, useState } from "react";
+import { CSSProperties, Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ThemeToggle from "../../components/ThemeToggle";
 import Link from "next/link";
@@ -88,11 +88,32 @@ function StudentQrScanContent() {
   );
   const [walkInResult, setWalkInResult] = useState<WalkInResult | null>(null);
   const [creatingSlots, setCreatingSlots] = useState<number | null>(null);
+  const walkInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     runQrScan();
+
+    return () => {
+      clearWalkInTimer();
+    };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  function clearWalkInTimer() {
+    if (walkInTimerRef.current) {
+      clearTimeout(walkInTimerRef.current);
+      walkInTimerRef.current = null;
+    }
+  }
+
+  function startWalkInCheckAfterPause() {
+    clearWalkInTimer();
+
+    walkInTimerRef.current = setTimeout(() => {
+      loadWalkInAvailability();
+    }, 2200);
+  }
 
   async function runQrScan() {
     if (!token) {
@@ -132,10 +153,13 @@ function StudentQrScanContent() {
       if (noReservation) {
         setScanResult(data);
         setState("no_reservation");
-        setMessage(data.error ?? data.message ?? "No reservation made.");
+        setMessage(
+          data.error ??
+          data.message ??
+          "You do not have an active reservation for this QR scan."
+        );
 
-        // Automatically check if walk-in is possible.
-        loadWalkInAvailability();
+        startWalkInCheckAfterPause();
         return;
       }
 
@@ -167,7 +191,7 @@ function StudentQrScanContent() {
       setAvailability(data);
 
       if (!data.available || data.options.length === 0) {
-        setState("no_reservation");
+        setState("error");
         setMessage(data.message ?? "No walk-in slots are available right now.");
         return;
       }
@@ -286,7 +310,7 @@ function StudentQrScanContent() {
               )}
 
               <p style={s.text}>
-                Checking if a walk-in reservation is available right now...
+                Checking walk-in availability in a moment...
               </p>
 
               <div style={s.actions}>
@@ -301,9 +325,12 @@ function StudentQrScanContent() {
                 <button
                   type="button"
                   style={s.btn}
-                  onClick={loadWalkInAvailability}
+                  onClick={() => {
+                    clearWalkInTimer();
+                    loadWalkInAvailability();
+                  }}
                 >
-                  Check walk-in
+                  Check now
                 </button>
               </div>
             </>
@@ -312,9 +339,11 @@ function StudentQrScanContent() {
           {state === "walk_in_loading" && (
             <>
               <div style={s.statusIcon}>⌛</div>
-              <h1 style={s.title}>Checking walk-in slots</h1>
+
+              <h1 style={s.title}>Checking walk-in availability</h1>
+
               <p style={s.text}>
-                Checking which lab can accommodate you starting now.
+                Please wait while we check if there is an available lab timeslot right now.
               </p>
             </>
           )}
@@ -697,5 +726,12 @@ const s: Record<string, CSSProperties> = {
     fontSize: 14,
     fontWeight: 800,
     cursor: "pointer",
+  },
+
+  mutedText: {
+    margin: "8px 0 0",
+    color: "var(--muted)",
+    fontSize: 14,
+    lineHeight: 1.5,
   },
 };
