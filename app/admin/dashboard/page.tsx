@@ -587,9 +587,6 @@ export default function AdminDashboard() {
     const firstData = await firstRes.json();
 
     if (firstRes.status === 409 && firstData.needsConfirmation) {
-      const confirmed = window.confirm(firstData.message);
-      if (!confirmed) return false;
-
       const secondRes = await createAdminBlock(payload, true);
       const secondData = await secondRes.json();
 
@@ -597,11 +594,6 @@ export default function AdminDashboard() {
         alert(secondData.error ?? "Failed to create block.");
         return false;
       }
-
-      alert(
-        `Block created. ${secondData.cancelledStudentReservations ?? 0
-        } student booking(s) were cancelled.`
-      );
 
       return true;
     }
@@ -636,9 +628,6 @@ export default function AdminDashboard() {
   async function adminRemoveBlock(slot: DisplaySlot) {
     if (!slot.blocking_schedule_id) return;
 
-    const confirmed = window.confirm("Remove this schedule block?");
-    if (!confirmed) return;
-
     const res = await fetch(`/api/admin/schedules/${slot.blocking_schedule_id}`, {
       method: "DELETE",
     });
@@ -651,6 +640,7 @@ export default function AdminDashboard() {
     }
 
     setShowSlotModal(false);
+    fetchAllActivity();
     fetchSchedule();
   }
 
@@ -1594,17 +1584,40 @@ export default function AdminDashboard() {
             </p>
 
             <p style={s.slotModalDesc}>
-              {selectedSlot.status === "available" &&
-                `This slot is available. ${selectedSlot.slots_left}/${selectedSlot.capacity} slots left.`}
+              {selectedSlot.status === "available" && (
+                <p style={s.modalHelpText}>
+                  This slot is available. {selectedSlot.slots_left}/{selectedSlot.capacity} slots left.
+                </p>
+              )}
 
-              {selectedSlot.status === "reserved" &&
-                `This slot has student reservations. ${selectedSlot.slots_left}/${selectedSlot.capacity} slots left.`}
+              {selectedSlot.status === "reserved" && (
+                <p style={s.modalWarningText}>
+                  This slot has {selectedSlot.reserved_count} student{" "}
+                  {selectedSlot.reserved_count === 1 ? "reservation" : "reservations"}.
+                  Blocking this slot will cancel{" "}
+                  {selectedSlot.reserved_count === 1 ? "that booking" : "those bookings"}.
+                </p>
+              )}
 
-              {selectedSlot.status === "full" &&
-                `This slot is full. ${selectedSlot.capacity}/${selectedSlot.capacity} slots are reserved.`}
+              {selectedSlot.status === "full" && (
+                <p style={s.modalWarningText}>
+                  This slot is full. Blocking this slot will cancel all{" "}
+                  {selectedSlot.capacity} student bookings.
+                </p>
+              )}
+
+              {selectedSlot.status === "occupied" && (
+                <p style={s.modalHelpText}>
+                  {selectedSlot.course_name ?? "This slot is blocked or occupied."}
+                </p>
+              )}
 
               {selectedSlot.status === "occupied" &&
-                (selectedSlot.course_name ?? "This slot is blocked or occupied.")}
+                selectedSlot.blocking_source === "one-time" && (
+                  <p style={s.modalWarningText}>
+                    Removing this block will reopen the timeslot for reservations.
+                  </p>
+                )}
             </p>
 
             <div style={{ display: "grid", gap: 8 }}>
@@ -2196,5 +2209,23 @@ const s: Record<string, CSSProperties> = {
     fontSize: 14,
     fontWeight: 800,
     whiteSpace: "nowrap",
+  },
+
+  modalHelpText: {
+    margin: "10px 0 14px",
+    color: "var(--text)",
+    fontSize: 14,
+    lineHeight: 1.5,
+  },
+
+  modalWarningText: {
+    margin: "10px 0 14px",
+    color: "var(--danger-text)",
+    background: "var(--danger-bg)",
+    border: "1px solid var(--danger-border)",
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    lineHeight: 1.5,
   },
 };
