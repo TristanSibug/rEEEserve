@@ -2065,6 +2065,7 @@ const s: { [k: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     gap: 12,
     flexWrap: "wrap",
+    marginTop: 18,
   },
 
   btn: {
