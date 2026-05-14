@@ -723,7 +723,7 @@ const s: Record<string, CSSProperties> = {
     display: "grid",
     gap: 10,
     textAlign: "left",
-    background: "#F3F4F6",
+    background: "var(--surface)",
     border: "1px solid var(--border)",
     borderRadius: 18,
     padding: 14,
@@ -804,7 +804,7 @@ const s: Record<string, CSSProperties> = {
 
   selectedDurationBtn: {
     border: "2px solid #185FA5",
-    background: "#E6F1FB",
+    background: "rgba(24, 95, 165, 0.14)",
     color: "#185FA5",
   },
 
@@ -819,5 +819,12 @@ const s: Record<string, CSSProperties> = {
     fontSize: 12,
     cursor: "pointer",
     textAlign: "center",
+  },
+
+  successText: {
+    margin: "10px 0 18px",
+    fontSize: 14,
+    color: "var(--muted-text)",
+    lineHeight: 1.6,
   },
 };
