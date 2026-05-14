@@ -222,7 +222,26 @@ function StudentQrScanContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.error ?? "Failed to create walk-in reservation.");
+        const errorMessage =
+          data.error ?? data.message ?? "Failed to create walk-in reservation.";
+
+        const alreadyHasReservation =
+          errorMessage.toLowerCase().includes("already have") ||
+          errorMessage.toLowerCase().includes("overlap") ||
+          errorMessage.toLowerCase().includes("same timeslot") ||
+          errorMessage.toLowerCase().includes("during this time");
+
+        if (alreadyHasReservation) {
+          setState("no_reservation");
+          setMessage(
+            "You already have a reservation during this time. Please go to your dashboard instead."
+          );
+          setSelectedWalkInSlots(null);
+          setAvailability(null);
+          return;
+        }
+
+        setMessage(errorMessage);
         await loadWalkInAvailability();
         return;
       }

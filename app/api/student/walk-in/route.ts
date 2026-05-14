@@ -317,6 +317,39 @@ export async function POST(request: Request) {
       );
     }
 
+    const walkInStart = slots[0].time_start;
+    const walkInEnd = slots[slots.length - 1].time_end;
+
+    const { data: overlappingOwnReservations, error: overlapError } = await supabase
+      .from("reservations")
+      .select("id, room_name, time_start, time_end, reservation_type")
+      .eq("student_email", user.email)
+      .eq("reserved_date", today)
+      .eq("status", "approved");
+
+    if (overlapError) {
+      return NextResponse.json({ error: overlapError.message }, { status: 500 });
+    }
+
+    const hasOverlap = (overlappingOwnReservations ?? []).some((reservation: any) =>
+      overlaps(
+        walkInStart,
+        walkInEnd,
+        reservation.time_start,
+        reservation.time_end
+      )
+    );
+
+    if (hasOverlap) {
+      return NextResponse.json(
+        {
+          error:
+            "You already have an approved reservation during this time. You cannot create another walk-in for the same timeslot.",
+        },
+        { status: 409 }
+      );
+    }
+
     const rows = slots.map(slot => ({
       student_id: null,
       student_email: user.email,
