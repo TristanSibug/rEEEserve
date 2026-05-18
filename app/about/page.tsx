@@ -156,7 +156,7 @@ export default function AboutPage() {
           flex-direction: column;
           background: var(--background);
           color: var(--text);
-          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family: sans-serif;
           overflow-x: hidden;
         }
 
@@ -189,6 +189,7 @@ export default function AboutPage() {
           display: flex;
           align-items: center;
           gap: 12px;
+          flexShrink: 0,
         }
 
         .navLink {
