@@ -19,7 +19,7 @@ const features = [
   },
   {
     title: "Walk-in support",
-    text: "No reservation? REEEserve can still help students find available lab space.",
+    text: "No reservation? rEEEserve can still help students find available lab space.",
   },
   {
     title: "Instructor tools",
@@ -70,14 +70,14 @@ export default function AboutPage() {
           <div className="heroGlow" />
 
           <div className="heroContent">
-            <p className="eyebrow">About REEEserve</p>
+            <p className="eyebrow">About rEEEserve</p>
 
             <h1>
-              Welcome to <span>REEEserve!</span>
+              Welcome to <span>rEEEserve!</span>
             </h1>
 
             <p className="heroText">
-              REEEserve is a smart system built for laboratory management that
+              rEEEserve is a smart system built for laboratory management that
               aims to provide an efficient and straightforward way to allocate
               lab facilities to users, while also providing powerful
               administrative tools to handlers in order to maximize utilization
@@ -106,7 +106,7 @@ export default function AboutPage() {
             </p>
 
             <p>
-              And so, we built REEEserve as our answer to that ever-present
+              And so, we built rEEEserve as our answer to that ever-present
               issue. Originally, as the name suggests, it was for students to
               reserve lab slots in advance, but we evolved the use to make it a
               dynamically allocating system that serves not only students, but
@@ -118,7 +118,7 @@ export default function AboutPage() {
         <section className="section reveal">
           <div className="sectionHeader">
             <p className="sectionLabel">Features</p>
-            <h2>What REEEserve helps you do</h2>
+            <h2>What rEEEserve helps you do</h2>
           </div>
 
           <div className="featureGrid">
@@ -161,11 +161,10 @@ export default function AboutPage() {
         }
 
         .nav {
-          height: 64px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 28px;
+          padding: 18px 28px;
           border-bottom: 1px solid var(--border);
           background: var(--surface);
           position: sticky;
