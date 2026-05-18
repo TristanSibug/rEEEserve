@@ -222,7 +222,26 @@ function StudentQrScanContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(data.error ?? "Failed to create walk-in reservation.");
+        const errorMessage =
+          data.error ?? data.message ?? "Failed to create walk-in reservation.";
+
+        const alreadyHasReservation =
+          errorMessage.toLowerCase().includes("already have") ||
+          errorMessage.toLowerCase().includes("overlap") ||
+          errorMessage.toLowerCase().includes("same timeslot") ||
+          errorMessage.toLowerCase().includes("during this time");
+
+        if (alreadyHasReservation) {
+          setState("no_reservation");
+          setMessage(
+            "You already have a reservation during this time. Please go to your dashboard instead."
+          );
+          setSelectedWalkInSlots(null);
+          setAvailability(null);
+          return;
+        }
+
+        setMessage(errorMessage);
         await loadWalkInAvailability();
         return;
       }
@@ -704,7 +723,7 @@ const s: Record<string, CSSProperties> = {
     display: "grid",
     gap: 10,
     textAlign: "left",
-    background: "#F3F4F6",
+    background: "var(--surface)",
     border: "1px solid var(--border)",
     borderRadius: 18,
     padding: 14,
@@ -785,7 +804,7 @@ const s: Record<string, CSSProperties> = {
 
   selectedDurationBtn: {
     border: "2px solid #185FA5",
-    background: "#E6F1FB",
+    background: "rgba(24, 95, 165, 0.14)",
     color: "#185FA5",
   },
 
@@ -800,5 +819,12 @@ const s: Record<string, CSSProperties> = {
     fontSize: 12,
     cursor: "pointer",
     textAlign: "center",
+  },
+
+  successText: {
+    margin: "10px 0 18px",
+    fontSize: 14,
+    color: "var(--muted-text)",
+    lineHeight: 1.6,
   },
 };
