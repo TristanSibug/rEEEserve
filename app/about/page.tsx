@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
+import ThemeToggle from "../components/ThemeToggle";
 
 const features = [
   {
@@ -7,49 +11,83 @@ const features = [
   },
   {
     title: "Reserve in advance",
-    text: "Book slots early so you do not have to worry about losing a spot during busy weeks.",
+    text: "Book slots ahead of time so you do not have to worry about losing a spot during busy weeks.",
   },
   {
     title: "Validate reservations",
-    text: "Use the attendance flow to confirm that reserved lab slots are actually used.",
+    text: "Confirm reserved lab slots through a straightforward attendance validation flow.",
   },
   {
-    title: "Support walk-ins",
+    title: "Walk-in support",
     text: "No reservation? REEEserve can still help students find available lab space.",
   },
   {
     title: "Instructor tools",
-    text: "Instructors can manage lab classes and help maximize room usage.",
+    text: "Instructors can manage lab classes and help maximize lab room usage.",
   },
 ];
 
 export default function AboutPage() {
+  useEffect(() => {
+    const revealItems = document.querySelectorAll(".reveal");
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      },
+      {
+        threshold: 0.15,
+      }
+    );
+
+    revealItems.forEach(item => observer.observe(item));
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="page">
       <nav className="nav">
         <Link href="/" className="logo">
-          REEE<span>serve</span>
+          rEEE<span>serve</span>
         </Link>
 
-        <Link href="/" className="navLink">
-          Back to home
-        </Link>
+        <div className="navRight">
+          <ThemeToggle />
+
+          <Link href="/" className="navLink">
+            Back to home
+          </Link>
+        </div>
       </nav>
 
       <main className="main">
-        <section className="hero">
-          <p className="eyebrow">About REEEserve</p>
-          <h1>Welcome to REEEserve!</h1>
-          <p className="heroText">
-            REEEserve is a smart system built for laboratory management that aims
-            to provide an efficient and straightforward way to allocate lab
-            facilities to users, while also providing powerful administrative
-            tools to handlers in order to maximize utilization of resources.
-          </p>
+        <section className="hero reveal">
+          <div className="heroGlow" />
+
+          <div className="heroContent">
+            <p className="eyebrow">About REEEserve</p>
+
+            <h1>
+              Welcome to <span>REEEserve!</span>
+            </h1>
+
+            <p className="heroText">
+              REEEserve is a smart system built for laboratory management that
+              aims to provide an efficient and straightforward way to allocate
+              lab facilities to users, while also providing powerful
+              administrative tools to handlers in order to maximize utilization
+              of resources.
+            </p>
+          </div>
         </section>
 
-        <section className="section twoCol">
-          <div>
+        <section className="section twoCol reveal">
+          <div className="stickyTitle">
             <p className="sectionLabel">Motivation</p>
             <h2>Built for the reality of EEEI hell weeks.</h2>
           </div>
@@ -77,7 +115,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="section">
+        <section className="section reveal">
           <div className="sectionHeader">
             <p className="sectionLabel">Features</p>
             <h2>What REEEserve helps you do</h2>
@@ -85,10 +123,15 @@ export default function AboutPage() {
 
           <div className="featureGrid">
             {features.map((feature, index) => (
-              <article key={feature.title} className="featureCard">
+              <article
+                key={feature.title}
+                className="featureCard reveal"
+                style={{ transitionDelay: `${index * 80}ms` }}
+              >
                 <div className="featureNumber">
                   {String(index + 1).padStart(2, "0")}
                 </div>
+
                 <h3>{feature.title}</h3>
                 <p>{feature.text}</p>
               </article>
@@ -111,9 +154,10 @@ export default function AboutPage() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: var(--background, #f5f5f5);
-          color: var(--text, #111);
+          background: var(--background);
+          color: var(--text);
           font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          overflow-x: hidden;
         }
 
         .nav {
@@ -122,18 +166,19 @@ export default function AboutPage() {
           align-items: center;
           justify-content: space-between;
           padding: 0 28px;
-          border-bottom: 1px solid var(--border, #eee);
-          background: var(--surface, #fff);
+          border-bottom: 1px solid var(--border);
+          background: var(--surface);
           position: sticky;
           top: 0;
           z-index: 20;
+          backdrop-filter: blur(14px);
         }
 
         .logo {
           font-size: 20px;
           font-weight: 800;
           text-decoration: none;
-          color: var(--text, #111);
+          color: var(--text);
           letter-spacing: -0.5px;
         }
 
@@ -141,30 +186,59 @@ export default function AboutPage() {
           color: #185FA5;
         }
 
+        .navRight {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
         .navLink {
           font-size: 13px;
           color: #185FA5;
           text-decoration: none;
-          font-weight: 600;
+          font-weight: 700;
+          padding: 9px 12px;
+          border-radius: 999px;
+          background: rgba(24, 95, 165, 0.1);
         }
 
         .main {
           flex: 1;
           width: 100%;
-          max-width: 1040px;
+          max-width: 1080px;
           margin: 0 auto;
-          padding: 42px 28px 56px;
+          padding: 44px 28px 64px;
           box-sizing: border-box;
         }
 
         .hero {
-          background:
-            radial-gradient(circle at top right, rgba(24, 95, 165, 0.16), transparent 34%),
-            var(--surface, #fff);
-          border: 1px solid var(--border, #eee);
-          border-radius: 24px;
-          padding: 44px;
-          box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+          position: relative;
+          overflow: hidden;
+          min-height: 380px;
+          display: flex;
+          align-items: center;
+          border: 1px solid var(--border);
+          border-radius: 28px;
+          padding: 48px;
+          background: var(--surface);
+          box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+        }
+
+        .heroGlow {
+          position: absolute;
+          width: 420px;
+          height: 420px;
+          right: -120px;
+          top: -140px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(24, 95, 165, 0.28), transparent 65%);
+          animation: floatGlow 7s ease-in-out infinite;
+        }
+
+        .heroContent {
+          position: relative;
+          z-index: 1;
+          max-width: 800px;
         }
 
         .eyebrow,
@@ -178,57 +252,65 @@ export default function AboutPage() {
         }
 
         h1 {
-          max-width: 720px;
           margin: 0;
-          font-size: clamp(34px, 6vw, 58px);
-          line-height: 1;
-          letter-spacing: -2px;
+          font-size: clamp(38px, 7vw, 72px);
+          line-height: 0.95;
+          letter-spacing: -3px;
+        }
+
+        h1 span {
+          color: #185FA5;
         }
 
         .heroText {
           max-width: 760px;
-          margin: 22px 0 0;
+          margin: 24px 0 0;
           font-size: 17px;
-          line-height: 1.8;
-          color: var(--muted-text, #666);
+          line-height: 1.85;
+          color: var(--muted-text);
         }
 
         .section {
-          margin-top: 24px;
-          background: var(--surface, #fff);
-          border: 1px solid var(--border, #eee);
-          border-radius: 20px;
-          padding: 32px;
+          margin-top: 26px;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 24px;
+          padding: 34px;
         }
 
         .twoCol {
           display: grid;
           grid-template-columns: 0.85fr 1.15fr;
-          gap: 36px;
+          gap: 38px;
           align-items: start;
+        }
+
+        .stickyTitle {
+          position: sticky;
+          top: 96px;
         }
 
         h2 {
           margin: 0;
-          font-size: 26px;
+          font-size: 28px;
           line-height: 1.2;
-          letter-spacing: -0.8px;
+          letter-spacing: -0.9px;
         }
 
         .textBlock {
           display: grid;
-          gap: 14px;
+          gap: 16px;
         }
 
         .textBlock p {
           margin: 0;
-          color: var(--muted-text, #666);
+          color: var(--muted-text);
           font-size: 15px;
-          line-height: 1.8;
+          line-height: 1.85;
         }
 
         .sectionHeader {
-          margin-bottom: 20px;
+          margin-bottom: 22px;
         }
 
         .featureGrid {
@@ -238,12 +320,19 @@ export default function AboutPage() {
         }
 
         .featureCard {
-          min-height: 160px;
-          padding: 20px;
-          border-radius: 16px;
-          border: 1px solid var(--border, #eee);
-          background: var(--soft-surface, #fafafa);
+          min-height: 170px;
+          padding: 21px;
+          border-radius: 18px;
+          border: 1px solid var(--border);
+          background: var(--soft-surface, rgba(24, 95, 165, 0.04));
           box-sizing: border-box;
+          transition-property: opacity, transform, border-color, box-shadow;
+        }
+
+        .featureCard:hover {
+          transform: translateY(-5px);
+          border-color: rgba(24, 95, 165, 0.35);
+          box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
         }
 
         .featureNumber {
@@ -265,46 +354,66 @@ export default function AboutPage() {
 
         .featureCard p {
           margin: 0;
-          color: var(--muted-text, #666);
+          color: var(--muted-text);
           font-size: 13px;
           line-height: 1.65;
         }
 
         .footer {
           padding: 14px 28px;
-          border-top: 1px solid var(--border, #eee);
-          background: var(--surface, #fff);
+          border-top: 1px solid var(--border);
+          background: var(--surface);
           display: flex;
+          justify-content: center;
           gap: 20px;
         }
 
         .footerLink {
           font-size: 13px;
-          color: var(--muted-text, #888);
+          color: var(--muted-text);
           text-decoration: none;
         }
 
         .footerLink.active {
           color: #185FA5;
-          font-weight: 700;
+          font-weight: 800;
         }
 
-        @media (max-width: 760px) {
-          .nav {
-            padding: 0 20px;
+        .reveal {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 650ms ease, transform 650ms ease;
+        }
+
+        .reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        @keyframes floatGlow {
+          0%, 100% {
+            transform: translate3d(0, 0, 0) scale(1);
           }
 
+          50% {
+            transform: translate3d(-30px, 35px, 0) scale(1.08);
+          }
+        }
+
+        @media (max-width: 820px) {
           .main {
-            padding: 24px 16px 40px;
+            padding: 24px 16px 46px;
           }
 
           .hero {
-            padding: 28px 22px;
-            border-radius: 20px;
+            min-height: 320px;
+            padding: 30px 22px;
+            border-radius: 22px;
           }
 
           .section {
             padding: 24px 20px;
+            border-radius: 20px;
           }
 
           .twoCol {
@@ -312,12 +421,21 @@ export default function AboutPage() {
             gap: 18px;
           }
 
+          .stickyTitle {
+            position: static;
+          }
+
           .featureGrid {
             grid-template-columns: 1fr;
           }
 
-          .footer {
-            padding: 14px 20px;
+          .nav {
+            padding: 0 18px;
+          }
+
+          .navLink {
+            font-size: 12px;
+            padding: 8px 10px;
           }
         }
       `}</style>
