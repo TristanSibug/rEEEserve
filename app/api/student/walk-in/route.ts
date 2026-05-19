@@ -73,6 +73,23 @@ function roundUpToNextHalfHour(minutes: number) {
   return Math.ceil(minutes / 30) * 30;
 }
 
+function roundDownToCurrentHalfHour(minutes: number) {
+  return Math.floor(minutes / 30) * 30;
+}
+
+function getWalkInStartMinutes(mode: string | null, nowMinutes: number) {
+  const currentSlotStart = roundDownToCurrentHalfHour(nowMinutes);
+  const currentSlotEnd = currentSlotStart + 30;
+  const minutesLeftInCurrentSlot = currentSlotEnd - nowMinutes;
+  const canUseCurrentSlot = minutesLeftInCurrentSlot >= 15;
+
+  if (mode === "current" && canUseCurrentSlot) {
+    return Math.max(LAB_START_MINUTES, currentSlotStart);
+  }
+
+  return Math.max(LAB_START_MINUTES, roundUpToNextHalfHour(nowMinutes));
+}
+
 function getDurationLabel(minutes: number) {
   if (minutes === 30) return "30 mins";
   if (minutes === 60) return "1 hour";
@@ -179,6 +196,8 @@ export async function POST(request: Request) {
     const requestedSlots = Number(body.slots);
     const requestedRoom = String(body.room_name ?? "").trim();
 
+    const mode = String(body.mode ?? "next");
+
     if (!Number.isInteger(requestedSlots)) {
       return NextResponse.json(
         { error: "Invalid walk-in duration." },
@@ -221,10 +240,7 @@ export async function POST(request: Request) {
 
     const { today, nowMinutes } = getManilaDateTime();
 
-    const startMinutes = Math.max(
-      LAB_START_MINUTES,
-      roundUpToNextHalfHour(nowMinutes)
-    );
+    const startMinutes = getWalkInStartMinutes(mode, nowMinutes);
 
     if (startMinutes >= LAB_END_MINUTES) {
       return NextResponse.json(

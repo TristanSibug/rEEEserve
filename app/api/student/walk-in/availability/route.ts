@@ -68,6 +68,32 @@ function roundUpToNextHalfHour(minutes: number) {
   return Math.ceil(minutes / 30) * 30;
 }
 
+function roundDownToCurrentHalfHour(minutes: number) {
+  return Math.floor(minutes / 30) * 30;
+}
+
+function getWalkInTiming(nowMinutes: number, mode: string | null) {
+  const currentSlotStart = roundDownToCurrentHalfHour(nowMinutes);
+  const currentSlotEnd = currentSlotStart + 30;
+  const minutesLeftInCurrentSlot = currentSlotEnd - nowMinutes;
+
+  const canAskCurrentSlot = minutesLeftInCurrentSlot >= 15;
+
+  if (mode === "current" && canAskCurrentSlot) {
+    return {
+      startMinutes: Math.max(LAB_START_MINUTES, currentSlotStart),
+      canAskCurrentSlot,
+      autoUsedNextSlot: false,
+    };
+  }
+
+  return {
+    startMinutes: Math.max(LAB_START_MINUTES, roundUpToNextHalfHour(nowMinutes)),
+    canAskCurrentSlot,
+    autoUsedNextSlot: !canAskCurrentSlot,
+  };
+}
+
 function getDurationLabel(minutes: number) {
   if (minutes === 30) return "30 mins";
   if (minutes === 60) return "1 hour";
@@ -239,7 +265,7 @@ async function getAvailabilityForRoom(params: {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
@@ -255,10 +281,14 @@ export async function GET() {
 
     const { today, nowMinutes } = getManilaDateTime();
 
-    const startMinutes = Math.max(
-      LAB_START_MINUTES,
-      roundUpToNextHalfHour(nowMinutes)
-    );
+    const { searchParams } = new URL(request.url);
+    const mode = searchParams.get("mode");
+
+    const {
+      startMinutes,
+      canAskCurrentSlot,
+      autoUsedNextSlot,
+    } = getWalkInTiming(nowMinutes, mode);
 
     if (startMinutes >= LAB_END_MINUTES) {
       return NextResponse.json({
@@ -272,6 +302,8 @@ export async function GET() {
         max_label: "0 mins",
         options: [],
         rooms: [],
+        can_ask_current_slot: canAskCurrentSlot,
+        auto_used_next_slot: autoUsedNextSlot,
       });
     }
 
@@ -322,6 +354,8 @@ export async function GET() {
         max_label: "0 mins",
         options: [],
         rooms: [],
+        can_ask_current_slot: canAskCurrentSlot,
+        auto_used_next_slot: autoUsedNextSlot,
       });
     }
 
@@ -388,6 +422,8 @@ export async function GET() {
       options,
       rooms: roomAvailability,
       remaining_daily_minutes: remainingDailyMinutes,
+      can_ask_current_slot: canAskCurrentSlot,
+      auto_used_next_slot: autoUsedNextSlot,
     });
   } catch (error: any) {
     return NextResponse.json(

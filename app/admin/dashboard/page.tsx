@@ -15,6 +15,7 @@ type StudentReservation = {
   time_start: string;
   time_end: string;
   status: string;
+  attendance_status?: string | null;
 };
 
 type InstructorReservation = {
@@ -36,6 +37,7 @@ type ActivityItem = {
   time_start: string;
   time_end: string;
   status: string;
+  attendance_status?: string | null;
 };
 
 type VisualRange = {
@@ -68,7 +70,7 @@ type DisplaySlot = {
 
 type ReserveFor = "student" | "instructor";
 type FilterType = "student" | "instructor";
-type ActivityView = "ongoing" | "pending" | "past" | "cancelled";
+type ActivityView = "ongoing" | "past" | "cancelled";
 
 type ResForm = {
   reserve_for: ReserveFor;
@@ -450,24 +452,6 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleApprove(id: number) {
-    const res = await fetch(`/api/admin/reservations/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "approved" }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error ?? "Failed to approve reservation.");
-      return;
-    }
-
-    fetchAllActivity();
-    fetchSchedule();
-  }
-
   async function handleRemoveStudentReservation(id: number | string) {
     const confirmed = window.confirm("Remove this student reservation?");
     if (!confirmed) return;
@@ -653,6 +637,7 @@ export default function AdminDashboard() {
     time_start: r.time_start,
     time_end: r.time_end,
     status: r.status,
+    attendance_status: r.attendance_status,
   }));
 
   const instructorActivity: ActivityItem[] = instructorReservations.map(r => ({
@@ -680,14 +665,6 @@ export default function AdminDashboard() {
       }
       return !isPastReservation(item);
     })
-    .sort((a, b) => {
-      const aDateTime = `${a.reserved_date} ${normalizeTime(a.time_start)}`;
-      const bDateTime = `${b.reserved_date} ${normalizeTime(b.time_start)}`;
-      return aDateTime.localeCompare(bDateTime);
-    });
-
-  const pendingActivity = labFilteredActivity
-    .filter(item => item.kind === "student" && item.status === "pending")
     .sort((a, b) => {
       const aDateTime = `${a.reserved_date} ${normalizeTime(a.time_start)}`;
       const bDateTime = `${b.reserved_date} ${normalizeTime(b.time_start)}`;
@@ -726,11 +703,9 @@ export default function AdminDashboard() {
   const displayedActivity =
     activityView === "ongoing"
       ? ongoingActivity
-      : activityView === "pending"
-        ? pendingActivity
-        : activityView === "past"
-          ? pastActivity
-          : cancelledActivity;
+      : activityView === "past"
+        ? pastActivity
+        : cancelledActivity;
 
   const reservationsTodayCount = studentActivity.filter(
     (item) =>
@@ -804,17 +779,28 @@ export default function AdminDashboard() {
     );
   }
 
-  function statusLabel(status: string) {
-    const labels: Record<string, string> = {
-      approved: "Approved",
-      pending: "Pending",
-      cancelled: "Cancelled",
-      cancelled_by_admin: "Cancelled by admin",
-      cancelled_by_instructor: "Cancelled by instructor",
-      instructor_reservation: "Instructor reservation",
-    };
+  function statusLabel(status: string, item?: ActivityItem) {
+    if (item?.kind === "student") {
+      if (status === "cancelled_by_admin") return "Cancelled by admin";
+      if (status === "cancelled_by_instructor") return "Cancelled by instructor";
+      if (status === "cancelled") return "Cancelled";
 
-    return labels[status] ?? status;
+      if (item.attendance_status === "checked_in") {
+        return "Attended";
+      }
+
+      if (isPastReservation(item)) {
+        return "Did not attend";
+      }
+
+      return "Not yet attended";
+    }
+
+    if (status === "instructor_reservation") {
+      return "Instructor reservation";
+    }
+
+    return status;
   }
 
   function fmt(t: string) {
@@ -1171,7 +1157,6 @@ export default function AdminDashboard() {
             <div style={{ ...s.activityTabs, ...(isMobile ? s.activityTabsMobile : {}) }}>
               {[
                 ["ongoing", "Ongoing", ongoingActivity.length],
-                ["pending", "Pending", pendingActivity.length],
                 ["past", "Past", pastActivity.length],
                 ["cancelled", "Cancelled", cancelledActivity.length],
               ].map(([key, label, count]) => (
@@ -1217,11 +1202,9 @@ export default function AdminDashboard() {
                     <td colSpan={6} style={s.empty}>
                       {activityView === "ongoing"
                         ? "No ongoing reservations found"
-                        : activityView === "pending"
-                          ? "No pending reservations found"
-                          : activityView === "past"
-                            ? "No past reservations found"
-                            : "No cancelled reservations found"}
+                        : activityView === "past"
+                          ? "No past reservations found"
+                          : "No cancelled reservations found"}
                     </td>
                   </tr>
                 ) : (
@@ -1235,7 +1218,7 @@ export default function AdminDashboard() {
                       </td>
                       <td style={s.td}>
                         <span style={pillStyle(item.status)}>
-                          {statusLabel(item.status)}
+                          {statusLabel(item.status, item)}
                         </span>
                       </td>
                       <td style={s.actionTd}>
@@ -1261,33 +1244,6 @@ export default function AdminDashboard() {
                           </div>
                         )}
 
-                        {activityView === "pending" &&
-                          item.kind === "student" &&
-                          canManageReservation(item) && (
-                            <div style={s.actionGroup}>
-                              <button
-                                style={{ ...s.actionBtn, color: "#3B6D11" }}
-                                onClick={() => handleApprove(Number(item.id))}
-                              >
-                                Approve
-                              </button>
-
-                              <button
-                                style={s.actionBtn}
-                                onClick={() => openEditItem(item)}
-                              >
-                                Edit
-                              </button>
-
-                              <button
-                                style={{ ...s.actionBtn, color: "#A32D2D" }}
-                                onClick={() => handleRemoveStudentReservation(item.id)}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          )}
-
                         {activityView === "past" && (
                           <span style={s.pastText}>Finished</span>
                         )}
@@ -1296,10 +1252,9 @@ export default function AdminDashboard() {
                           <span style={s.pastText}>Cancelled</span>
                         )}
 
-                        {(activityView === "ongoing" || activityView === "pending") &&
-                          !canManageReservation(item) && (
-                            <span style={s.pastText}>Locked</span>
-                          )}
+                        {activityView === "ongoing" && !canManageReservation(item) && (
+                          <span>Locked</span>
+                        )}
                       </td>
                     </tr>
                   ))

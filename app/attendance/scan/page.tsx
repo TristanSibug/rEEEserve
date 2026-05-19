@@ -9,10 +9,13 @@ type ScanState =
   | "loading"
   | "success"
   | "no_reservation"
+  | "walk_in_start_choice"
   | "walk_in_loading"
   | "walk_in_options"
   | "walk_in_success"
   | "error";
+
+type WalkInStartMode = "current" | "next";
 
 type WalkInOption = {
   slots: number;
@@ -27,23 +30,21 @@ type RoomAvailability = {
 };
 
 type WalkInAvailability = {
-  ok: boolean;
   available: boolean;
-  message: string;
+  message?: string;
   date: string;
   start_time: string | null;
-
   max_slots: number;
   max_minutes: number;
   max_label: string;
-
   selectable_slots?: number;
   selectable_minutes?: number;
   selectable_label?: string;
-
+  remaining_daily_minutes?: number;
   options: WalkInOption[];
   rooms: RoomAvailability[];
-  remaining_daily_minutes?: number;
+  can_ask_current_slot?: boolean;
+  auto_used_next_slot?: boolean;
 };
 
 type WalkInResult = {
@@ -113,6 +114,9 @@ function StudentQrScanContent() {
     null
   );
 
+  const [walkInStartMode, setWalkInStartMode] =
+    useState<WalkInStartMode>("next");
+
   useEffect(() => {
     runQrScan();
 
@@ -173,7 +177,40 @@ function StudentQrScanContent() {
     }
   }
 
-  async function loadWalkInAvailability() {
+  async function loadWalkInAvailability(mode: WalkInStartMode = walkInStartMode) {
+    setState("walk_in_loading");
+    setMessage("");
+
+    try {
+      const res = await fetch(`/api/student/walk-in/availability?mode=${mode}`, {
+        method: "GET",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setState("no_reservation");
+        setMessage(data.error ?? "Failed to check walk-in availability.");
+        return;
+      }
+
+      setAvailability(data);
+      setSelectedWalkInSlots(null);
+
+      if (!data.available || data.options.length === 0) {
+        setState("error");
+        setMessage(data.message ?? "No walk-in slots are available right now.");
+        return;
+      }
+
+      setState("walk_in_options");
+    } catch {
+      setState("no_reservation");
+      setMessage("Failed to check walk-in availability.");
+    }
+  }
+
+  async function checkWalkInStartChoice() {
     setState("walk_in_loading");
     setMessage("");
 
@@ -190,6 +227,13 @@ function StudentQrScanContent() {
         return;
       }
 
+      if (data.can_ask_current_slot) {
+        setAvailability(data);
+        setState("walk_in_start_choice");
+        return;
+      }
+
+      setWalkInStartMode("next");
       setAvailability(data);
 
       if (!data.available || data.options.length === 0) {
@@ -216,6 +260,7 @@ function StudentQrScanContent() {
         body: JSON.stringify({
           slots,
           room_name: roomName,
+          mode: walkInStartMode,
         }),
       });
 
@@ -342,14 +387,54 @@ function StudentQrScanContent() {
                   Go back
                 </button>
 
-                <button
-                  type="button"
-                  style={s.btn}
-                  onClick={loadWalkInAvailability}
-                >
+                <button type="button" style={s.btn} onClick={checkWalkInStartChoice}>
                   Check walk-in
                 </button>
               </div>
+            </>
+          )}
+
+          {state === "walk_in_start_choice" && (
+            <>
+              <div style={{ ...s.statusIcon, ...s.walkInIcon }}>↳</div>
+
+              <h1 style={s.title}>Choose walk-in start</h1>
+
+              <p style={s.text}>
+                There is still enough time left in the current timeslot. Do you want to start now or use the next timeslot instead?
+              </p>
+
+              <div style={s.actions}>
+                <button
+                  type="button"
+                  style={s.btnOutline}
+                  onClick={() => {
+                    setWalkInStartMode("current");
+                    loadWalkInAvailability("current");
+                  }}
+                >
+                  Start now
+                </button>
+
+                <button
+                  type="button"
+                  style={s.btn}
+                  onClick={() => {
+                    setWalkInStartMode("next");
+                    loadWalkInAvailability("next");
+                  }}
+                >
+                  Next timeslot
+                </button>
+              </div>
+
+              <button
+                type="button"
+                style={{ ...s.btnOutline, marginTop: 12 }}
+                onClick={() => setState("no_reservation")}
+              >
+                Back
+              </button>
             </>
           )}
 
