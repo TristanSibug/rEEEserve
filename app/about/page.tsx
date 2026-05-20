@@ -157,7 +157,6 @@ export default function AboutPage() {
           background: var(--background);
           color: var(--text);
           font-family: sans-serif;
-          overflow-x: hidden;
         }
 
         .nav {
