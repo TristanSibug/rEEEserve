@@ -273,7 +273,7 @@ const s: { [k: string]: React.CSSProperties } = {
   },
   footer: {
     display: "flex",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     alignItems: "center",
     padding: "14px 28px",
     marginTop: "auto",
