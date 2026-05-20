@@ -271,7 +271,6 @@ const styles: Record<string, CSSProperties> = {
     background: "var(--surface)",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
     gap: 18,
   },
 
