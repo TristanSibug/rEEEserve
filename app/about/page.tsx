@@ -144,9 +144,6 @@ export default function AboutPage() {
         <Link href="/about" className="footerLink active">
           About
         </Link>
-        <Link href="/help" className="footerLink">
-          Help
-        </Link>
       </footer>
 
       <style>{`

@@ -120,10 +120,6 @@ export default function AdminLogin() {
         <Link href="/about" style={styles.footerLink}>
           About
         </Link>
-
-        <Link href="/help" style={styles.footerLink}>
-          Help
-        </Link>
       </footer>
     </main>
   );

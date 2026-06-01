@@ -1498,9 +1498,6 @@ export default function Dashboard() {
         <Link href="/about" style={s.footerLink}>
           About
         </Link>
-        <Link href="/help" style={s.footerLink}>
-          Help
-        </Link>
       </footer>
     </div>
   );
