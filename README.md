@@ -7,8 +7,7 @@
 <p align="center">
   <a href="https://reeeserve.online">Open the website</a> ·
   <a href="#screenshots">Screenshots</a> ·
-  <a href="#how-it-works">How it works</a> ·
-  <a href="#local-development">Local development</a>
+  <a href="#how-it-works">How it works</a>
 </p>
 
 rEEEserve is a web-based laboratory reservation system designed around the workflows of the Electrical and Electronics Engineering Institute at UP Diliman. Students can check availability before travelling to campus, book a laboratory slot, and verify attendance by scanning a QR code. Instructors and administrators have their own tools for class schedules, room reservations, and facility oversight.
@@ -139,103 +138,6 @@ utils/
   email.ts                 Resend cancellation-email helper
 docs/screenshots/          Screenshots used in this README
 ```
-
-## Local development
-
-### Prerequisites
-
-- **Node.js 20.9 or later** and npm, as required by the pinned Next.js version.
-- A Supabase project with the application's database schema, policies, and initial data.
-- Google OAuth configured in Supabase Auth.
-- A Resend API key. For delivery beyond Resend's test restrictions, use a verified sender domain.
-
-**The repository currently does not include SQL migrations or database seed scripts.** A fresh Supabase project alone is not sufficient to run the complete application. Obtain the existing schema and seed data from the project maintainers before exercising the reservation workflows.
-
-The code references these tables:
-
-- `students`
-- `staff_credentials`
-- `weekly_lab_schedules`
-- `room_schedule_blocks`
-- `reservations`
-- `reservation_activity_log`
-- `attendance_qr_tokens`
-- `instructor_class_assignments`
-- `instructor_class_no_class_dates`
-
-Staff records must include the appropriate roles and instructor email mappings. Password-based staff login compares bcrypt hashes stored in `staff_credentials`. Configure database access policies for the application's browser and server Supabase clients.
-
-### 1. Install dependencies
-
-```bash
-git clone https://github.com/TristanSibug/rEEEserve.git
-cd rEEEserve
-npm ci
-```
-
-### 2. Configure the environment
-
-Create an untracked `.env.local` in the project root:
-
-```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
-RESEND_API_KEY=your-resend-api-key
-RESEND_FROM_EMAIL="rEEEserve <notifications@your-verified-domain>"
-
-# Optional demonstration entry points; keep disabled for normal operation.
-DEMO_LOGIN_ENABLED=false
-NEXT_PUBLIC_DEMO_LOGIN_ENABLED=false
-```
-
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL, used by browser and server clients. |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key. Do not substitute a service-role key. |
-| `RESEND_API_KEY` | Server-side API key required by `utils/email.ts`; the module throws if it is missing. |
-| `RESEND_FROM_EMAIL` | Sender identity. Defaults to `rEEEserve <onboarding@resend.dev>` when omitted. |
-| `DEMO_LOGIN_ENABLED` | Enables the server-side demo-login endpoint only when set to `true`. |
-| `NEXT_PUBLIC_DEMO_LOGIN_ENABLED` | Shows demo login controls and enables the client-side demo flow when set to `true`. |
-
-Demo mode uses existing staff records for instructor and administrator demonstrations. It is intended for a controlled test environment, not normal user authentication.
-
-### 3. Configure Google OAuth
-
-Enable the Google provider in Supabase Auth and configure its client ID and secret through the provider settings. In Google Cloud, use the OAuth callback URL supplied by Supabase. In Supabase's redirect allowlist, include the application's callback URLs:
-
-```text
-http://localhost:3000/auth/callback
-https://reeeserve.online/auth/callback
-```
-
-The app starts the Google flow with the `eee.upd.edu.ph` hosted-domain hint. After the code exchange, the callback checks instructor staff records and sends users to the corresponding dashboard. Apply any required institutional account restrictions in the authentication configuration; the Google domain hint by itself is not an access-control policy.
-
-### 4. Start the application
-
-```bash
-npm run dev
-```
-
-Open **http://localhost:3000**. Camera-based QR scanning requires browser camera permission and a secure context, normally HTTPS or localhost. For phone testing, use an HTTPS-accessible deployment rather than an ordinary HTTP LAN address.
-
-### Available commands
-
-```bash
-npm run dev     # Development server
-npm run build   # Production build
-npm start       # Serve the production build
-npm run lint    # ESLint
-```
-
-## Deploy to Vercel
-
-1. Import this repository into Vercel and use the Next.js framework preset.
-2. Add the environment variables above to the intended deployment environment.
-3. Connect the configured Supabase project and authorize the production `/auth/callback` URL.
-4. Configure Resend's sender identity, then deploy.
-5. Test student and instructor sign-in, booking validation, QR check-in, walk-in reservations, and cancellation-email delivery with appropriate test accounts and data.
-
-The project can also run as a standard Next.js production application using `npm run build` followed by `npm start`.
 
 ## Project context
 
