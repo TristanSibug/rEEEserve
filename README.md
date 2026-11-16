@@ -33,7 +33,7 @@ Co-developed by **Tristan Josh E. Sibug** and **Ruel Gregory Ordoñez** for the 
 
 <p align="center">
   <img src="docs/screenshots/google-sign-in.jpg" alt="rEEEserve sign-in screen with Google OAuth for EEE accounts" width="240">
-  <img src="docs/screenshots/dashboard.jpg" alt="Student dashboard showing reservations and the Scan QR action" width="240">
+  <img src="docs/screenshots/dashboard.jpg" alt="Student dashboard showing the Scan QR action and laboratory schedules" width="240">
   <img src="docs/screenshots/availability.jpg" alt="Laboratory availability and selectable time slots" width="240">
 </p>
 
